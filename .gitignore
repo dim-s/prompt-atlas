@@ -1,0 +1,20 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Local-only working files
+*.draft.md
+*.scratch.md
+TODO.local.md
+
+# Local skill cache / index files (if any tool creates them)
+.skill-cache/
+.skill-index/
