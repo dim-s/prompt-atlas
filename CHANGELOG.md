@@ -2,6 +2,22 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.1.0] — 2026-05-31
+
+### Added
+
+- **Claude Opus 4.8** (`claude-opus-4-8`, released 2026-05-28) as the current frontier Claude model across all five matrix tables (A–E), `models/claude.md`, `SKILL.md`, and cross-vendor comparison files. Opus 4.7 demoted to **previous** (still covered), 4.6 stays legacy.
+
+### Changed (content-aware, not just version bumps)
+
+- **Effort default** documented as `high` on all surfaces incl. Claude Code (4.8); effort flagged as "more important than any prior Opus."
+- **Tool-triggering** cell flipped: 4.7 "undertriggers" → 4.8 "triggers required tools reliably; favors reasoning — raise effort/instruct for *more* tool use."
+- **Adaptive thinking** note: 4.8 spends fewer thinking tokens than 4.7 at the same effort.
+- New 4.8 API levers surfaced (not embedded): mid-conversation system messages, refusal `stop_details` categories, fast mode, 1,024-token cache minimum.
+- Claude Code section notes **Workflows** (parallel-subagent research preview) and expanded **Auto mode**.
+- **Creative-domain kernel** pattern renamed *for Opus 4.7 / 4.8* (same direct-tone / literal / convergent defaults persist); sourced to the new Prompting Opus 4.8 guide alongside the 4.7 migration guide.
+- Cross-vendor benchmark refs updated where confident (e.g. SWE-Bench Pro: added Opus 4.8 = 69.2 alongside 4.7 = 64.3 in `deepseek.md`).
+
 ## [1.0.0] — 2026-05-25
 
 ### Added (initial public release)

@@ -27,6 +27,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Literalism | Generalizes scope | Persona / "act as" | Few-shot for format | Few-shot for reasoning | Aggressive emphasis | Step-by-step prescription |
 |---|---|---|---|---|---|---|---|
+| **Opus 4.8** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Opus 4.7** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Sonnet 4.6** | high | rarely | OK | helps | helps | overtriggers | tolerated |
 | **Haiku 4.5** | medium-high | rarely | OK | helps; needed when format strict | mixed | overtriggers | needed for complex tasks |
@@ -68,8 +69,9 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Reasoning depth lever | Default tone | Output format preference | Verbosity control |
 |---|---|---|---|---|
+| **Opus 4.8** | `effort` (low/medium/high/xhigh) — primary; **default `high` on all surfaces incl Claude Code** | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
 | **Opus 4.7** | `effort` (low/medium/high/xhigh) — primary | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
-| **Sonnet 4.6** | `effort` | direct, similar to Opus 4.7 | prose / XML | calibrates |
+| **Sonnet 4.6** | `effort` | direct, similar to Opus 4.8/4.7 | prose / XML | calibrates |
 | **Haiku 4.5** | `effort` (limited range) | direct, terse | prose; explicit format needed | terse default |
 | **GPT-5.5** | `reasoning_effort` (none/low/medium/high/xhigh) — primary | efficient, task-oriented, no padding | **`json_schema` strongly preferred** | `text.verbosity` parameter |
 | **GPT-5.4** | `reasoning_effort` (default `none`) | direct | `json_schema` preferred | `text.verbosity` |
@@ -109,6 +111,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Tool guidance location | Subagent default | "Use proactively" needed? | MCP tool description critical? |
 |---|---|---|---|---|
+| **Opus 4.8** | system prompt OK | spawns fewer — explicit ask needed | improved — triggers required tools reliably; favors reasoning, so raise effort / instruct for *more* tool use | yes |
 | **Opus 4.7** | system prompt OK | spawns fewer — explicit ask needed | yes — undertriggers | yes |
 | **Sonnet 4.6** | system prompt OK | spawns more by default | sometimes | yes |
 | **Haiku 4.5** | system prompt OK | conservative — name tool explicitly | yes | yes |
@@ -140,6 +143,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Migration style | Patches from prev version |
 |---|---|---|
+| **Opus 4.8** | runs out-of-box on 4.7 prompts; `high` effort default | check effort-default latency/token cost; trim now-redundant "use the tool" nudges (under-triggering fixed); verbosity recalibrates |
 | **Opus 4.7** | forward-compatible from 4.6; tone shifts | trim "avoid AI slop" frontend blocks; trim "after every 3 tool calls summarize" |
 | **Sonnet 4.6** | forward-compatible | trim "be thorough / use X when in doubt" — overtriggers |
 | **Haiku 4.5** | forward-compatible | mostly unchanged from 4.0/4.5 era |

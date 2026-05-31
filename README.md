@@ -156,7 +156,7 @@ prompt-atlas/
     ├── multilingual.md            non-EN prompt handling — applies to BOTH classes
     │
     ├── models/                    vendor-specific deltas
-    │   ├── claude.md              Opus 4.7 / Sonnet 4.6 / Haiku 4.5
+    │   ├── claude.md              Opus 4.8 / 4.7 / Sonnet 4.6 / Haiku 4.5
     │   ├── gpt.md                 GPT-5.1 → 5.5 + Instant variant
     │   ├── gemini.md              Gemini 3.1 Pro / Flash / 3.5 Flash / Flash-Lite
     │   ├── kimi.md                Kimi K2.6 / K2.5 / K2 — Agent Swarms protocol

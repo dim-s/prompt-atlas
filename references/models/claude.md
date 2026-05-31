@@ -131,16 +131,16 @@ Avoid over-engineering. Only make changes that are directly requested or clearly
 - Abstractions: don't create helpers for one-time operations or design for hypothetical future needs.
 ```
 
-### Prompting language is similar to Opus 4.7
+### Prompting language is similar to Opus 4.8/4.7
 
-Most advice from the Opus 4.7 section applies to Sonnet 4.6 too. The main differences:
+Most advice from the Opus 4.8 section applies to Sonnet 4.6 too. The main differences:
 
-- Sonnet 4.6 is a bit less literal than Opus 4.7 — it still generalizes a little more. Explicit scope is still helpful but less critical.
-- Tone is similar to Opus 4.7 (direct, less validation-forward).
+- Sonnet 4.6 is a bit less literal than Opus 4.8/4.7 — it still generalizes a little more. Explicit scope is still helpful but less critical.
+- Tone is similar to Opus 4.8/4.7 (direct, less validation-forward).
 
-### When to use Sonnet 4.6 vs Opus 4.7
+### When to use Sonnet 4.6 vs Opus 4.8
 
-(This is a model-choice question that affects wording only indirectly.) Opus 4.7 wins for multi-hour autonomous work, deep research, large-scale migrations. Sonnet 4.6 wins for interactive sessions, high-volume repetitive work, and anything where speed matters.
+(This is a model-choice question that affects wording only indirectly.) Opus 4.8 wins for multi-hour autonomous work, deep research, large-scale migrations. Sonnet 4.6 wins for interactive sessions, high-volume repetitive work, and anything where speed matters.
 
 ---
 
@@ -150,7 +150,7 @@ The fastest and cheapest current model. Near-frontier intelligence at a small fr
 
 ### It's less forgiving of vague wording
 
-Haiku 4.5 handles ambiguity less gracefully than Opus 4.7 / Sonnet 4.6. Prompts need to be MORE specific, not less.
+Haiku 4.5 handles ambiguity less gracefully than Opus 4.8 / Sonnet 4.6. Prompts need to be MORE specific, not less.
 
 - Spell out exactly what you want.
 - Include examples when format matters.
@@ -177,7 +177,7 @@ Haiku is the right default when the subagent's job is bounded and read-only: sea
 
 ## Universal / multi-model prompts
 
-Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Opus 4.7, Sonnet 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
+Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Opus 4.8 or 4.7, Sonnet 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
 
 ### How to ask the user about model target
 
@@ -197,7 +197,7 @@ If Haiku 4.5 is in scope, be MORE specific — Haiku handles vague prompts worse
 
 - Don't assume Haiku will do deep multi-step reasoning — break complex tasks into concrete steps in the prompt itself.
 - Don't assume Opus's literalism to save you from having to state scope (Sonnet generalizes a bit more freely).
-- Don't write tone instructions assuming one model's default ("be less formal" reads differently on Opus 4.7 vs Haiku).
+- Don't write tone instructions assuming one model's default ("be less formal" reads differently on Opus 4.8 vs Haiku).
 
 **3. Be moderate with emphasis.**
 
@@ -225,13 +225,13 @@ These work consistently across all models. Negative-only rules without alternati
 
 **6. Watch for model-specific scaffolding that should be stripped.**
 
-- Old "avoid AI slop" long frontend prompts → trim for 4.7.
+- Old "avoid AI slop" long frontend prompts → trim for 4.7 / 4.8 (4.8 needs even less).
 - "After every 3 tool calls, summarize" → Opus 4.7 already does this; still harmless on Sonnet 4.6 but adds noise.
 - "Be thorough, use X tool when in doubt" → now causes overtriggering on 4.5+. Soften to "Use X when it enhances your understanding".
 
 **7. Don't name a specific model in the prompt unless you have to.**
 
-Naming Claude in a prompt that might run on any model locks you to that model. Instead of "You are Claude Opus 4.7", use "You are a helpful coding assistant". Reserve the model name for cases where identity matters (e.g. the user will see the model string).
+Naming Claude in a prompt that might run on any model locks you to that model. Instead of "You are Claude Opus 4.8", use "You are a helpful coding assistant". Reserve the model name for cases where identity matters (e.g. the user will see the model string).
 
 **8. When a universal prompt isn't enough, split.**
 
@@ -251,7 +251,7 @@ Before calling a prompt "universal", verify:
 
 - [ ] No hard dependency on model-specific features (adaptive thinking, high-res vision, `xhigh` effort, etc.)
 - [ ] Specificity high enough for Haiku 4.5 to follow
-- [ ] Explicit scope stated for Opus 4.7's literalism
+- [ ] Explicit scope stated for Opus 4.8/4.7's literalism
 - [ ] Overengineering/over-exploration guards for Sonnet 4.6
 - [ ] Emphasis used sparingly (no "CRITICAL:" stack)
 - [ ] No model name hardcoded unless required
