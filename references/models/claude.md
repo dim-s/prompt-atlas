@@ -4,6 +4,92 @@ What actually changes about how you should PHRASE prompts for each current Claud
 
 ---
 
+## Claude Fable 5
+
+New tier above Opus (June 2026; first public release of the Mythos line). Anthropic's guide is explicit that Fable 5 responds to the same prompting techniques as other Claude models — the deltas below are what actually changes for wording. Source: "Prompting Claude Fable 5" (official).
+
+### A brief instruction replaces an enumeration
+
+Instruction-following is strong enough that one short principle steers as well as listing every behavior by name. Prompts that grew long fighting older models' lapses now add noise. Example from the official guide — instead of enumerating each verbosity pattern to avoid:
+
+> Lead with the outcome. Your first sentence after finishing should answer "what happened" or "what did you find". Supporting detail and reasoning come after. Being readable and being concise are different things, and readability matters more.
+
+Same for checkpoint behavior — one boundary statement instead of case-by-case rules:
+
+> Pause for the user only when the work genuinely requires them: a destructive or irreversible action, a real scope change, or input that only they can provide.
+
+### Never instruct it to echo its reasoning
+
+**The highest-severity Fable-specific finding.** Prompts, skills, or harness instructions that tell the model to echo, transcribe, or explain its internal reasoning as response text ("show your thinking", "explain your reasoning step by step in the answer") trigger the `reasoning_extraction` refusal classifier and cause fallbacks to Opus 4.8. When migrating, audit every skill and system prompt for reflection / show-your-thinking instructions. If reasoning visibility is needed, that's an API concern (summarized thinking blocks) — handoff, not a wording fix.
+
+### Trim over-prescriptive skills and prompts
+
+Skills developed for prior models are often too prescriptive for Fable 5 and **can degrade output quality**. Review and consider removing older instructions if default performance is better. This is the same "scar tissue" audit as the prime directive, with the direction reversed: on Fable 5, the burden of proof shifts toward removal.
+
+### Subagent default flips: it delegates readily
+
+Opposite of Opus 4.8/4.7. Fable 5 dispatches parallel subagents more readily and dependably sustains long-running ones. Wording shifts from encouragement to boundaries:
+
+> Delegate independent subtasks to subagents and keep working while they run. Intervene if a subagent goes off track or is missing relevant context.
+
+Prefer asynchronous orchestration over blocking on each subagent; for verification, fresh-context verifier subagents outperform self-critique.
+
+### Long runs: ground claims, state boundaries, prevent overplanning
+
+Three snippets cover the documented long-run failure modes.
+
+Fabricated status reports (Anthropic: nearly eliminated them in testing):
+
+> Before reporting progress, audit each claim against a tool result from this session. Only report work you can point to evidence for; if something is not yet verified, say so explicitly.
+
+Unrequested actions (drafting an email no one asked for, defensive git branches):
+
+> When the user is describing a problem, asking a question, or thinking out loud rather than requesting a change, the deliverable is your assessment. Report your findings and stop. Don't apply a fix until they ask for one.
+
+Overplanning on ambiguous tasks:
+
+> When you have enough information to act, act. Do not re-derive facts already established in the conversation, re-litigate a decision the user has already made, or narrate options you will not pursue. If you are weighing a choice, give a recommendation, not an exhaustive survey.
+
+### Rare early stopping and context-budget anxiety
+
+Deep into long sessions Fable 5 can end a turn with a statement of intent ("I'll now run X") without the tool call, or offer to summarize and start a new session when the harness shows a remaining-token countdown. Wording fixes: for autonomous pipelines add an "operating autonomously — check your last paragraph before ending the turn" reminder; avoid surfacing context-budget counters to the model, or add "You have ample context remaining. Do not stop, summarize, or suggest a new session on account of context limits."
+
+### Give the reason, not only the request
+
+Fable 5 performs better when it knows the intent behind a task — it connects the work to relevant context instead of inferring intent:
+
+> I'm working on [the larger task] for [who it's for]. They need [what the output enables]. With that in mind: [request].
+
+### Memory pays off
+
+Fable 5 is notably good at writing and using file-based memory. For recurring agents, provide a place for lessons and describe the hygiene:
+
+> Store one lesson per file with a one-line summary at the top. Record corrections and confirmed approaches alike, including why they mattered. Don't save what the repo or chat history already records; update an existing note rather than creating a duplicate; delete notes that turn out to be wrong.
+
+### Quiet between tool calls — narration flipped vs Opus 4.8
+
+*Field observation (maintainer, Jun 2026), consistent with the official guide's framing.* Fable 5 narrates noticeably less between steps than Opus 4.8 — it silently reads, edits, and moves on. The official guide treats between-call text as optional ("terse shorthand is fine between tool calls… brevity there is good") and recommends a send-to-user tool for long runs precisely because little surfaces by default.
+
+Two consequences for migrated prompts:
+
+- **Strip 4.8-era silence-defaults.** Snippets like "Default to silence between tool calls; do not narrate routine actions" were added to quiet Opus 4.8's narration. On Fable 5 they double-suppress an already-quiet model.
+- **If you want visibility in interactive sessions, ask for the shape, not a schedule:**
+
+> Before your first tool call, say in one sentence what you're about to do. While working, give a brief update when you find something load-bearing or change direction — one sentence each. Routine reads and edits don't need narration.
+
+For long asynchronous agents, narration is the wrong channel anyway — that's the send-to-user tool's job (harness concern, handoff).
+
+### Final-summary readability in agentic sessions
+
+In long tool-heavy sessions Fable 5 can carry working shorthand (arrow chains, invented labels, references to thinking the user never saw) into the user-facing summary. A communication addendum fixes it — key line: *"Terse shorthand is fine between tool calls; your final summary is for a reader who didn't see any of that. Drop the working shorthand, write complete sentences, open with the outcome."*
+
+### Effort and safety domains — surface out-of-band, don't embed
+
+- `effort` stays the primary lever (API/CLI parameter — never paste into the prompt body). Note for advice: `low` on Fable 5 often matches or beats `xhigh` on prior Opus — reflexive maximizing wastes latency and tokens.
+- Prompts in offensive-cybersecurity or biology/life-sciences territory can trigger safety classifiers even on benign work — no wording fix exists; the answer is fallback configuration (API concern, handoff to `claude-api`).
+
+---
+
 ## Claude Opus 4.7
 
 The most important shifts versus older Claude generations.
@@ -183,7 +269,7 @@ Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across
 
 When it's unclear, ask one short question:
 
-> "Под какую модель этот промпт — Opus 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
+> "Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
 
 If they don't know, the safest default is **universal** — write for the lowest-common-denominator behavior across 4.5+ models.
 
@@ -228,6 +314,7 @@ These work consistently across all models. Negative-only rules without alternati
 - Old "avoid AI slop" long frontend prompts → trim for 4.7 / 4.8 (4.8 needs even less).
 - "After every 3 tool calls, summarize" → Opus 4.7 already does this; still harmless on Sonnet 4.6 but adds noise.
 - "Be thorough, use X tool when in doubt" → now causes overtriggering on 4.5+. Soften to "Use X when it enhances your understanding".
+- "Show / explain your reasoning in the answer" → if Fable 5 may be in scope, strip: triggers the `reasoning_extraction` refusal classifier (see the Fable 5 section). Harmless-but-unnecessary on Opus/Sonnet/Haiku.
 
 **7. Don't name a specific model in the prompt unless you have to.**
 
@@ -257,6 +344,7 @@ Before calling a prompt "universal", verify:
 - [ ] No model name hardcoded unless required
 - [ ] Uses XML/headings for structure, not emphasis, to signal important parts
 - [ ] If thinking-related: phrased as "consider" / "verify" / "reason through" rather than "think harder"
+- [ ] No "echo / show / explain your reasoning" instructions (refusal trigger if Fable 5 is in scope)
 
 ---
 

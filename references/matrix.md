@@ -27,6 +27,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Literalism | Generalizes scope | Persona / "act as" | Few-shot for format | Few-shot for reasoning | Aggressive emphasis | Step-by-step prescription |
 |---|---|---|---|---|---|---|---|
+| **Fable 5** (Anthropic, Jun 9 2026 — tier above Opus) | very high — but a brief principle steers as well as an enumeration | improved — navigates ambiguity, determines next steps; still state boundaries for *actions* | OK if functional, 1 line | helps | helps if relevant | overtriggers — one short instruction replaces the list | tolerated; **over-prescriptive skills/scaffolding degrade output — trim** |
 | **Opus 4.8** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Opus 4.7** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Sonnet 4.6** | high | rarely | OK | helps | helps | overtriggers | tolerated |
@@ -62,6 +63,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 - *"+5% boost"* = Google reports identity-based prompting ("You are a planner") boosts reasoning on Gemini 3 by ~5%. **Opposite default to GPT-5.5** — flag in cross-vendor reviews.
 - *"distillation identity confusion"* (GLM) = the model occasionally responds "I am Claude, created by Anthropic" — a documented training artifact. Persona blocks that hard-pin identity may misfire; functional-role wording is safer.
 - *"DeepSeek user-prompt priority"* = DeepSeek's official guidance (echoed in V4 practitioner guides) puts **core instructions in the user message**, with a brief system prompt ("You are a senior architect" style). Opposite default to most other vendors; flag when porting Claude/GPT system prompts to V4.
+- *"over-prescriptive skills degrade output"* (Fable 5) = Anthropic's prompting guide is explicit: skills and prompts developed for prior models are often too prescriptive for Fable 5 and can degrade quality. Review and trim before adding; brief instructions outperform behavior-by-behavior enumeration.
 
 ---
 
@@ -69,6 +71,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Reasoning depth lever | Default tone | Output format preference | Verbosity control |
 |---|---|---|---|---|
+| **Fable 5** | `effort` — primary; adaptive thinking **always on, cannot be disabled**; `low` on Fable often ≥ `xhigh` on prior Opus | direct; un-steered it elaborates beyond the task at higher effort; **quiet between tool calls** — narrates less than Opus 4.8 (field obs. Jun 2026) | prose / XML as Opus; **never instruct to echo or transcribe its reasoning** — triggers `reasoning_extraction` refusal | calibrates; one short "lead with the outcome" instruction is enough; strip 4.8-era silence-defaults |
 | **Opus 4.8** | `effort` (low/medium/high/xhigh) — primary; **default `high` on all surfaces incl Claude Code** | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
 | **Opus 4.7** | `effort` (low/medium/high/xhigh) — primary | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
 | **Sonnet 4.6** | `effort` | direct, similar to Opus 4.8/4.7 | prose / XML | calibrates |
@@ -111,6 +114,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Tool guidance location | Subagent default | "Use proactively" needed? | MCP tool description critical? |
 |---|---|---|---|---|
+| **Fable 5** | system prompt OK | **spawns readily — flipped vs Opus 4.8/4.7**; dependable parallel dispatch, sustains long-running subagents | no — give *boundaries* on when delegation is appropriate instead of encouragement; prefer async orchestration + long-lived subagents | yes |
 | **Opus 4.8** | system prompt OK | spawns fewer — explicit ask needed | improved — triggers required tools reliably; favors reasoning, so raise effort / instruct for *more* tool use | yes |
 | **Opus 4.7** | system prompt OK | spawns fewer — explicit ask needed | yes — undertriggers | yes |
 | **Sonnet 4.6** | system prompt OK | spawns more by default | sometimes | yes |
@@ -143,6 +147,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model | Migration style | Patches from prev version |
 |---|---|---|
+| **Fable 5** | runs out-of-box on Opus 4.8 prompts; refusal/fallback handling is an API concern (handoff) | **audit prompts and skills for "show / explain your reasoning" lines** — they trigger `reasoning_extraction` refusals; trim over-prescriptive skill instructions (degrade output); add progress-grounding + action-boundary snippets for long runs; remove harness-visible remaining-context counters (model offers to wrap up) |
 | **Opus 4.8** | runs out-of-box on 4.7 prompts; `high` effort default | check effort-default latency/token cost; trim now-redundant "use the tool" nudges (under-triggering fixed); verbosity recalibrates |
 | **Opus 4.7** | forward-compatible from 4.6; tone shifts | trim "avoid AI slop" frontend blocks; trim "after every 3 tool calls summarize" |
 | **Sonnet 4.6** | forward-compatible | trim "be thorough / use X when in doubt" — overtriggers |
@@ -195,7 +200,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 ### Step 1 — Pick rows
 
 - Single-model prompt → 1 row
-- Universal-Claude → all 3 Claude rows; intersect (write for the strictest)
+- Universal-Claude → all current Claude rows (Fable 5, Opus 4.8/4.7, Sonnet 4.6, Haiku 4.5); intersect (write for the strictest)
 - Universal-GPT-5.x → all GPT-5.x rows; intersect
 - Cross-vendor → strictest cells across both vendors
 

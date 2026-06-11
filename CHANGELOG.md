@@ -2,6 +2,21 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.2.0] — 2026-06-11
+
+### Added
+
+- **Claude Fable 5** (`claude-fable-5`, released 2026-06-09) — new frontier tier above Opus; first public release of the Mythos line. Rows in matrix tables A–D, new `models/claude.md § Claude Fable 5` section, SKILL.md Step 2c routing + May–June updates block, README coverage. Sourced from Anthropic's official "Prompting Claude Fable 5" guide and "Introducing Claude Fable 5 and Claude Mythos 5".
+
+### Review-relevant behavioral deltas (vs Opus 4.8)
+
+- **`reasoning_extraction` refusal trigger** — "show / explain your reasoning in the answer" instructions in prompts and skills cause refusals with fallback to Opus 4.8. New highest-severity Fable-specific finding; added to universal-prompt checklist and scaffolding-to-strip list.
+- **Subagent default flips** — Fable 5 delegates readily and sustains parallel/long-running subagents (Opus 4.8/4.7 undertrigger). Wording shifts from encouragement to boundaries; async orchestration preferred.
+- **Over-prescriptive skills degrade output** — prior-model skills are often too prescriptive for Fable 5; burden of proof shifts toward trimming. Brief principle ≈ full enumeration (strong instruction following).
+- **Long-run snippets** added: progress-grounding (anti-fabricated-status), action boundaries (anti-unrequested-actions), overplanning guard, early-stopping reminder, context-budget reassurance, intent-framing ("give the reason, not only the request"), memory hygiene, final-summary readability.
+- Effort note (out-of-band, not embedded): `low` on Fable 5 often ≥ `xhigh` on prior Opus; adaptive thinking always on.
+- **Narration flips quiet** (field observation, Jun 2026) — Fable 5 narrates less between tool calls than Opus 4.8; strip 4.8-era silence-default snippets (double-suppression), request update *shape* if visibility needed in interactive sessions.
+
 ## [1.1.0] — 2026-05-31
 
 ### Added

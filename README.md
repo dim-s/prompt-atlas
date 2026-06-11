@@ -12,7 +12,7 @@ License: [CC-BY-SA 4.0](./LICENSE). Built on the methodology of [matrix-citation
 
 | Vendor | Models covered |
 |---|---|
-| **Anthropic Claude** | Opus 4.7 / Sonnet 4.6 / Haiku 4.5 + legacy 4.6 |
+| **Anthropic Claude** | **Fable 5** (Jun 2026, tier above Opus) / Opus 4.8 / 4.7 / Sonnet 4.6 / Haiku 4.5 + legacy 4.6 |
 | **OpenAI GPT-5.x** in Codex CLI | GPT-5.5 (+ Instant variant) / 5.4 / 5.3 / 5.3-codex / 5.2 / 5.1 |
 | **Google Gemini 3.x** in Gemini CLI | 3.1 Pro / 3 Flash / **3.5 Flash** (May 2026) / 3.1 Flash-Lite + 2.5 legacy |
 | **Moonshot Kimi** | K2.6 / K2.5 / K2 (retires 2026-05-25) |

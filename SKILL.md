@@ -212,7 +212,7 @@ Infer from signals; only ask if conflicting.
 
 #### Step 2c — Model version (frontier only)
 
-Claude options: **Opus 4.7** / **Sonnet 4.6** / **Haiku 4.5** / **Universal Claude** / older.
+Claude options: **Fable 5** (frontier tier above Opus, Jun 2026) / **Opus 4.8** / **Opus 4.7** / **Sonnet 4.6** / **Haiku 4.5** / **Universal Claude** / older.
 
 OpenAI options: **GPT-5.5** (frontier) / **GPT-5.4** / **GPT-5.3 / 5.3-codex** / **GPT-5.2** / **GPT-5.1** (legacy) / **Universal GPT-5.x**.
 
@@ -232,17 +232,18 @@ Mistral frontier options: **Mistral Large 3** (Dec 2025 flagship, ecosystem stil
 
 Meta options: **Muse Spark** (Apr 2026, closed-weight, limited docs) — treat as experimental coverage; most axes `?`.
 
-**Recent May 2026 updates worth flagging in reviews:**
+**Recent May–June 2026 updates worth flagging in reviews:**
+- **Claude Fable 5** (Jun 9) — new tier above Opus (first public Mythos-line model, $10/$50 per MTok). Three review-relevant deltas: (1) "show / explain your reasoning" instructions trigger the `reasoning_extraction` refusal classifier — audit skills when migrating; (2) subagent default **flips** vs Opus 4.8/4.7 — delegates readily, write boundaries not encouragement; (3) over-prescriptive skills from prior models can degrade output — trim. See `models/claude.md § Claude Fable 5`.
 - **Gemini 3.5 Flash** (May 19) — `thinking_budget` retired → `thinking_level` enum with **default dropped from `high` to `medium`**. Silent regression risk on naive migrations from `gemini-3-flash-preview`.
 - **GPT-5.5 Instant** (May 5) — new low-latency variant of GPT-5.5, same family rules apply.
 - **Grok 4.3 API rollout** (Apr 30 - May 4) — 8 legacy Grok models retire **May 15, 2026**; check pinned model strings.
-- **Kimi K2** (preceding K2.6) — retires **May 25, 2026** (today).
+- **Kimi K2** (preceding K2.6) — retired **May 25, 2026**.
 
 **Cross-vendor universal:** must behave well across two or three frontier vendors. The strictest case — opposite defaults across vendors must be reconciled. Read `models/_universal.md` § Cross-vendor (three-vendor) for Claude+GPT+Gemini; § Cross-vendor (4+) for anything broader.
 
 If you can't infer, ask one short question. **Render in the user's detected language** (see § Language below):
 
-> "Which model is this prompt for — Claude (Opus 4.7 / Sonnet 4.6 / Haiku 4.5), OpenAI GPT-5.x in Codex CLI (5.3 / 5.4 / 5.5), Google Gemini 3.x (Pro / Flash / Flash-Lite), Moonshot Kimi K2.6, Z.ai GLM-5.1 / 5 / 4.6, Alibaba Qwen3.7-Max / 3.6, DeepSeek V4-Pro / Flash, or cross-vendor?"
+> "Which model is this prompt for — Claude (Fable 5 / Opus 4.8 / 4.7 / Sonnet 4.6 / Haiku 4.5), OpenAI GPT-5.x in Codex CLI (5.3 / 5.4 / 5.5), Google Gemini 3.x (Pro / Flash / Flash-Lite), Moonshot Kimi K2.6, Z.ai GLM-5.1 / 5 / 4.6, Alibaba Qwen3.7-Max / 3.6, DeepSeek V4-Pro / Flash, or cross-vendor?"
 
 When the answer is one of Kimi / GLM / Qwen / DeepSeek, the workflow stays on **Path A (frontier)** but loads the vendor-specific model file (`models/kimi.md` / `models/glm.md` / `models/qwen-frontier.md` / `models/deepseek.md`) — see Step 3.
 

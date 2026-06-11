@@ -10,7 +10,7 @@ Multiple overlapping cases. Read the relevant section.
 
 | Case | Section |
 |---|---|
-| Prompt must work across multiple Claude versions (Opus 4.7 + Sonnet 4.6 + Haiku 4.5) | § Universal Claude |
+| Prompt must work across multiple Claude versions (Fable 5 + Opus 4.8 / 4.7 + Sonnet 4.6 + Haiku 4.5) | § Universal Claude |
 | Prompt must work across multiple GPT-5.x versions (5.3 + 5.4 + 5.5) | § Universal GPT-5.x |
 | Prompt must work across multiple Gemini 3.x variants (Pro + Flash + Flash-Lite) | § Universal Gemini |
 | Prompt must work across two or three frontier vendors (Claude + GPT-5.x + Gemini) | § Cross-vendor (three-vendor) |
@@ -30,7 +30,7 @@ Most production CLAUDE.md / AGENTS.md fall into one of these — pure single-mod
 
 If unclear, one short question:
 
-> *"Под какую модель этот промпт — Opus 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
+> *"Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
 
 Default to **universal** when in doubt — write for lowest-common-denominator behavior across 4.5+ models.
 
@@ -45,6 +45,7 @@ If Haiku 4.5 is in scope, be MORE specific — Haiku handles vague prompts worse
 - Don't assume Haiku will do deep multi-step reasoning — break complex tasks into concrete steps.
 - Don't assume Opus's literalism saves you from stating scope (Sonnet generalizes more freely).
 - Don't write tone instructions assuming one model's default — "be less formal" reads differently on Opus 4.7 vs Haiku.
+- Don't write subagent guidance assuming one direction — the default **diverges inside the family**: Fable 5 delegates readily, Opus 4.8/4.7 undertrigger. Universal wording states *when delegation is appropriate* ("delegate independent subtasks; work directly for single-file reads") — that reads as a boundary on Fable 5 and as encouragement on Opus.
 
 **3. Be moderate with emphasis.**
 
@@ -96,6 +97,7 @@ Baseline for the weakest model + an "additional guidance" section that cites str
 - [ ] No model name hardcoded
 - [ ] Structure (XML/headings) used to signal important parts, not emphasis
 - [ ] If thinking-related: phrased as "consider" / "verify" / "reason through" rather than "think harder"
+- [ ] No "echo / show / explain your reasoning" instructions — refusal trigger (`reasoning_extraction`) when Fable 5 is in scope; unnecessary on the rest
 
 ---
 
