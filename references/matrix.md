@@ -30,7 +30,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Fable 5** (Anthropic, Jun 9 2026 — tier above Opus) | very high — but a brief principle steers as well as an enumeration | improved — navigates ambiguity, determines next steps; still state boundaries for *actions* | OK if functional, 1 line | helps | helps if relevant | overtriggers — one short instruction replaces the list | tolerated; **over-prescriptive skills/scaffolding degrade output — trim** |
 | **Opus 4.8** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Opus 4.7** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
-| **Sonnet 4.6** | high | rarely | OK | helps | helps | overtriggers | tolerated |
+| **Sonnet 5** (Anthropic, Jun 2026 — current Sonnet) | **very high — moved to Opus-level literalism**, esp. at low effort | no — must state scope (unlike 4.6) | OK if functional, 1 line | helps | helps if relevant | overtriggers — reserve for safety | tolerated |
+| **Sonnet 4.6** (previous) | high | rarely | OK | helps | helps | overtriggers | tolerated |
 | **Haiku 4.5** | medium-high | rarely | OK | helps; needed when format strict | mixed | overtriggers | needed for complex tasks |
 | **Opus 4.6 (legacy)** | medium | yes — extrapolates | helps strongly | helps | helps | works as intended | tolerated |
 | **GPT-5.5** | high | partial | hurts — strip persona | hurts on reasoning | hurts | mostly inert noise | **treats as noise** — outcome-first |
@@ -43,7 +44,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Gemini 3.1 Flash-Lite** | high (concise wins for speed) | partial | helps (cheaper persona use) | helps when format strict | mixed | inert | CoT not needed |
 | **Gemini 2.5 Pro / Flash (legacy)** | medium | yes | helps strongly | helps | helps | works | encouraged (CoT scaffolding common) |
 | **Kimi K2.6** (Moonshot, Apr 2026) | medium-high | partial | **helps** — official docs encourage role assignment | helps (official guide explicit) | helps | inert noise | tolerated — official guide encourages explicit steps |
-| **GLM-5.1** (Z.ai, Apr 2026) | medium-high | partial | OK, but **distillation identity confusion** — model occasionally claims "I am Claude" | helps | helps | inert | tolerated; helps for long-horizon |
+| **GLM-5.2** (Z.ai, Jun 2026 — current) | medium-high | partial | OK if functional; **distillation identity confusion persists** — don't pin identity | helps | helps | inert | tolerated; outcome-first for long-horizon |
+| **GLM-5.1** (Z.ai, Apr 2026 — previous) | medium-high | partial | OK, but **distillation identity confusion** — model occasionally claims "I am Claude" | helps | helps | inert | tolerated; helps for long-horizon |
 | **GLM-5 / 4.6 (legacy)** | medium | yes | OK | helps | helps | inert | tolerated |
 | **Qwen3.7-Max** (Alibaba, May 2026) | **very high** — explicit > vague more than Claude/GPT | partial | OK (closed-weight reasoning model) | helps when format strict | helps | inert | tolerated; "self-verify" prompts boost completeness |
 | **Qwen3.6 Plus / Max-Preview (legacy)** | high | partial | OK | helps | helps | inert | tolerated |
@@ -64,6 +66,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 - *"distillation identity confusion"* (GLM) = the model occasionally responds "I am Claude, created by Anthropic" — a documented training artifact. Persona blocks that hard-pin identity may misfire; functional-role wording is safer.
 - *"DeepSeek user-prompt priority"* = DeepSeek's official guidance (echoed in V4 practitioner guides) puts **core instructions in the user message**, with a brief system prompt ("You are a senior architect" style). Opposite default to most other vendors; flag when porting Claude/GPT system prompts to V4.
 - *"over-prescriptive skills degrade output"* (Fable 5) = Anthropic's prompting guide is explicit: skills and prompts developed for prior models are often too prescriptive for Fable 5 and can degrade quality. Review and trim before adding; brief instructions outperform behavior-by-behavior enumeration.
+- *"Sonnet 5 moved to Opus-level literalism"* = the biggest behavioral shift in the Claude family this cycle. Prompts written assuming Sonnet 4.6's looser generalization ("it'll figure out the scope") now under-apply on Sonnet 5 — state scope explicitly, same as Opus 4.7/4.8. Sonnet 5 also **rejects sampling-parameter tuning** (see Table B temperature gotcha).
 
 ---
 
@@ -74,7 +77,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Fable 5** | `effort` — primary; adaptive thinking **always on, cannot be disabled**; `low` on Fable often ≥ `xhigh` on prior Opus | direct; un-steered it elaborates beyond the task at higher effort; **quiet between tool calls** — narrates less than Opus 4.8 (field obs. Jun 2026) | prose / XML as Opus; **never instruct to echo or transcribe its reasoning** — triggers `reasoning_extraction` refusal | calibrates; one short "lead with the outcome" instruction is enough; strip 4.8-era silence-defaults |
 | **Opus 4.8** | `effort` (low/medium/high/xhigh) — primary; **default `high` on all surfaces incl Claude Code** | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
 | **Opus 4.7** | `effort` (low/medium/high/xhigh) — primary | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
-| **Sonnet 4.6** | `effort` | direct, similar to Opus 4.8/4.7 | prose / XML | calibrates |
+| **Sonnet 5** | `effort` (low/medium/high/xhigh/max) — default `high`; **adaptive thinking ON by default** (change from 4.6); manual `budget_tokens` removed (400) | direct; prose style may shift from 4.6 — re-eval voice prompts | prose / XML; structured outputs (prefill unsupported) | calibrates to task (like Opus 4.7) |
+| **Sonnet 4.6** (previous) | `effort`; thinking off by default | direct, similar to Opus 4.8/4.7 | prose / XML | calibrates |
 | **Haiku 4.5** | `effort` (limited range) | direct, terse | prose; explicit format needed | terse default |
 | **GPT-5.5** | `reasoning_effort` (none/low/medium/high/xhigh) — primary | efficient, task-oriented, no padding | **`json_schema` strongly preferred** | `text.verbosity` parameter |
 | **GPT-5.4** | `reasoning_effort` (default `none`) | direct | `json_schema` preferred | `text.verbosity` |
@@ -85,7 +89,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Gemini 3 Flash** | `thinking_level` (often `low` for latency + "think silently" in system instruction) | direct | `json_schema` preferred | implicit |
 | **Gemini 3.1 Flash-Lite** | `thinking_level: low` typical (speed-optimized) | direct, terse | `json_schema` preferred | implicit |
 | **Kimi K2.6** | `extra_body={'thinking':{'type':'enabled'\|'disabled'}}` — two-mode toggle, **thinking is default** | warm, helpful, conversational by default | `json_object` / JSON Mode; XML/triple-quote delimiters helpful | implicit; specify length explicitly when needed |
-| **GLM-5.1** | thinking **enabled by default at the /chat/completions endpoint** — model decides whether to engage chain-of-thought | direct | `json_schema` (recommended) / `json_object` (legacy) | implicit |
+| **GLM-5.2** | **explicit `reasoning_effort` (`high`/`max`)** + `thinking` toggle (default enabled) — reasoning is now a runtime knob; `<reasoning_content>` re-injection demoted to fallback | direct | `json_schema` (recommended) / `json_object` (legacy) | implicit |
+| **GLM-5.1** (previous) | thinking **enabled by default at the /chat/completions endpoint** — model decides whether to engage chain-of-thought | direct | `json_schema` (recommended) / `json_object` (legacy) | implicit |
 | **GLM-5 / 4.6 (legacy)** | thinking on by default | direct | `json_schema` / `json_object` | implicit |
 | **Qwen3.7-Max** | thinking-mode toggle — required-on for best results, **adds 45-60s latency** | direct, **higher abstention** ("I don't know" more often than competitors) | `json_object` / structured prompt | implicit |
 | **DeepSeek V4-Pro / Flash** | `thinking: "off" \| "high" \| "max"` — three-level lever; **tool calls work in thinking mode** (unlike R1) | direct, slightly more literal than Claude | `json_object` + **must still demand JSON in prose** even with `response_format` set | implicit |
@@ -96,17 +101,17 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Mistral Large 3** | reasoning variants exposed separately (instruct vs reasoning models in the family) | direct | `json_object` standard | implicit |
 | **Meta Muse Spark** | ? — limited public docs | ? | ? | ? |
 
-**Cross-vendor rule for reasoning depth:** never write "think harder" or "think step by step" in the body. The lever is the API parameter on all current vendors (Claude `effort`, OpenAI `reasoning_effort`, Gemini `thinking_level`, Kimi `extra_body.thinking`, GLM endpoint-default, Qwen mode-toggle, DeepSeek `thinking`). Wording substitutes: "Verify against criteria...", "List edge cases first...".
+**Cross-vendor rule for reasoning depth:** never write "think harder" or "think step by step" in the body. The lever is the API parameter on all current vendors (Claude `effort`, OpenAI `reasoning_effort`, Gemini `thinking_level`, Kimi `extra_body.thinking`, GLM-5.2 `reasoning_effort` / earlier GLM endpoint-default, Qwen mode-toggle, DeepSeek `thinking`). Wording substitutes: "Verify against criteria...", "List edge cases first...".
 
 **Gemini-specific gotcha:** `thinking_level` and legacy `thinking_budget` cannot coexist in one request — returns 400 error. When migrating from 2.5 prompts, audit code for both.
 
-**Temperature gotcha (Gemini-only):** Google **strongly recommends keeping temperature at 1.0**. Lowering causes looping / degraded reasoning. **This is opposite to Claude / GPT-5.x where temperature is freely tunable.** Cross-vendor wording: don't reference temperature in the prompt body; let API config handle it per vendor.
+**Temperature gotcha (Gemini + newest Claude):** Google **strongly recommends keeping temperature at 1.0** on Gemini (lowering causes looping / degraded reasoning). As of mid-2026 the newest Claude models go further — `temperature`, `top_p`, `top_k` at a **non-default value return a 400 error on Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** (Sonnet 4.6 / Haiku 4.5 still tune freely). **GPT-5.x remains freely tunable.** Cross-vendor wording: don't reference temperature in the prompt body; steer tone/variety through the system prompt and let API config handle sampling per vendor. For design variety on the sampling-locked Claude models, use "propose N directions, then implement the chosen one" instead of temperature.
 
 **Kimi-specific temperature split:** Moonshot's model card recommends `temperature=1.0, top_p=1.0` for Thinking mode and `temperature=0.6, top_p=0.95` for Instant mode. Don't hardcode a single temperature into a Kimi-targeted prompt.
 
 **DeepSeek-specific multi-turn gotcha:** the `reasoning_content` field returned by V4 **must be round-tripped** on subsequent turns or the API returns 400. V3.2 / R1 **rejected** the same field — a hard breaking change on the migration path. Wording in cross-version DeepSeek prompts should not assume either behavior; let the client library handle it.
 
-**GLM-specific system-prompt gotcha:** Z.ai's GLM models have thinking enabled by default but **heavy system prompts (especially Claude Code's) suppress the reasoning judgment**, and the model rarely engages chain-of-thought under that load. Cross-tool routers (Claude Code Router, OpenCode) work around this by injecting custom `<reasoning_content>` markers and explicitly instructing the model to "write detailed reasoning before answering" — not by removing the host system prompt. Treat heavy persistent-context files as actively hostile to GLM thinking unless mitigations are present.
+**GLM-specific system-prompt gotcha:** Z.ai's GLM models have thinking enabled by default but **heavy system prompts (especially Claude Code's) suppress the reasoning judgment**, and the model rarely engages chain-of-thought under that load. **On GLM-5.2 the first mitigation is the new `reasoning_effort` param (`high`/`max`)** — set it out-of-band. Where a router doesn't forward it (or on GLM-5.1 and earlier), cross-tool routers work around this by injecting custom `<reasoning_content>` markers and instructing the model to "write detailed reasoning before answering" — not by removing the host system prompt. Treat heavy persistent-context files as actively hostile to GLM thinking unless mitigations are present.
 
 ---
 
@@ -117,7 +122,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Fable 5** | system prompt OK | **spawns readily — flipped vs Opus 4.8/4.7**; dependable parallel dispatch, sustains long-running subagents | no — give *boundaries* on when delegation is appropriate instead of encouragement; prefer async orchestration + long-lived subagents | yes |
 | **Opus 4.8** | system prompt OK | spawns fewer — explicit ask needed | improved — triggers required tools reliably; favors reasoning, so raise effort / instruct for *more* tool use | yes |
 | **Opus 4.7** | system prompt OK | spawns fewer — explicit ask needed | yes — undertriggers | yes |
-| **Sonnet 4.6** | system prompt OK | spawns more by default | sometimes | yes |
+| **Sonnet 5** | system prompt OK | **more agentic than 4.6** — reaches for tools + runs self-verification loops readily; **no subagent-spawn flip documented** (unlike Fable 5) — treat conservatively | with thinking OFF it under-reaches for tools — add explicit nudge; effort (`high`/`xhigh`) is a tool-usage lever | yes |
+| **Sonnet 4.6** (previous) | system prompt OK | spawns more by default | sometimes | yes |
 | **Haiku 4.5** | system prompt OK | conservative — name tool explicitly | yes | yes |
 | **GPT-5.5** | **inside tool description** (strong split) | spawns what's defined | yes | yes |
 | **GPT-5.4** | tool description preferred | mid | yes | yes |
@@ -128,7 +134,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Gemini 3 Flash** | system instruction OK | mid | yes | yes |
 | **Gemini 3.1 Flash-Lite** | terse — push tool guidance into tool descriptions | bounded scope works best | yes | yes |
 | **Kimi K2.6** | system prompt OK; tool descriptions also work | **Agent Swarms** (300 parallel sub-agents, 4000 steps) — explicit ask needed for swarm decomposition | yes — undertriggers swarms without explicit framing | yes |
-| **GLM-5.1** | system prompt + tool description; **but heavy host system prompts suppress thinking** | spawns what's defined; **8-hour autonomous runs** observed in long-horizon tasks (6,000+ tool calls) | yes | yes |
+| **GLM-5.2** | system prompt + tool description; heavy host still suppresses thinking — mitigate with `reasoning_effort` | spawns what's defined; long-horizon autonomous, **1M lossless context**, **tops open-weight MCP-Atlas tool-use (77.0)** | yes | yes |
+| **GLM-5.1** (previous) | system prompt + tool description; **but heavy host system prompts suppress thinking** | spawns what's defined; **8-hour autonomous runs** observed in long-horizon tasks (6,000+ tool calls) | yes | yes |
 | **GLM-5 / 4.6** | mixed | mid | yes | yes |
 | **Qwen3.7-Max** | system instruction + tool description (OpenAI + Anthropic API compat both supported) | **35-hour autonomous claim** (vendor-reported, unverified externally); 1,000+ tool calls per run | yes | yes |
 | **DeepSeek V4-Pro / Flash** | tool description preferred; **keep system prompt brief** (system overuse → 85% error rate per V4 guides) | spawns what's defined; tool calls work in thinking mode | yes | yes |
@@ -150,7 +157,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Fable 5** | runs out-of-box on Opus 4.8 prompts; refusal/fallback handling is an API concern (handoff) | **audit prompts and skills for "show / explain your reasoning" lines** — they trigger `reasoning_extraction` refusals; trim over-prescriptive skill instructions (degrade output); add progress-grounding + action-boundary snippets for long runs; remove harness-visible remaining-context counters (model offers to wrap up) |
 | **Opus 4.8** | runs out-of-box on 4.7 prompts; `high` effort default | check effort-default latency/token cost; trim now-redundant "use the tool" nudges (under-triggering fixed); verbosity recalibrates |
 | **Opus 4.7** | forward-compatible from 4.6; tone shifts | trim "avoid AI slop" frontend blocks; trim "after every 3 tool calls summarize" |
-| **Sonnet 4.6** | forward-compatible | trim "be thorough / use X when in doubt" — overtriggers |
+| **Sonnet 5** | **drop-in from Sonnet 4.6** — runs out-of-box on 4.6 prompts | 3 API changes: adaptive thinking ON by default (revisit `max_tokens`); sampling params `temp`/`top_p`/`top_k` → 400 (remove); manual extended thinking → 400. New tokenizer = **~30% more tokens** (recount, revisit `max_tokens`). State scope for new Opus-level literalism; trim "after every 3 tool calls" scaffolding; add coverage language to code-review harnesses |
+| **Sonnet 4.6** (previous) | forward-compatible | trim "be thorough / use X when in doubt" — overtriggers |
 | **Haiku 4.5** | forward-compatible | mostly unchanged from 4.0/4.5 era |
 | **GPT-5.5** | **fresh baseline required** (OpenAI explicit) | strip 5.4-era process-step prescription; strip "think step by step"; move format to `json_schema`; cut few-shot for reasoning |
 | **GPT-5.4** | minor patches from 5.3 | introduce `phase` field for Responses API agents |
@@ -162,7 +170,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Gemini 3.1 Flash-Lite** | new (March 2026) | fresh — no legacy patches usually |
 | **Gemini 2.5 Pro / Flash → 3.x** | **CoT-stripping rewrite** | remove "think step by step" / chain-of-thought scaffolding; rely on `thinking_level: high`; review temperature uses; persona blocks become more load-bearing (will be obeyed strongly) |
 | **Kimi K2.6** | forward-compatible from K2.5; **K2 retires May 25, 2026** | trim "pure text" assumptions (K2.6 is multimodal); switch text-only image handling code; review thinking-toggle code (preserve_thinking semantics added) |
-| **GLM-5.1** | minor patches from GLM-5 | mostly unchanged from 5.0; review SWE-bench-tuned prompts |
+| **GLM-5.2** | forward-compatible from GLM-5.1 | move reasoning control from `<reasoning_content>` prose to the `reasoning_effort` param where the router forwards it; trim thinking-suppression scaffolding; re-validate long-context prompts (**1M lossless** — patterns split for 5.1's window may now fit one pass) |
+| **GLM-5.1** (previous) | minor patches from GLM-5 | mostly unchanged from 5.0; review SWE-bench-tuned prompts |
 | **GLM-5 / 4.6** | from GLM-4.6 → GLM-5: re-evaluate against system-engineering benchmarks | rewrite for system-engineering focus over pure coding; review tool-calling assumptions |
 | **Qwen3.7-Max** | from Qwen3.6 / 3-Max-Thinking | budget for higher abstention ("I don't know" jumps); trim factual-recall-dependent prompts; expect 1M context but validate against your task |
 | **DeepSeek V4-Pro / Flash** | **API breaking from V3.2** on `reasoning_content` (V4 requires round-trip, V3 rejects) | rebuild multi-turn flows to round-trip `reasoning_content`; audit prefix cache hashing; move complex instructions from system → user prompt |
@@ -185,13 +194,13 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | **Cursor** | ? (TBD when added) | ? | `.cursorrules` single file |
 | **Aider** | ? | ? | `CONVENTIONS.md` |
 | **Kimi Code (Moonshot)** | ? — undocumented cap | likely rot, untested at scale | follows Claude Code conventions for routed mode; native mode TBD |
-| **Z.ai API + cross-tool routers (GLM)** | none on API; **router-mediated system-prompt size is the binding constraint** | thinking suppression past large prompts (documented) | use slim project-level `AGENTS.md` (<4 KiB) — heavy persistent context measurably suppresses GLM thinking |
+| **Z.ai API + cross-tool routers (GLM)** | none on API; GLM-5.2 holds **1M lossless** context, but router-mediated system-prompt size is still the binding constraint | thinking suppression past large prompts (documented; not fixed on 5.2) | use slim project-level `AGENTS.md` (<4 KiB) — heavy persistent context measurably suppresses GLM thinking regardless of the big context window; on 5.2 set `reasoning_effort` to re-open thinking |
 | **DashScope (Qwen)** | ? — OpenAI-compat surface | 1M nominal but no independent long-context verification | works inside any tool that talks OpenAI API; Anthropic-compat surface also supported |
 | **DeepSeek API** | ? on the chat endpoint; **`reasoning_content` round-trip mandatory** | DSA reasoning quality degrades past ~500K of 1M context | XML-tagged context structure recommended (92% vs 45% unstructured per V4 guides) |
 
 **Cross-vendor rule:** target combined hierarchy size **under 8 KiB** for the file's load-bearing rules. Reserves 24 KiB for growth before Codex's hard cap surprises you. Gemini CLI accepts `AGENTS.md` natively when `settings.json` is configured — making `AGENTS.md` viable as a true cross-tool standard across Claude Code (via `@import`), Codex CLI (native), and Gemini CLI (native via config).
 
-**GLM-specific cap:** even though Z.ai's API has no documented size cap, GLM's reasoning judgment is measurably suppressed by heavy host system prompts (Claude Code, OpenCode, Cline). For GLM-routed setups, keep `AGENTS.md` under ~4 KiB and prefer in-message `<reasoning_content>` cues over relying on the endpoint's default thinking mode.
+**GLM-specific cap:** even though Z.ai's API has no documented size cap, GLM's reasoning judgment is measurably suppressed by heavy host system prompts (Claude Code, OpenCode, Cline) — and GLM-5.2's 1M lossless window does **not** fix this (it's a reasoning-gate effect, not a context-length one). For GLM-routed setups, keep `AGENTS.md` under ~4 KiB. On GLM-5.2, re-open thinking with the `reasoning_effort` param; on 5.1 and earlier, prefer in-message `<reasoning_content>` cues over relying on the endpoint's default thinking mode.
 
 ---
 
@@ -200,7 +209,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 ### Step 1 — Pick rows
 
 - Single-model prompt → 1 row
-- Universal-Claude → all current Claude rows (Fable 5, Opus 4.8/4.7, Sonnet 4.6, Haiku 4.5); intersect (write for the strictest)
+- Universal-Claude → all current Claude rows (Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, Haiku 4.5); intersect (write for the strictest)
 - Universal-GPT-5.x → all GPT-5.x rows; intersect
 - Cross-vendor → strictest cells across both vendors
 

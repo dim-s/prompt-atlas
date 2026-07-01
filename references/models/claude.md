@@ -190,9 +190,92 @@ NEVER use generic AI-generated aesthetics like overused font families (Inter, Ro
 
 ---
 
+## Claude Sonnet 5
+
+Current Sonnet-tier frontier (June 2026; `claude-sonnet-5`). A **drop-in upgrade for Sonnet 4.6** — Anthropic's guide is explicit it "performs well out of the box on existing Claude Sonnet 4.6 prompts." What actually changes for wording is a shift toward Opus-family literalism plus three API-level changes. 1M context (default and max, no smaller variant), 128k max output, priced the same as 4.6 ($3/$15; intro $2/$10 through Aug 31 2026). Sources: "Prompting Claude Sonnet 5" + "What's new in Claude Sonnet 5" (official).
+
+### The behavioral headline: Sonnet 5 moved toward Opus literalism
+
+The old mental model — "Sonnet 4.6 is less literal than Opus, generalizes a bit more" — no longer describes Sonnet 5. It "interprets prompts literally and explicitly, particularly at lower effort levels. It does not silently generalize an instruction from one item to another, and it does not infer requests you didn't make." Same wording fix as Opus 4.7/4.8: state scope explicitly.
+
+| Weak | Strong |
+|---|---|
+| "Format the section." | "Apply this formatting to every section, not just the first one." |
+
+The upside is precision — it performs better for API use cases with carefully tuned prompts, structured extraction, and predictable pipelines.
+
+### Adaptive thinking on by default (change from 4.6)
+
+On Sonnet 4.6, a request with no `thinking` field ran WITHOUT thinking. On Sonnet 5 the same request runs WITH adaptive thinking (turn off via `thinking: {type: "disabled"}` — an API concern). Manual extended thinking (`budget_tokens`) is removed and returns 400, same as Opus 4.8/4.7.
+
+Wording implication: adaptive-thinking triggering is **steerable from the prompt**. If the model emits thinking blocks more often than you want — common under large or complex system prompts — add:
+
+> Thinking adds latency and should only be used when it will meaningfully improve answer quality, typically for problems that require multi-step reasoning. When in doubt, respond directly.
+
+### Effort: default `high`, respects levels strictly
+
+Effort defaults to `high` (same as 4.6); raise to `xhigh` for the hardest coding/agentic tasks. Sonnet 5 "respects effort levels strictly, especially at the low end" — at `low`/`medium` it scopes work to exactly what was asked. If reasoning is shallow on a complex problem, **raise effort rather than prompting around it**. If you must hold effort at `low` for latency, add targeted guidance:
+
+> This task involves multi-step reasoning. Think carefully through the problem before responding.
+
+Rough cross-model mapping (migration, not wording): Sonnet 5 @ medium ≈ Sonnet 4.6 @ high; Sonnet 5 @ high ≈ Sonnet 4.6 @ max. Benchmark by observed thinking length, not effort name.
+
+### More agentic — reaches for tools and self-verifies more readily
+
+Sonnet 5 is "more agentic than Claude Sonnet 4.6 by default and will reach for tools and run self-verification loops more readily." Two wording consequences:
+
+- **With thinking disabled** it's *less* likely to reach for tools — if you rely on tool calls with thinking off, add an explicit nudge in the system prompt.
+- Effort is a tool-usage lever: `high`/`xhigh` show substantially more tool use in agentic search and coding.
+
+Note: the guide documents readier tool use and self-verification; it does **not** document a subagent-spawning default flip like Fable 5's. Don't assume aggressive subagent delegation — matrix Table C marks Sonnet 5's subagent default conservatively.
+
+### Verbosity calibrates to task
+
+Like Opus 4.7, Sonnet 5 "calibrates response length to the complexity of the task rather than defaulting to a fixed verbosity" — shorter on simple lookups, longer on open-ended analysis. Same verbosity-down snippet, and positive examples beat negative lists:
+
+> Provide concise, focused responses. Skip non-essential context, and keep examples minimal.
+
+### Progress updates: strip the scaffolding
+
+Sonnet 5 "provides regular, higher-quality updates to the user throughout long agentic traces." If you added "After every 3 tool calls, summarize progress" scaffolding, remove it. If the calibration is off for your use case, describe the update *shape* you want plus examples — same pattern as Opus 4.7.
+
+### Sampling parameters removed — `temperature` / `top_p` / `top_k` → 400
+
+**The biggest cross-vendor delta.** Setting `temperature`, `top_p`, or `top_k` to a non-default value returns a 400 error on Sonnet 5. The guide: *"This constraint is new for Sonnet-class models; the same constraint was previously introduced on Claude Opus 4.7."* The Claude models that now reject sampling tuning are **Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** — Sonnet 4.6 and Haiku 4.5 still accept it. Use system-prompt instructions for tone/variety instead of temperature. This moves the newest Claude models into the same camp as Gemini 3 (temperature fixed at 1.0) — see the cross-model note below.
+
+### Design/frontend: propose-directions is now the variety lever
+
+Sonnet 5 "may settle into a consistent default visual style" on open-ended frontend/design briefs. Generic negatives ("don't use that color") just shift it to another fixed palette. Because temperature is no longer accepted, **proposing options before building is the recommended way to get meaningfully different directions across runs**:
+
+> Before building, propose 4 distinct visual directions tailored to this brief (each as: bg hex / accent hex / typeface, plus a one-line rationale). Ask the user to pick one, then implement only that direction.
+
+The same `<frontend_aesthetics>` anti-slop block (see Opus 4.7 section) applies verbatim.
+
+### Code review harnesses: coverage language (same as Opus 4.7)
+
+A harness tuned for an older model may show lower recall on Sonnet 5 — a harness effect, not a capability regression. "only report high-severity issues" / "be conservative" is now followed more faithfully: the model investigates just as deeply but converts fewer investigations into reported findings (precision rises, recall can fall). Same coverage snippet as Opus 4.7:
+
+> Report every issue you find, including ones you are uncertain about or consider low-severity. Do not filter for importance or confidence at this stage - a separate verification step will do that. Your goal here is coverage: it is better to surface a finding that later gets filtered out than to silently drop a real bug. For each finding, include your confidence level and an estimated severity so a downstream filter can rank them.
+
+### New tokenizer — a token-budget concern, not a wording one
+
+Sonnet 5 uses a new tokenizer: the same text produces **~30% more tokens** than 4.6. Not an API change (shapes unchanged), but `max_tokens` limits tuned for 4.6 may truncate equivalent output, token counts rise, and per-request cost shifts even though per-token price is unchanged. Surface as a migration note. At `high`/`xhigh`/`max`, leave `max_tokens` headroom for thinking + tool calls, or you get a response that's almost all thinking then a truncated answer with `stop_reason: "max_tokens"`.
+
+### Tone/style may shift
+
+Prose style on long-form writing may drift from 4.6; re-evaluate voice prompts against the new baseline. Warm-voice snippet:
+
+> Use a warm, collaborative tone. Acknowledge the user's framing before answering.
+
+### First Sonnet with real-time cybersecurity safeguards
+
+Benign-but-adjacent security prompts may hit a refusal, returned as HTTP 200 with `stop_reason: "refusal"` (not an error). No wording fix — fallback handling is an API concern (handoff to `claude-api`).
+
+---
+
 ## Claude Sonnet 4.6
 
-The default workhorse model. Most of the 4.6-generation behaviors apply — see below. Tone, literalism, and subagent-spawning defaults are between Opus 4.7 and older Sonnet 4.5.
+The **previous** Sonnet — the current Sonnet frontier is Sonnet 5 (above). Still covered because it's widely deployed and, unlike Sonnet 5, accepts sampling-parameter tuning. Tone, literalism, and subagent-spawning defaults sit between Opus 4.7 and older Sonnet 4.5.
 
 ### It explores a lot by default
 
@@ -224,9 +307,9 @@ Most advice from the Opus 4.8 section applies to Sonnet 4.6 too. The main differ
 - Sonnet 4.6 is a bit less literal than Opus 4.8/4.7 — it still generalizes a little more. Explicit scope is still helpful but less critical.
 - Tone is similar to Opus 4.8/4.7 (direct, less validation-forward).
 
-### When to use Sonnet 4.6 vs Opus 4.8
+### When to use Sonnet 5 vs Sonnet 4.6 vs Opus 4.8
 
-(This is a model-choice question that affects wording only indirectly.) Opus 4.8 wins for multi-hour autonomous work, deep research, large-scale migrations. Sonnet 4.6 wins for interactive sessions, high-volume repetitive work, and anything where speed matters.
+(A model-choice question that affects wording only indirectly.) **Sonnet 5** is a same-price capability upgrade over 4.6 and the default choice for new Sonnet work — it's an option for workloads needing more than 4.6 without moving to Opus-class. Keep **Sonnet 4.6** only where you specifically need sampling-parameter tuning (Sonnet 5 rejects it) or haven't re-tuned `max_tokens` for the new tokenizer yet. **Opus 4.8** still wins for multi-hour autonomous work, deep research, and large-scale migrations. Between Sonnet 5 and 4.6, Sonnet 5 wins for interactive sessions, high-volume repetitive work, and anything speed-sensitive.
 
 ---
 
@@ -263,13 +346,13 @@ Haiku is the right default when the subagent's job is bounded and read-only: sea
 
 ## Universal / multi-model prompts
 
-Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Opus 4.8 or 4.7, Sonnet 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
+Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Fable 5, Opus 4.8 or 4.7, Sonnet 5 or 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
 
 ### How to ask the user about model target
 
 When it's unclear, ask one short question:
 
-> "Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
+> "Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
 
 If they don't know, the safest default is **universal** — write for the lowest-common-denominator behavior across 4.5+ models.
 
@@ -338,19 +421,28 @@ Before calling a prompt "universal", verify:
 
 - [ ] No hard dependency on model-specific features (adaptive thinking, high-res vision, `xhigh` effort, etc.)
 - [ ] Specificity high enough for Haiku 4.5 to follow
-- [ ] Explicit scope stated for Opus 4.8/4.7's literalism
+- [ ] Explicit scope stated for Opus 4.8/4.7 and Sonnet 5 literalism (Sonnet 5 is now Opus-literal, not 4.6-loose)
 - [ ] Overengineering/over-exploration guards for Sonnet 4.6
 - [ ] Emphasis used sparingly (no "CRITICAL:" stack)
 - [ ] No model name hardcoded unless required
 - [ ] Uses XML/headings for structure, not emphasis, to signal important parts
 - [ ] If thinking-related: phrased as "consider" / "verify" / "reason through" rather than "think harder"
 - [ ] No "echo / show / explain your reasoning" instructions (refusal trigger if Fable 5 is in scope)
+- [ ] No `temperature` / `top_p` / `top_k` tuning assumed if Opus 4.7+/4.8, Fable 5, or Sonnet 5 is in scope (non-default returns 400) — steer tone/variety with wording instead
 
 ---
 
 ## Cross-model wording principles
 
 These apply regardless of which model you're targeting:
+
+### Sampling parameters are now fixed on the newest Claude models
+
+`temperature`, `top_p`, and `top_k` at non-default values return a 400 error on **Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** (the constraint began on Opus 4.7 and reached Sonnet-class with Sonnet 5). Sonnet 4.6 and Haiku 4.5 still accept them. Practical consequences for wording:
+
+- Don't design a prompt that relies on lowering temperature for determinism or raising it for variety on these models — the lever is gone. Steer tone and variety through the system prompt instead.
+- For design/creative variety across runs, the "propose N options, then implement the chosen one" pattern replaces temperature (see the Sonnet 5 and Opus 4.7 design sections).
+- This aligns the newest Claude models with Gemini 3 (temperature fixed at 1.0). In cross-vendor `AGENTS.md`, "don't reference temperature in the body" is now the safe rule for Claude *and* Gemini — only Sonnet 4.6 / Haiku 4.5 / GPT-5.x still tune it.
 
 ### Dial back aggressive language on all 4.5+ models
 

@@ -1,6 +1,6 @@
 # Model-specific wording differences — Z.ai GLM family
 
-What changes about how you should PHRASE prompts for GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
+What changes about how you should PHRASE prompts for GLM-5.2, GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
 
 GLM lives in a different agentic ecosystem than Claude / GPT / Gemini: it's most commonly accessed **through cross-tool routers** (Claude Code Router, OpenCode, Cline, Kilo Code, Cursor, OpenClaw) rather than a vendor-native CLI. That fact dominates how prompts must be shaped — see § *The Claude-Code-router pattern* below.
 
@@ -29,6 +29,8 @@ Notes on the markers:
 - The custom markers also keep the reasoning visible in the conversation flow rather than being filtered into a separate field
 
 If you're writing a prompt targeting GLM specifically **without** a host system prompt (direct API usage), you can rely on the endpoint default — but flag the assumption so future readers know why the prompt has no explicit reasoning instruction.
+
+**GLM-5.2 update (June 2026):** GLM-5.2 exposes an explicit `reasoning_effort` parameter (`"high"` / `"max"`) alongside the `thinking` toggle — reasoning depth is now a runtime knob like every other frontier vendor. This demotes the `<reasoning_content>` prose re-injection to a **fallback** for routers that don't forward `reasoning_effort` to Z.ai's endpoint. Where the parameter reaches the endpoint, set `reasoning_effort` instead of injecting prose markers. The heavy-host-prompt suppression concern above is not documented as fixed, so keep re-injection in your toolkit — but reach for the parameter first. See § *GLM-5.2*.
 
 ### 2. Outcome-first, but explicit step naming tolerated
 
@@ -86,7 +88,53 @@ Z.ai is the rebranded name as of late 2025 / early 2026. The same company, same 
 
 ---
 
-## GLM-5.1 (Z.ai, April 7, 2026 — current frontier)
+## GLM-5.2 (Z.ai, June 16, 2026 — current frontier)
+
+### Headline facts
+
+- **Architecture:** ~753 B-parameter MoE (~40 B active), MIT license, open weights on Hugging Face. Adds an upgraded **Multi-Token Prediction (MTP)** layer for speculative decoding (~20% longer accepted token length at inference — a latency/throughput fact, not a prompting one).
+- **Context:** **1M-token, "solid lossless" long context.** Z.ai claims more stable ultra-long-context performance than 5.1, "even surpassing Opus in select real-world benchmarks," after months of specialized training for long-horizon Coding Agent scenarios.
+- **Benchmarks:** Terminal-Bench 2.1 **81.0** (was 62.0 on 5.1), SWE-bench Pro **62.1** (was 58.4; beats GPT-5.5's 58.6), MCP-Atlas tool-use **77.0** (> GPT-5.5's 75.3); FrontierSWE trailing Opus 4.8 by ~1%. Strongest open-weight model at release.
+- **Positioning vs 5.1:** "stronger project-level context capacity, more stable long-horizon task execution, more reliable adherence to production-grade engineering standards."
+- **Pricing:** ~$4.40 / M output tokens (third-party listings; the official prompting guide doesn't state it).
+
+### The big wording change: explicit `reasoning_effort` replaces the endpoint-only lever
+
+This is the delta that matters most for prompt-atlas. On GLM-5.1 the only practical reasoning lever under a heavy host prompt was **prose re-injection** (custom `<reasoning_content>` markers — family rule #1). GLM-5.2 exposes reasoning depth as an explicit runtime parameter, like every other frontier vendor:
+
+- `"thinking": {"type": "enabled"}` — enabled by default; disable with `{"type": "disabled"}`.
+- `"reasoning_effort": "high" | "max"` — the selectable Thinking Mode toggle.
+
+Implications:
+
+- The reasoning knob is now **out-of-band, not prose** — same rule as all other vendors. Don't write "think step by step"; set `reasoning_effort`.
+- The `<reasoning_content>` re-injection workaround **drops to a fallback** — reserve it for router setups that don't forward `reasoning_effort` to Z.ai's endpoint.
+- Heavy-host-prompt thinking-suppression (family rule #1) is not documented as fixed; treat `reasoning_effort` as the primary mitigation now, re-injection as the fallback.
+
+### Official prompting patterns (from Z.ai's GLM-5.2 guide)
+
+Z.ai documents recommended prompt shapes for coding workflows — all outcome-first and long-horizon:
+
+- **Codebase audit:** *"Please read the current project and output a system architecture map, core module responsibilities, key API contracts, major data flows, core call chains, potential technical debt, and the engineering constraints that must be followed in future refactoring."*
+- **Refactoring:** enable "/goal mode"; ask for an execution plan, impact scope, and risk boundaries *before* implementation.
+- **Standards enforcement:** put standards in `CLAUDE.md` / `Agent.md` and request strict adherence with explicit verification.
+- **Persona:** the official example uses a functional persona ("a senior full-stack software engineer…") — consistent with family rule #8 (functional persona OK, no identity pinning).
+
+### Wording behaviors that matter
+
+- **1M lossless context changes the calculus for capability, not for budget.** GLM-5.2 genuinely retains long context well — you no longer need to fear a long spec won't be *held*. But the <4 KiB load-bearing ceiling for router-mediated setups (family rule #4) still holds for a different reason: heavy host prompts stack tokens and can still suppress reasoning. Big-context capability ≠ license to bloat the system prompt.
+- **Long-horizon framing is even more its wheelhouse** — write outcome-defined success criteria, verification loops, and stop conditions, not turn-by-turn steps.
+- **Identity-pinning still fails** (family rule #3) — functional roles only.
+
+### Migration from GLM-5.1 → GLM-5.2
+
+- Prompts run forward-compatibly; the main action is to **move reasoning control from prose re-injection to the `reasoning_effort` parameter** where the router exposes it.
+- Re-run 5.1 prompts tuned around thinking-suppression — you may be able to trim `<reasoning_content>` scaffolding.
+- Re-validate long-context prompts: 1M lossless means patterns split for 5.1's tighter window may now fit in one pass.
+
+---
+
+## GLM-5.1 (Z.ai, April 7, 2026 — previous frontier)
 
 ### Headline facts
 
@@ -187,7 +235,7 @@ Mirror of the family-wide section, distilled into rules for cross-model reviews:
 
 - **Heavy system prompts suppress GLM thinking** — not a Claude/GPT problem, very real on GLM
 - **Functional persona OK, identity-pinning fails** (distillation artifact)
-- **Thinking enabled at endpoint by default** — don't write "think step by step"; the lever is the host endpoint, not prose
+- **Reasoning lever is out-of-band, not prose** — GLM-5.2 has an explicit `reasoning_effort` param (`high`/`max`); earlier versions rely on the endpoint default. Either way, don't write "think step by step"
 - **Outcome-first beats step prescription**, but not as aggressively as GPT-5.5
 - **`json_schema` over `json_object`** for structured output
 - **Long-horizon framing is GLM's wheelhouse** — write success criteria and stop conditions, not turn-by-turn steps
@@ -203,6 +251,6 @@ If a prompt must run on GLM **and** Claude / GPT / Gemini:
 - The 4 KiB AGENTS.md ceiling for GLM is **stricter** than Codex's 32 KiB and Claude Code's "soft 300-line" ceiling. **Strictest constraint wins** → write to GLM's budget.
 - Identity pinning is fine on Claude / GPT / Gemini but breaks GLM. **Strip identity pinning.**
 - `json_schema` over `json_object` works on Claude / GPT / Gemini / GLM alike — safe default.
-- Heavy system prompts hurt GLM specifically. If you cannot trim the host prompt (e.g., Claude Code), inject explicit reasoning directives at the top of your `AGENTS.md` as the family-wide mitigation.
+- Heavy system prompts hurt GLM specifically. On GLM-5.2, the first mitigation is the `reasoning_effort` parameter (out-of-band, costs nothing on other vendors). If the router doesn't forward it, or you're on GLM-5.1 and earlier, fall back to injecting explicit `<reasoning_content>` directives at the top of your `AGENTS.md` as the family-wide mitigation.
 
 When in doubt: tune for GLM, then check the result reads well on the other vendors. The reverse usually fails.

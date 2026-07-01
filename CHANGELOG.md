@@ -2,6 +2,28 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.3.0] — 2026-07-01
+
+### Added
+
+- **Claude Sonnet 5** (`claude-sonnet-5`, June 2026) — current Sonnet-tier frontier, demoting **Sonnet 4.6** to *previous* (still covered — it's the last Sonnet that accepts sampling tuning). Rows across matrix tables A–E, new `models/claude.md § Claude Sonnet 5` section, SKILL.md Step 2c routing + reasoning-knobs table + June-2026 updates block, `_universal.md` Universal-Claude, README coverage. Sourced from Anthropic's official "Prompting Claude Sonnet 5" and "What's new in Claude Sonnet 5" guides.
+- **Z.ai GLM-5.2** (`zai-org/GLM-5.2`, released 2026-06-16) — current GLM frontier, demoting **GLM-5.1** to *previous*. Rows across matrix tables A–E, new `models/glm.md § GLM-5.2` section, SKILL.md routing + reasoning-knobs + updates, `_universal.md` Universal-GLM, README coverage. Sourced from Z.ai's official GLM-5.2 developer docs + independent benchmark reporting.
+- **Subagent `effort:` frontmatter as a declarative effort-knob.** Documented Claude Code's official `.claude/agents/*.md` `effort:` field (`low`/`medium`/`high`/`xhigh`/`max`; **overrides session effort**) in the SKILL.md reasoning-knobs table and the "declarative-metadata exceptions" list — previously the list noted only Codex `model_reasoning_effort`, and the reasoning-knob table implied effort was CLI/API-only. Also clarified the prose-body antipattern to exclude frontmatter. Sourced from Claude Code sub-agents docs; surfaced during Sonnet 5 subagent-migration A/B testing.
+
+### Review-relevant behavioral deltas — Claude Sonnet 5 (vs Sonnet 4.6)
+
+- **Moved to Opus-level literalism.** The old "Sonnet is looser than Opus, generalizes more" model no longer holds — Sonnet 5 does not silently generalize scope. Prompts written for 4.6's inference under-apply; state scope explicitly. This changed the Table A literalism cell and the Universal-Claude "state scope" rule (previously Opus-only).
+- **Sampling parameters removed** — `temperature` / `top_p` / `top_k` at non-default → 400, new for Sonnet-class (the constraint began on Opus 4.7). This propagated to a **cross-vendor rule change**: "don't reference temperature in the body" now covers the newest Claude *and* Gemini, not Gemini alone. Updated Table B temperature-gotcha (renamed from "Gemini-only"), the three-vendor and 4+ cross-vendor tables, and every temperature checklist item.
+- **Adaptive thinking ON by default** (change from 4.6's thinking-off) + **new tokenizer (~30% more tokens)** — surfaced as migration/`max_tokens` notes, not prompt edits. Adaptive-thinking triggering is steerable from the prompt (snippet added).
+- **More agentic** — readier tool use + self-verification loops; with thinking off it under-reaches for tools (add a nudge). **No subagent-spawn flip** (unlike Fable 5) — Table C marks it conservatively to avoid over-claiming.
+- Verbosity calibrates to task, code-review harnesses need coverage language, frontend settles into a default style (propose-N-directions is the variety lever now that temperature is locked) — all mirror the Opus 4.7 snippets, cross-referenced rather than duplicated.
+
+### Review-relevant behavioral deltas — GLM-5.2 (vs GLM-5.1)
+
+- **Explicit `reasoning_effort` (`high`/`max`) parameter** — the headline wording change. Reasoning depth is now an out-of-band knob like every other frontier vendor. The `<reasoning_content>` prose re-injection workaround (family rule #1) drops to a **fallback** for routers that don't forward the param. Updated the SKILL.md reasoning-knobs table, the "exceptions where a knob lives in metadata" note, matrix Table B/C/E GLM cells, and the Universal-GLM reasoning rule.
+- **1M lossless context** — genuine long-context capability, but it does **not** lift the <4 KiB `AGENTS.md` ceiling for router-mediated setups: host-prompt thinking-suppression is a reasoning-gate effect, not a context-length one. Called out explicitly to prevent a "big window = bloat the prompt" misread.
+- **Identity-pinning still fails** (distillation artifact carried over); benchmarks (Terminal-Bench 2.1 81.0, SWE-bench Pro 62.1 > GPT-5.5, MCP-Atlas 77.0, FrontierSWE −1% vs Opus 4.8) and official prompting patterns (/goal mode, codebase-audit, standards-enforcement) added.
+
 ## [1.2.0] — 2026-06-11
 
 ### Added

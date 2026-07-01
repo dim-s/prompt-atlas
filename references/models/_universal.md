@@ -10,7 +10,7 @@ Multiple overlapping cases. Read the relevant section.
 
 | Case | Section |
 |---|---|
-| Prompt must work across multiple Claude versions (Fable 5 + Opus 4.8 / 4.7 + Sonnet 4.6 + Haiku 4.5) | § Universal Claude |
+| Prompt must work across multiple Claude versions (Fable 5 + Opus 4.8 / 4.7 + Sonnet 5 / 4.6 + Haiku 4.5) | § Universal Claude |
 | Prompt must work across multiple GPT-5.x versions (5.3 + 5.4 + 5.5) | § Universal GPT-5.x |
 | Prompt must work across multiple Gemini 3.x variants (Pro + Flash + Flash-Lite) | § Universal Gemini |
 | Prompt must work across two or three frontier vendors (Claude + GPT-5.x + Gemini) | § Cross-vendor (three-vendor) |
@@ -30,7 +30,7 @@ Most production CLAUDE.md / AGENTS.md fall into one of these — pure single-mod
 
 If unclear, one short question:
 
-> *"Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
+> *"Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
 
 Default to **universal** when in doubt — write for lowest-common-denominator behavior across 4.5+ models.
 
@@ -43,9 +43,10 @@ If Haiku 4.5 is in scope, be MORE specific — Haiku handles vague prompts worse
 **2. Avoid leaning on single-model features.**
 
 - Don't assume Haiku will do deep multi-step reasoning — break complex tasks into concrete steps.
-- Don't assume Opus's literalism saves you from stating scope (Sonnet generalizes more freely).
+- **State scope explicitly** — Opus 4.7/4.8 AND now Sonnet 5 are literal and won't generalize an instruction across items. Only Sonnet 4.6 / Haiku still generalize a little; write for the literal majority.
 - Don't write tone instructions assuming one model's default — "be less formal" reads differently on Opus 4.7 vs Haiku.
-- Don't write subagent guidance assuming one direction — the default **diverges inside the family**: Fable 5 delegates readily, Opus 4.8/4.7 undertrigger. Universal wording states *when delegation is appropriate* ("delegate independent subtasks; work directly for single-file reads") — that reads as a boundary on Fable 5 and as encouragement on Opus.
+- **Don't rely on `temperature` for determinism or variety** — non-default `temperature`/`top_p`/`top_k` returns a 400 on Fable 5 / Opus 4.8 / 4.7 / Sonnet 5 (only Sonnet 4.6 / Haiku still accept it). Steer tone/variety with wording; for design variety use "propose N directions, then implement the chosen one."
+- Don't write subagent guidance assuming one direction — the default **diverges inside the family**: Fable 5 delegates readily, Opus 4.8/4.7 undertrigger, Sonnet 5 reaches for tools/self-verification readily but has no documented subagent-spawn flip. Universal wording states *when delegation is appropriate* ("delegate independent subtasks; work directly for single-file reads") — that reads as a boundary on Fable 5 and as encouragement on Opus.
 
 **3. Be moderate with emphasis.**
 
@@ -91,8 +92,9 @@ Baseline for the weakest model + an "additional guidance" section that cites str
 
 - [ ] No hard dependency on model-specific features (adaptive thinking, high-res vision, `xhigh` effort)
 - [ ] Specificity high enough for Haiku 4.5 to follow
-- [ ] Explicit scope stated for Opus 4.7's literalism
+- [ ] Explicit scope stated for Opus 4.7/4.8 and Sonnet 5 literalism (Sonnet 5 no longer generalizes like 4.6)
 - [ ] Overengineering / over-exploration guards for Sonnet 4.6
+- [ ] No `temperature` / `top_p` / `top_k` tuning assumed (non-default → 400 on Fable 5 / Opus 4.7+/4.8 / Sonnet 5)
 - [ ] Emphasis used sparingly (no "CRITICAL:" stack)
 - [ ] No model name hardcoded
 - [ ] Structure (XML/headings) used to signal important parts, not emphasis
@@ -209,7 +211,7 @@ A prompt that works across Kimi K2.6 and (still-deployed) K2.5. K2 itself retire
 
 ## Universal GLM
 
-A prompt that works across GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The family-wide rule about heavy host system prompts suppressing thinking applies to all three — but most strongly on the larger models, which have more capacity to be "interfered with."
+A prompt that works across GLM-5.2, GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The family-wide rule about heavy host system prompts suppressing thinking applies to all of them — but the mitigation differs by version: **GLM-5.2 has the `reasoning_effort` param, earlier versions only have prose re-injection.** Write the re-injection block for the older versions and note that 5.2 can use the param instead.
 
 ### Rules
 
@@ -217,7 +219,7 @@ A prompt that works across GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The fam
 
 **2. Don't pin model identity.** All three versions have the "I am Claude" distillation artifact. Use functional roles only.
 
-**3. Inject explicit reasoning directives** when the prompt runs under a heavy host. Custom `<reasoning_content>` markers + "write detailed reasoning before answering" works across the family.
+**3. Re-open thinking under a heavy host.** On GLM-5.2, set `reasoning_effort` (`high`/`max`) out-of-band — the cleanest lever. On GLM-5.1 and earlier (or routers that don't forward the param), inject custom `<reasoning_content>` markers + "write detailed reasoning before answering" in the prompt body. For a cross-version prompt, keep the re-injection block (works on all) and note the param as the 5.2-preferred alternative.
 
 **4. `json_schema` preferred** over `json_object` — works on all three; gives stricter shape control.
 
@@ -225,12 +227,12 @@ A prompt that works across GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The fam
 
 ### Universal-GLM checklist
 
-- [ ] Total system + AGENTS.md size <4 KiB load-bearing
-- [ ] No identity pinning ("You are GLM-5.1") — functional roles only
-- [ ] Reasoning re-injection present if running under heavy host system prompt
+- [ ] Total system + AGENTS.md size <4 KiB load-bearing (GLM-5.2's 1M lossless context does not lift this — it's a reasoning-gate ceiling, not a length one)
+- [ ] No identity pinning ("You are GLM-5.2") — functional roles only
+- [ ] Reasoning lever handled: `reasoning_effort` param on 5.2, `<reasoning_content>` re-injection on 5.1 and earlier / non-forwarding routers
 - [ ] `json_schema` over `json_object` for structured output
 - [ ] No "think step by step" in body
-- [ ] Long-horizon framing where applicable (8-hour autonomous on 5.1)
+- [ ] Long-horizon framing where applicable (8-hour autonomous on 5.1; 5.2 stronger long-horizon + 1M lossless)
 - [ ] No model name hardcoded
 
 ---
@@ -314,7 +316,7 @@ The hardest classic case: an `AGENTS.md` or system prompt meant to work on **two
 | Subagent spawning | Opus 4.7 spawns fewer | Codex spawns what's defined | Spawns what's defined; supports remote subagents | Be explicit when you want delegation |
 | Output format | Prose constraints work | Push to `json_schema` | Push to `response_json_schema` | Prefer schema for all three |
 | Aggressive emphasis | Overuse → overtriggering 4.5+ | Mostly inert noise | Inert noise | Reserve ALL-CAPS / "CRITICAL:" for safety invariants only |
-| **Temperature in body** | Tunable; mentioning OK | Tunable; mentioning OK | **Don't tune (1.0 fixed); don't mention** | Don't reference temperature in body — let API config handle per vendor |
+| **Temperature in body** | **Fable 5 / Opus 4.7+/4.8 / Sonnet 5: non-default → 400; Sonnet 4.6 / Haiku still tunable** | Tunable; mentioning OK | **Don't tune (1.0 fixed); don't mention** | Don't reference temperature in body — the newest Claude and all Gemini reject it; let API config handle per vendor |
 | **Negative constraint position** | Anywhere | Anywhere | **At end (drops early negatives)** | Place at end of file (strictest wins) |
 | **XML + Markdown mixing** | Tolerated | Tolerated | **Pick one** | Pick one consistently (strictest wins) |
 | **Blanket "do not" instructions** | Tolerated | Tolerated | **Over-indexes — fails basic logic** | Replace with positive scoped instructions ("Use the provided context for deductions") |
@@ -379,7 +381,7 @@ OpenAI's strong recommendation; Anthropic and Google both tolerate either. Pick 
 
 **6. Don't reference temperature in body.**
 
-Gemini requires 1.0; Claude and GPT-5.x are tunable. Don't write "use temperature 0.3" in any cross-vendor body — let each vendor's API config handle.
+Gemini requires 1.0, and the newest Claude models (Fable 5 / Opus 4.7+/4.8 / Sonnet 5) reject non-default sampling with a 400; only GPT-5.x and older Claude (Sonnet 4.6 / Haiku) still tune. Don't write "use temperature 0.3" in any cross-vendor body — let each vendor's API config handle it, and steer variety through wording (e.g. "propose N directions").
 
 **7. Place negative constraints at the end of the file.**
 
@@ -456,7 +458,7 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Self-verification | **explicit "review for coverage" instruction present** | Qwen (load-bearing) |
 | Reasoning depth | **API knob only, no prose CoT** | All frontier vendors (universal) |
 | Output format | **`json_schema` / `json_object` API + JSON demanded in prose** | DeepSeek (both required) |
-| Temperature | **no mention in body** | Gemini (1.0 fixed) |
+| Temperature | **no mention in body** | Gemini (1.0 fixed) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) |
 | Aggressive emphasis | **safety invariants only** | Claude 4.5+ (overtriggers) |
 | Negative constraints | **at end of file, positive-scoped phrasing preferred** | Gemini (drops early; over-indexes on blanket negatives) |
 | XML + Markdown | **markdown skeleton, XML inline only** | Gemini (strict) |

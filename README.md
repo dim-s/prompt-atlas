@@ -12,11 +12,11 @@ License: [CC-BY-SA 4.0](./LICENSE). Built on the methodology of [matrix-citation
 
 | Vendor | Models covered |
 |---|---|
-| **Anthropic Claude** | **Fable 5** (Jun 2026, tier above Opus) / Opus 4.8 / 4.7 / Sonnet 4.6 / Haiku 4.5 + legacy 4.6 |
+| **Anthropic Claude** | **Fable 5** (Jun 2026, tier above Opus) / Opus 4.8 / 4.7 / **Sonnet 5** (Jun 2026) / Sonnet 4.6 / Haiku 4.5 + legacy 4.6 |
 | **OpenAI GPT-5.x** in Codex CLI | GPT-5.5 (+ Instant variant) / 5.4 / 5.3 / 5.3-codex / 5.2 / 5.1 |
 | **Google Gemini 3.x** in Gemini CLI | 3.1 Pro / 3 Flash / **3.5 Flash** (May 2026) / 3.1 Flash-Lite + 2.5 legacy |
 | **Moonshot Kimi** | K2.6 / K2.5 / K2 (retires 2026-05-25) |
-| **Z.ai GLM** | GLM-5.1 / GLM-5 / GLM-4.6 |
+| **Z.ai GLM** | **GLM-5.2** (Jun 2026) / GLM-5.1 / GLM-5 / GLM-4.6 |
 | **Alibaba Qwen frontier** | Qwen3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview / 3-Max-Thinking |
 | **DeepSeek** | V4-Pro / V4-Flash / V3.2 / R1 |
 | **xAI Grok** | Grok 4.3 (Grok 5 pending Q2 2026) |
@@ -156,11 +156,11 @@ prompt-atlas/
     ├── multilingual.md            non-EN prompt handling — applies to BOTH classes
     │
     ├── models/                    vendor-specific deltas
-    │   ├── claude.md              Opus 4.8 / 4.7 / Sonnet 4.6 / Haiku 4.5
+    │   ├── claude.md              Fable 5 / Opus 4.8 / 4.7 / Sonnet 5 / Sonnet 4.6 / Haiku 4.5
     │   ├── gpt.md                 GPT-5.1 → 5.5 + Instant variant
     │   ├── gemini.md              Gemini 3.1 Pro / Flash / 3.5 Flash / Flash-Lite
     │   ├── kimi.md                Kimi K2.6 / K2.5 / K2 — Agent Swarms protocol
-    │   ├── glm.md                 Z.ai GLM-5.1 / 5 / 4.6 — Claude-Code-router pattern
+    │   ├── glm.md                 Z.ai GLM-5.2 / 5.1 / 5 / 4.6 — reasoning_effort + Claude-Code-router pattern
     │   ├── qwen-frontier.md       Qwen3.7-Max / 3.6 Plus / Max-Preview / 3-Max-Thinking
     │   ├── deepseek.md            V4-Pro / V4-Flash / V3.2 — user-prompt-priority pattern
     │   ├── grok.md                xAI Grok 4.3
