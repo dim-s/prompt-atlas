@@ -129,6 +129,8 @@ For any prompt with side effects (writes code, sends messages, mutates state), i
 
 When reviewing prompts that lack a verification path: this is almost always a `[CRITICAL]` finding for slash-commands and subagents, `[IMPROVE]` for ad-hoc prompts.
 
+**The line that matters as of July 2026** — this principle is about giving the model *a way* to verify: a command to run, a schema to match, an artifact to compare against. It is **not** about instructing the model to re-check its own confidence ("double-check your answer", "include a final verification step", "use a subagent to verify"). That second kind is a documented over-verification trigger on Claude Opus 5, where the fix is removal (`antipatterns.md` #37). Everything in the list above stays correct on every model — it's task work, not ritual.
+
 ---
 
 ## Pattern: hint + literal anchor (preserving extrapolation on literal models)

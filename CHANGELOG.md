@@ -2,6 +2,37 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.4.0] — 2026-07-25
+
+### Added
+
+- **Claude Opus 5** (`claude-opus-5`, July 2026) — current Opus tier and Anthropic's default recommendation for complex agentic coding, demoting **Opus 4.8** and **Opus 4.7** to the legacy table. Rows across matrix tables A–E, new `models/claude.md § Claude Opus 5` section, SKILL.md Step 2c routing + July-2026 updates block + gap-analysis row, `_universal.md` Universal-Claude, README coverage. Sourced from Anthropic's official "Prompting Claude Opus 5", "What's new in Claude Opus 5", "Prompting best practices", "Effort", and migration guide.
+- **Anti-pattern #37 — carried-over self-verification instructions on Opus 5.** The Claude-family analog of #36 (paying for behavior the model already has). Documents the strip-don't-soften rule and the line between task verification (keep) and self-review (remove).
+- **Anti-pattern #38 — telling the model not to think.** Inert as a reasoning control everywhere; on Opus 5 with thinking disabled it *increases* internal-XML-tag leakage into visible output. Includes the official combined mitigation for text-form tool calls and leaked tags.
+- **Within-family contradiction table in SKILL.md Step 4.** New section: as of July 2026 the Claude family disagrees with itself on self-verification, subagent delegation, and narration — so "it's a Claude prompt" no longer determines the recommendation. Step 2c now instructs asking for the Claude *version* even when the vendor is obvious.
+- **`models/claude.md § Universal` rule 7** — divergence table plus conditional phrasings that survive the whole family (state the *condition*, not the direction).
+
+### Changed — inverted advice (four Opus 5 deltas that reverse prior guidance)
+
+This is the largest set of reversals in any Claude release the skill has tracked. Each was correct guidance on Opus 4.7/4.8 and is now wrong on Opus 5:
+
+- **Self-verification: `[ADD]` → `[CRITICAL]` strip.** Opus 5 verifies its own work unprompted; carried-over verification instructions cause over-verification with no quality gain, and Anthropic's guidance is removal, not rewording. `techniques.md §20` gained an explicit Opus-5 exception, and the SKILL.md gap-analysis row for tool-using subagents — which recommended adding a verification step unconditionally — now carves Opus 5 out. Highest-impact change in this release: the skill was actively recommending the harmful pattern.
+- **Verbosity: "calibrates to task" → does not calibrate.** Every other current Claude shortens simple answers on its own. Opus 5's defaults run long, and `effort` controls thinking volume, not visible length — so the standing advice "raise/lower effort before rewriting" is wrong for verbosity complaints specifically. Documented in the SKILL.md reasoning-knobs section, matrix table B, and `techniques.md §19`, which also gained a separate length-calibration snippet for **written files** (a new axis — deliverables run long independently of chat).
+- **Subagents: encouragement → boundaries + cap.** Opus 5 flips to readily delegating (like Fable 5), inverting the 4.7/4.8 undertriggering default that `techniques.md §17`'s encouragement snippet was written for. Added the damping snippet alongside it.
+- **Narration: quiet → talkative.** Opus 5 narrates more between tool calls, the opposite of Fable 5's field-observed quiet. 4.8-era silence-defaults, which `models/claude.md` told reviewers to strip for Fable 5, stay useful here — a shared Claude prompt cannot carry one narration setting.
+
+### Changed — other
+
+- **Creative-domain kernel gained an Opus 5 caveat.** The kernel was tuned against Opus 4.7's flatness; on Opus 5 two of its blocks fight the model's own defaults — *expansion license* compounds with Opus 5's scope-widening, and the *tone re-frame* compounds with already-long output. Install selectively.
+- **Scope guidance widened.** Prior Opus models only failed to generalize *downward*; Opus 5 can also add unrequested steps, so narrow tasks need both boundaries stated. New snippet in `techniques.md §20`.
+- **Code-review coverage language reinforced.** Opus 5 finds real bugs at a high rate with few false positives, so "only report high-severity issues" discards good findings; accuracy holding at low effort makes a cheap-pass/thorough-pass harness viable.
+- **Table E context-rot caveat.** Opus 5's instruction following and tool calling are documented as consistent across its full 1M window — the ~300-line rot heuristic doesn't apply to it (and shouldn't be generalized from it).
+- `models/claude.md` Sonnet 4.6 section pointed at a non-existent "Opus 4.8 section"; the Opus 4.7 section is now explicitly labelled as covering 4.8, and the cross-reference is fixed.
+
+### Not verified
+
+- **Sampling-parameter rejection on Opus 5.** The `temperature`/`top_p`/`top_k` → 400 constraint is not restated in the Opus 5 docs and is not listed among its breaking changes from 4.8, so it's recorded as carried over — **an inference from absence, not a quoted statement**. Flagged as such in `models/claude.md`, matrix table B, and `_universal.md` rather than asserted.
+
 ## [1.3.0] — 2026-07-01
 
 ### Added

@@ -243,6 +243,8 @@ For any slash command with side effects, the body must include a verification st
 
 When reviewing a slash command that lacks verification: usually `[CRITICAL]` if the command writes code or commits, `[IMPROVE]` if it only reads.
 
+Note what this is asking for: a concrete verification *action* (run this, compare that). Adding "and double-check your work before finishing" on top is a different thing — and on Claude Opus 5 it's a strip, not an add (`antipatterns.md` #37).
+
 ---
 
 ## Hooks — when wording matters and when it doesn't

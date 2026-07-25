@@ -28,8 +28,9 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | Model | Literalism | Generalizes scope | Persona / "act as" | Few-shot for format | Few-shot for reasoning | Aggressive emphasis | Step-by-step prescription |
 |---|---|---|---|---|---|---|---|
 | **Fable 5** (Anthropic, Jun 9 2026 — tier above Opus) | very high — but a brief principle steers as well as an enumeration | improved — navigates ambiguity, determines next steps; still state boundaries for *actions* | OK if functional, 1 line | helps | helps if relevant | overtriggers — one short instruction replaces the list | tolerated; **over-prescriptive skills/scaffolding degrade output — trim** |
-| **Opus 4.8** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
-| **Opus 4.7** | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
+| **Opus 5** (Anthropic, Jul 2026 — current Opus tier) | very high | no — must state scope; **also widens it** — state the upper boundary too | OK if functional, 1 line | helps | helps if relevant | overtriggers — reserve for safety | tolerated; **strip self-verification steps — over-verifies** |
+| **Opus 4.8** (legacy) | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
+| **Opus 4.7** (legacy) | very high | no — must state scope | OK if functional, 1 line | helps (3-5) | helps if relevant | overtriggers — reserve for safety | tolerated; sometimes appreciated |
 | **Sonnet 5** (Anthropic, Jun 2026 — current Sonnet) | **very high — moved to Opus-level literalism**, esp. at low effort | no — must state scope (unlike 4.6) | OK if functional, 1 line | helps | helps if relevant | overtriggers — reserve for safety | tolerated |
 | **Sonnet 4.6** (previous) | high | rarely | OK | helps | helps | overtriggers | tolerated |
 | **Haiku 4.5** | medium-high | rarely | OK | helps; needed when format strict | mixed | overtriggers | needed for complex tasks |
@@ -66,6 +67,8 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 - *"distillation identity confusion"* (GLM) = the model occasionally responds "I am Claude, created by Anthropic" — a documented training artifact. Persona blocks that hard-pin identity may misfire; functional-role wording is safer.
 - *"DeepSeek user-prompt priority"* = DeepSeek's official guidance (echoed in V4 practitioner guides) puts **core instructions in the user message**, with a brief system prompt ("You are a senior architect" style). Opposite default to most other vendors; flag when porting Claude/GPT system prompts to V4.
 - *"over-prescriptive skills degrade output"* (Fable 5) = Anthropic's prompting guide is explicit: skills and prompts developed for prior models are often too prescriptive for Fable 5 and can degrade quality. Review and trim before adding; brief instructions outperform behavior-by-behavior enumeration.
+- *"Opus 5 over-verifies"* = Anthropic's guide is explicit that Opus 5 checks its own work unprompted, and that verification instructions carried over from earlier models compound with that behavior — costing tokens with no quality gain. The documented fix is **removal**, not softening. This inverts `techniques.md §20`, which stays correct for every other Claude.
+- *"Opus 5 also widens scope"* = unlike 4.7/4.8, which only failed to generalize *downward* (missing items you didn't enumerate), Opus 5 can add steps you didn't request. Narrow tasks need both boundaries stated, not just the lower one.
 - *"Sonnet 5 moved to Opus-level literalism"* = the biggest behavioral shift in the Claude family this cycle. Prompts written assuming Sonnet 4.6's looser generalization ("it'll figure out the scope") now under-apply on Sonnet 5 — state scope explicitly, same as Opus 4.7/4.8. Sonnet 5 also **rejects sampling-parameter tuning** (see Table B temperature gotcha).
 
 ---
@@ -75,8 +78,9 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | Model | Reasoning depth lever | Default tone | Output format preference | Verbosity control |
 |---|---|---|---|---|
 | **Fable 5** | `effort` — primary; adaptive thinking **always on, cannot be disabled**; `low` on Fable often ≥ `xhigh` on prior Opus | direct; un-steered it elaborates beyond the task at higher effort; **quiet between tool calls** — narrates less than Opus 4.8 (field obs. Jun 2026) | prose / XML as Opus; **never instruct to echo or transcribe its reasoning** — triggers `reasoning_extraction` refusal | calibrates; one short "lead with the outcome" instruction is enough; strip 4.8-era silence-defaults |
-| **Opus 4.8** | `effort` (low/medium/high/xhigh) — primary; **default `high` on all surfaces incl Claude Code** | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
-| **Opus 4.7** | `effort` (low/medium/high/xhigh) — primary | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
+| **Opus 5** | `effort` (low/medium/high/xhigh/max) — default `high`; **adaptive thinking ON by default**; converts effort→quality more reliably than any prior Opus, and `low`/`medium` are strong enough to be the primary cost lever | direct, but **narrates more during agentic work** than 4.8 (opposite of Fable 5); narrates its own corrections more | prose / XML as Opus; with thinking **off** it can leak `<thinking>` tags and text-form tool calls — see `models/claude.md` | **does NOT calibrate — defaults run long, and effort does not shorten visible output.** Prompt explicitly; calibrate written files separately from chat |
+| **Opus 4.8** (legacy) | `effort` (low/medium/high/xhigh) — primary; **default `high` on all surfaces incl Claude Code** | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
+| **Opus 4.7** (legacy) | `effort` (low/medium/high/xhigh) — primary | direct, less validation, fewer emojis | prose constraints OK; XML tags for multi-part | calibrates to task; explicit if forced |
 | **Sonnet 5** | `effort` (low/medium/high/xhigh/max) — default `high`; **adaptive thinking ON by default** (change from 4.6); manual `budget_tokens` removed (400) | direct; prose style may shift from 4.6 — re-eval voice prompts | prose / XML; structured outputs (prefill unsupported) | calibrates to task (like Opus 4.7) |
 | **Sonnet 4.6** (previous) | `effort`; thinking off by default | direct, similar to Opus 4.8/4.7 | prose / XML | calibrates |
 | **Haiku 4.5** | `effort` (limited range) | direct, terse | prose; explicit format needed | terse default |
@@ -105,7 +109,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 **Gemini-specific gotcha:** `thinking_level` and legacy `thinking_budget` cannot coexist in one request — returns 400 error. When migrating from 2.5 prompts, audit code for both.
 
-**Temperature gotcha (Gemini + newest Claude):** Google **strongly recommends keeping temperature at 1.0** on Gemini (lowering causes looping / degraded reasoning). As of mid-2026 the newest Claude models go further — `temperature`, `top_p`, `top_k` at a **non-default value return a 400 error on Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** (Sonnet 4.6 / Haiku 4.5 still tune freely). **GPT-5.x remains freely tunable.** Cross-vendor wording: don't reference temperature in the prompt body; steer tone/variety through the system prompt and let API config handle sampling per vendor. For design variety on the sampling-locked Claude models, use "propose N directions, then implement the chosen one" instead of temperature.
+**Temperature gotcha (Gemini + newest Claude):** Google **strongly recommends keeping temperature at 1.0** on Gemini (lowering causes looping / degraded reasoning). As of mid-2026 the newest Claude models go further — `temperature`, `top_p`, `top_k` at a **non-default value return a 400 error on Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5**, and Opus 5 carries the constraint over (not restated in its docs, not listed among its breaking changes — inference from absence, so verify before relying on it). Sonnet 4.6 / Haiku 4.5 still tune freely. **GPT-5.x remains freely tunable.** Cross-vendor wording: don't reference temperature in the prompt body; steer tone/variety through the system prompt and let API config handle sampling per vendor. For design variety on the sampling-locked Claude models, use "propose N directions, then implement the chosen one" instead of temperature.
 
 **Kimi-specific temperature split:** Moonshot's model card recommends `temperature=1.0, top_p=1.0` for Thinking mode and `temperature=0.6, top_p=0.95` for Instant mode. Don't hardcode a single temperature into a Kimi-targeted prompt.
 
@@ -120,8 +124,9 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | Model | Tool guidance location | Subagent default | "Use proactively" needed? | MCP tool description critical? |
 |---|---|---|---|---|
 | **Fable 5** | system prompt OK | **spawns readily — flipped vs Opus 4.8/4.7**; dependable parallel dispatch, sustains long-running subagents | no — give *boundaries* on when delegation is appropriate instead of encouragement; prefer async orchestration + long-lived subagents | yes |
-| **Opus 4.8** | system prompt OK | spawns fewer — explicit ask needed | improved — triggers required tools reliably; favors reasoning, so raise effort / instruct for *more* tool use | yes |
-| **Opus 4.7** | system prompt OK | spawns fewer — explicit ask needed | yes — undertriggers | yes |
+| **Opus 5** | system prompt OK | **spawns readily — flipped vs Opus 4.8/4.7**; coordinates subagent teams well (writer-verifier, few overwrite collisions) — needs boundaries and a spawn cap, not encouragement | no — and explicitly forbid subagent-based self-verification (compounds with its own verify behavior) | yes |
+| **Opus 4.8** (legacy) | system prompt OK | spawns fewer — explicit ask needed | improved — triggers required tools reliably; favors reasoning, so raise effort / instruct for *more* tool use | yes |
+| **Opus 4.7** (legacy) | system prompt OK | spawns fewer — explicit ask needed | yes — undertriggers | yes |
 | **Sonnet 5** | system prompt OK | **more agentic than 4.6** — reaches for tools + runs self-verification loops readily; **no subagent-spawn flip documented** (unlike Fable 5) — treat conservatively | with thinking OFF it under-reaches for tools — add explicit nudge; effort (`high`/`xhigh`) is a tool-usage lever | yes |
 | **Sonnet 4.6** (previous) | system prompt OK | spawns more by default | sometimes | yes |
 | **Haiku 4.5** | system prompt OK | conservative — name tool explicitly | yes | yes |
@@ -155,8 +160,9 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 | Model | Migration style | Patches from prev version |
 |---|---|---|
 | **Fable 5** | runs out-of-box on Opus 4.8 prompts; refusal/fallback handling is an API concern (handoff) | **audit prompts and skills for "show / explain your reasoning" lines** — they trigger `reasoning_extraction` refusals; trim over-prescriptive skill instructions (degrade output); add progress-grounding + action-boundary snippets for long runs; remove harness-visible remaining-context counters (model offers to wrap up) |
-| **Opus 4.8** | runs out-of-box on 4.7 prompts; `high` effort default | check effort-default latency/token cost; trim now-redundant "use the tool" nudges (under-triggering fixed); verbosity recalibrates |
-| **Opus 4.7** | forward-compatible from 4.6; tone shifts | trim "avoid AI slop" frontend blocks; trim "after every 3 tool calls summarize" |
+| **Opus 5** | **runs out-of-box on Opus 4.8 prompts** — no rewrite needed, but four carried-over patterns now hurt | **strip self-verification / double-check instructions** (over-verification — the #1 finding); add explicit concision wording (verbosity no longer calibrates, effort won't fix it); add separate length calibration for written files; convert subagent encouragement into boundaries + a spawn cap; add a scope-boundary line for narrow tasks; keep code-review coverage language. API-side: thinking ON by default (revisit `max_tokens`), `thinking: disabled` + `xhigh`/`max` → 400, fresh effort sweep, cache minimum 512, no Priority Tier |
+| **Opus 4.8** (legacy) | runs out-of-box on 4.7 prompts; `high` effort default | check effort-default latency/token cost; trim now-redundant "use the tool" nudges (under-triggering fixed); verbosity recalibrates |
+| **Opus 4.7** (legacy) | forward-compatible from 4.6; tone shifts | trim "avoid AI slop" frontend blocks; trim "after every 3 tool calls summarize" |
 | **Sonnet 5** | **drop-in from Sonnet 4.6** — runs out-of-box on 4.6 prompts | 3 API changes: adaptive thinking ON by default (revisit `max_tokens`); sampling params `temp`/`top_p`/`top_k` → 400 (remove); manual extended thinking → 400. New tokenizer = **~30% more tokens** (recount, revisit `max_tokens`). State scope for new Opus-level literalism; trim "after every 3 tool calls" scaffolding; add coverage language to code-review harnesses |
 | **Sonnet 4.6** (previous) | forward-compatible | trim "be thorough / use X when in doubt" — overtriggers |
 | **Haiku 4.5** | forward-compatible | mostly unchanged from 4.0/4.5 era |
@@ -188,7 +194,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 
 | Model / system | Hard cap | Soft degradation | Hierarchy |
 |---|---|---|---|
-| **Claude Code (any Claude model)** | none | context rot beyond ~300 lines | one file per scope (root, parent dirs, child dirs on-demand); imports via `@path` |
+| **Claude Code (any Claude model)** | none | context rot beyond ~300 lines — **except Opus 5**, whose instruction following and tool calling are documented as consistent across its full 1M window | one file per scope (root, parent dirs, child dirs on-demand); imports via `@path` |
 | **Codex CLI (any GPT-5.x model)** | 32 KiB (`project_doc_max_bytes`) — silent drop past cap | rot still applies | hierarchical AGENTS.md + `.override.md` pattern; concatenated top-down |
 | **Gemini CLI (any Gemini 3.x model)** | none documented (soft) | rot still applies | hierarchical `GEMINI.md` (also `AGENTS.md` via `settings.json: { context.fileName }`); `~/.gemini/GEMINI.md` global + workspace + parents — concatenated; supports `@file.md` imports |
 | **Cursor** | ? (TBD when added) | ? | `.cursorrules` single file |
@@ -209,7 +215,7 @@ When a cell says `?` — the axis hasn't been tested for this model; treat conse
 ### Step 1 — Pick rows
 
 - Single-model prompt → 1 row
-- Universal-Claude → all current Claude rows (Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, Haiku 4.5); intersect (write for the strictest)
+- Universal-Claude → all current Claude rows (Fable 5, Opus 5, Opus 4.8/4.7, Sonnet 5/4.6, Haiku 4.5); intersect (write for the strictest). **Caution:** three axes now point in opposite directions inside the family — self-verification, subagent delegation, narration. Intersecting them mechanically produces a prompt that's wrong for half the set; use the conditional phrasings in `models/claude.md § Universal` rule 7
 - Universal-GPT-5.x → all GPT-5.x rows; intersect
 - Cross-vendor → strictest cells across both vendors
 

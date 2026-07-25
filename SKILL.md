@@ -69,6 +69,8 @@ The model **cannot change its own reasoning depth from prose**. Lines like `Use 
 
 When raising effort would help (creative agent, hints-and-vibes prompt, "think step by step" used as a substitute, kernel install on Opus 4.7, GLM running under a heavy router prompt), **mention it as a conversation point to the user** — never propose it as an `[ADD]` snippet to paste into the artifact:
 
+**One thing `effort` does NOT control, on any Claude:** the length of the visible response. This is worth stating explicitly on **Opus 5**, where the two are most often confused — lowering effort there reduces thinking volume without reliably shortening the answer, so "just drop to `medium`" is the wrong advice for a user complaining about verbosity. That one is a wording fix (`techniques.md §19`). Effort remains the right first lever for *depth* complaints (shallow reasoning, thin exploration, flat creative output).
+
 > ✅ "If you're running this on Claude Code, try `/effort xhigh` before we rewrite anything — that often restores the behavior you want and costs nothing."
 > ✅ "If you're on DeepSeek V4, try setting `thinking: 'max'` at the API level before tuning the prompt — the lever is more powerful than wording changes here."
 > ❌ `[ADD]` to CLAUDE.md: `Use effort: xhigh for kernel work, medium for brainstorm.`
@@ -85,7 +87,8 @@ Trigger proactively whenever the user is working with any of the artifact types 
 - They asked to write one from scratch
 - They report that a subagent or skill "isn't triggering" or "triggers too often"
 - They ask whether the wording "looks right" or "is clear enough"
-- They migrated to a newer Claude or GPT-5.x version (especially 5.4 → 5.5) and want prompts updated
+- They migrated to a newer Claude or GPT-5.x version (especially Opus 4.8 → Opus 5, or 5.4 → 5.5) and want prompts updated. The Opus 5 case is a *strip* audit more than an add one — see the Opus 5 row in the gap-analysis table
+- They report a model that suddenly got wordier, narrates more, delegates to subagents more eagerly, or re-checks its own work without being asked — on Claude, ask which version first: those are documented Opus 5 defaults, fixed by wording, not by rewriting the prompt's logic
 - They mention switching agentic environment (Claude Code ↔ Codex CLI) and need prompts adapted
 - They say any variant of: "проверь", "улучши", "review", "check", "audit", "почему не работает", "make this better", "адаптируй под кодекс", "tune for GPT-5.5"
 - They describe a creative / narrative / advisory / coaching / brainstorm agent and report it feels flat, mechanical, won't push back, or lost warmth on Opus 4.7 — apply the **Pattern: creative-domain kernel for Opus 4.7** below
@@ -213,7 +216,7 @@ Infer from signals; only ask if conflicting.
 
 #### Step 2c — Model version (frontier only)
 
-Claude options: **Fable 5** (frontier tier above Opus, Jun 2026) / **Opus 4.8** / **Opus 4.7** / **Sonnet 5** (current Sonnet, Jun 2026) / **Sonnet 4.6** (previous) / **Haiku 4.5** / **Universal Claude** / older.
+Claude options: **Fable 5** (frontier tier above Opus, Jun 2026) / **Opus 5** (current Opus tier, Jul 2026) / **Opus 4.8** / **Opus 4.7** (both now legacy) / **Sonnet 5** (current Sonnet, Jun 2026) / **Sonnet 4.6** (previous) / **Haiku 4.5** / **Universal Claude** / older.
 
 OpenAI options: **GPT-5.5** (frontier) / **GPT-5.4** / **GPT-5.3 / 5.3-codex** / **GPT-5.2** / **GPT-5.1** (legacy) / **Universal GPT-5.x**.
 
@@ -233,7 +236,8 @@ Mistral frontier options: **Mistral Large 3** (Dec 2025 flagship, ecosystem stil
 
 Meta options: **Muse Spark** (Apr 2026, closed-weight, limited docs) — treat as experimental coverage; most axes `?`.
 
-**Recent June 2026 updates worth flagging in reviews:**
+**Recent June–July 2026 updates worth flagging in reviews:**
+- **Claude Opus 5** (Jul 2026, `claude-opus-5`) — current Opus tier and Anthropic's default recommendation for agentic coding; Opus 4.8 / 4.7 drop to the legacy table. Runs out-of-box on 4.8 prompts, **but four carried-over patterns now hurt** — this is the largest set of inverted advice in any Claude release so far, so treat every Opus-5-targeted review as a migration audit: (1) **self-verification instructions must be stripped** — it verifies unprompted, and "double-check / final verification step / verify via subagent" causes over-verification (inverts `techniques.md §20`, the technique this skill has been recommending by default); (2) **verbosity no longer calibrates** — defaults run long and `effort` does not shorten visible output, so concision must be prompted, and files it writes need their own length calibration; (3) **subagent default flips** — delegates readily like Fable 5, so encouragement written for 4.8 must become boundaries + a spawn cap; (4) **narrates more** (opposite of Fable 5) and narrates its own corrections. Also: scope can widen (state the upper bound), code-review coverage language matters more, and with thinking disabled it leaks `<thinking>` tags and text-form tool calls — a "don't think" rule makes that worse. See `models/claude.md § Claude Opus 5`.
 - **Z.ai GLM-5.2** (Jun 16, `zai-org/GLM-5.2`) — current GLM frontier, ~753B MoE, MIT. Review-relevant delta: **explicit `reasoning_effort` (`high`/`max`) param** now exists — reasoning depth is an out-of-band knob like every other vendor, so the `<reasoning_content>` prose re-injection drops to a **fallback** for routers that don't forward the param. Also: **1M lossless context** (does NOT fix host-prompt thinking suppression — keep `AGENTS.md` <4 KiB), identity-pinning still fails, tops open-weight coding/tool-use benchmarks (Terminal-Bench 2.1 81.0, MCP-Atlas 77.0). See `models/glm.md § GLM-5.2`.
 - **Claude Sonnet 5** (Jun 2026, `claude-sonnet-5`) — current Sonnet frontier, drop-in on 4.6. Three review-relevant deltas: (1) **moved to Opus-level literalism** — state scope explicitly, 4.6-loose "it'll figure out the scope" prompts now under-apply; (2) **sampling params (`temperature`/`top_p`/`top_k`) → 400** — new for Sonnet-class (began on Opus 4.7); steer tone/variety with wording, use "propose N directions" for design variety; (3) **adaptive thinking ON by default** + **new tokenizer (~30% more tokens)** — revisit `max_tokens`. Also more agentic (readier tools + self-verify); no subagent-spawn flip (unlike Fable 5). See `models/claude.md § Claude Sonnet 5`.
 - **Claude Fable 5** (Jun 9) — new tier above Opus (first public Mythos-line model, $10/$50 per MTok). Three review-relevant deltas: (1) "show / explain your reasoning" instructions trigger the `reasoning_extraction` refusal classifier — audit skills when migrating; (2) subagent default **flips** vs Opus 4.8/4.7 — delegates readily, write boundaries not encouragement; (3) over-prescriptive skills from prior models can degrade output — trim. See `models/claude.md § Claude Fable 5`.
@@ -246,7 +250,9 @@ Meta options: **Muse Spark** (Apr 2026, closed-weight, limited docs) — treat a
 
 If you can't infer, ask one short question. **Render in the user's detected language** (see § Language below):
 
-> "Which model is this prompt for — Claude (Fable 5 / Opus 4.8 / 4.7 / Sonnet 5 / Sonnet 4.6 / Haiku 4.5), OpenAI GPT-5.x in Codex CLI (5.3 / 5.4 / 5.5), Google Gemini 3.x (Pro / Flash / Flash-Lite), Moonshot Kimi K2.6, Z.ai GLM-5.2 / 5.1 / 5 / 4.6, Alibaba Qwen3.7-Max / 3.6, DeepSeek V4-Pro / Flash, or cross-vendor?"
+> "Which model is this prompt for — Claude (Fable 5 / Opus 5 / Opus 4.8 / 4.7 / Sonnet 5 / Sonnet 4.6 / Haiku 4.5), OpenAI GPT-5.x in Codex CLI (5.3 / 5.4 / 5.5), Google Gemini 3.x (Pro / Flash / Flash-Lite), Moonshot Kimi K2.6, Z.ai GLM-5.2 / 5.1 / 5 / 4.6, Alibaba Qwen3.7-Max / 3.6, DeepSeek V4-Pro / Flash, or cross-vendor?"
+
+**Ask this even when the vendor is obviously Claude.** As of July 2026 the Claude family contradicts itself on three axes — self-verification, subagent delegation, narration — so "it's a Claude prompt" no longer determines the recommendation. See Step 4.
 
 When the answer is one of Kimi / GLM / Qwen / DeepSeek, the workflow stays on **Path A (frontier)** but loads the vendor-specific model file (`models/kimi.md` / `models/glm.md` / `models/qwen-frontier.md` / `models/deepseek.md`) — see Step 3.
 
@@ -319,8 +325,20 @@ Before producing any findings, scan the prompt for axes where the recommendation
 #### Within-vendor — three notorious axes (Claude / GPT / Gemini targets)
 
 1. **Persona / "You are X"** — Gemini 3 wants it (+5%), GPT-5.5 hurts, Claude neutral, Kimi helps (Moonshot guide), GLM functional-OK-but-no-identity-pinning, frontier Qwen OK, DeepSeek brief-only.
-2. **Temperature mention in body** — Gemini 3 forbids tuning (must stay 1.0); **newest Claude also forbids it** (`temperature`/`top_p`/`top_k` non-default → 400 on Fable 5 / Opus 4.8 / 4.7 / Sonnet 5; Sonnet 4.6 / Haiku 4.5 still tune); GPT-5.x tunable, Kimi mode-split (1.0 thinking / 0.6 instant), others tunable but vendor handles.
+2. **Temperature mention in body** — Gemini 3 forbids tuning (must stay 1.0); **newest Claude also forbids it** (`temperature`/`top_p`/`top_k` non-default → 400 on Fable 5 / Opus 5 / Opus 4.8 / 4.7 / Sonnet 5; Sonnet 4.6 / Haiku 4.5 still tune); GPT-5.x tunable, Kimi mode-split (1.0 thinking / 0.6 instant), others tunable but vendor handles.
 3. **CoT scaffolding ("think step by step")** — hurts Gemini 3 and GPT-5.5, tolerated on Claude, inert on Kimi/GLM/Qwen/DeepSeek (the lever is the parameter, not prose).
+
+#### Within-family — three axes that now contradict *inside* Claude
+
+New as of July 2026, and easy to miss because the usual disambiguation ("it's for Claude") doesn't resolve them. If the prompt touches any of these and the Claude version is unknown, ask:
+
+| Axis | Fable 5 | Opus 5 | Opus 4.8 / 4.7 | Sonnet 4.6 / Haiku 4.5 |
+|---|---|---|---|---|
+| Self-verification / "double-check" | neutral | **strip — over-verifies** | keep — helps | keep — helps |
+| Subagent delegation wording | boundaries | **boundaries + cap** | encouragement | mild |
+| Narration between tool calls | quiet — don't suppress further | **narrates more — suppress** | moderate | moderate |
+
+The self-verification row is the sharpest: a `[ADD] verification step` finding is correct on most of the family and a `[CRITICAL]` mistake on Opus 5. Universal-Claude wording that survives all of them is in `models/claude.md § Universal` rule 7.
 
 Less common but possible:
 - Few-shot examples (helps Claude / Kimi, hurts GPT-5.5 reasoning, mixed on Gemini, helps frontier Qwen for format)
@@ -430,7 +448,7 @@ Method:
 
 | Artifact | Often missing |
 |---|---|
-| Subagents with tool access | Verification step (`agentic-systems/claude-code.md` § Verification); permission to express uncertainty (`principles.md` #11); output format with priority tags |
+| Subagents with tool access | Verification step (`agentic-systems/claude-code.md` § Verification) — **but not when the target is Opus 5**, where a self-verification instruction is a `[CRITICAL]` strip, not an `[ADD]` (`antipatterns.md` #37); permission to express uncertainty (`principles.md` #11); output format with priority tags |
 | Subagents meant for delegation | "Use proactively" / "Use when..." in description; negative scope boundary against sibling agent |
 | CLAUDE.md / AGENTS.md | WHY for non-obvious rules; concrete commands instead of abstractions; load-bearing invariants at edges; negative-scope section ("don't touch X") |
 | SKILL.md descriptions | Explicit trigger clauses with file names / user phrasings; "Do NOT use when..." boundary; bilingual keywords if domain is non-English |
@@ -444,6 +462,7 @@ Method:
 | Non-English prompt / target output (Russian, German, Japanese, etc.) | Load `references/multilingual.md`. Common adds: style anchor in target language; **whitelist** of allowed English terms (NOT blacklist); separate thinking-language from output-language for reasoning tasks; final-position language gate (`<output_language>...`); system-prompt language matches target where the agent is permanently localized |
 | Small local model task prompt (`suites/<name>/system.md`, system prompt for Gemma / Qwen / Ministral / Phi / Llama 2-9B) | Load `references/matrix-small.md`, `references/techniques-small.md`, `references/antipatterns-small.md`, and `references/models/small-local.md` for the target family. Common adds: 4-5 few-shot examples at END mirroring failure modes; Forbidden block of 3-5 named anti-patterns (`techniques-small.md § Anti-defaults block`); EN system unlock for non-EN inputs on 2-3B; per-model override file when one base has divergent failure modes across models. Common strips: abstract principles in body; persona block; native tool calling without few-shot; thinking-on for 2-3B; same-model self-verify |
 | Per-model system override (`suites/<name>/system_<model>.md`) | Family-specific block above the Forbidden: anti-substitution block for Qwen, markdown-tolerance for Mistral / Ministral, "fold into first user turn" for Gemma. Cite `models/small-local.md § <family>` for the exact recommended block |
+| Prompt targeting Claude Opus 5 (or migrated from Opus 4.8) | Treat as a migration audit, and expect **strips to outnumber adds**. (1) Remove self-verification / double-check / verify-via-subagent instructions (`antipatterns.md` #37). (2) Add explicit concision wording — verbosity no longer calibrates and `effort` won't fix it — plus separate length calibration if the agent writes files (`techniques.md §19`). (3) Convert subagent encouragement into boundaries + a spawn cap (`techniques.md §17`). (4) Add a scope-boundary line for narrow tasks (`techniques.md §20`). (5) Remove any "don't think / answer directly" rule (`antipatterns.md` #38). Cite `models/claude.md § Claude Opus 5` |
 | Prompt targeting Moonshot Kimi K2.6 | If swarm work expected but not framed: add explicit "Decompose this into parallel sub-tasks..." line. Otherwise, often complete — Kimi tolerates Claude-style prompts well. Watch for stripped persona / few-shot from a GPT-5.5 port (restore them). Cite `models/kimi.md § Family-wide rules` |
 | Prompt targeting Z.ai GLM-5.2 / 5.1 routed through Claude Code / OpenCode / Cline | (1) On GLM-5.2, set `reasoning_effort` (`high`/`max`) out-of-band as the primary thinking mitigation; the `<reasoning_content>` re-injection block is the fallback for routers that don't forward it (and the primary lever on 5.1 and earlier). (2) Strip identity-pinning if present. (3) Trim total load-bearing AGENTS.md size to <4 KiB — GLM-5.2's 1M lossless context does not lift this ceiling (it's a reasoning-gate effect). Cite `models/glm.md § GLM-5.2` and `§ The Claude-Code-router pattern` |
 | Prompt targeting Alibaba Qwen3.7-Max | (1) Self-verification instruction ("before finishing, review your response..."). (2) Numbered requirements where critical sections must not be skipped. (3) Restore granular constraints (hex colors, sizes, scopes) if stripped during a GPT-5.5 port. Cite `models/qwen-frontier.md § Family-wide rules #2-5` |
@@ -526,6 +545,7 @@ Each line overrides a documented 4.7 default. Pick by which default is hurting t
 - Agent is mostly technical (coding, refactoring, ops) and only occasionally creative → use per-task unlockers (`techniques.md §25` top half) instead. The kernel's tone block will pollute regular technical output.
 - Cross-vendor universal prompt — the tone block is Claude-shaped (warmth needs explicit reinstall specifically on 4.7); Gemini 3 and GPT-5.5 react differently. Keep role re-frame + expansion license + divergence; drop tone.
 - Sonnet 4.6 / Haiku 4.5 targets — Sonnet less literal than 4.7 so lighter touch works; Haiku needs more concrete examples and fewer abstract clauses.
+- **Opus 5 target — install selectively, two blocks now fight the model's defaults.** The kernel was tuned against 4.7's flatness, and Opus 5 no longer has the same defaults. **Expansion license** ("treat the request as minimum scope, raise adjacent moves") pushes in the same direction as Opus 5's own scope-widening — installing both produces an agent that reliably does more than asked. **Tone re-frame** ("prose by default, no bullets") compounds with defaults that already run long. Keep the blocks that still address real 4.7-era gaps — role re-frame, default divergence, default pushback, anti-defaults — and replace expansion license with the scope-boundary snippet (`techniques.md §20`) unless the user explicitly wants an agent that expands the brief. Verify against the symptom the user actually reported, not against the 4.7 default table.
 - Agent has strong existing register that conflicts (formal legal advisor, compliance bot) — adapt tone, keep the rest.
 
 **Prime directive interaction**: if the existing prompt already has lines that look like a kernel attempt — keep them, even if awkwardly worded. They're scar tissue from observed failures. Only add blocks that address gaps; don't rewrite an existing tone line unless the user asks.
@@ -613,7 +633,7 @@ Omit Gap analysis section if the prompt is genuinely complete. Prefer 0-3 items 
 [Before/after snippets OR direct Edit calls, each with a one-line WHY citing matrix.md / matrix-small.md / principles.md / antipatterns-small.md.]
 
 ## Model-specific notes (only if relevant)
-[Things that matter specifically for the target model — Opus 4.7 / Sonnet 4.6 / Haiku 4.5 / GPT-5.5 / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B / etc.]
+[Things that matter specifically for the target model — Opus 5 / Opus 4.7 / Sonnet 5 / Haiku 4.5 / GPT-5.5 / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B / etc.]
 ```
 
 If the user explicitly asked for a rewrite rather than a review, produce the rewritten text directly with a short rationale at the end.

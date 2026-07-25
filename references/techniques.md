@@ -361,11 +361,19 @@ When to spawn subagents (for a main agent):
 Use subagents when tasks can run in parallel, require isolated context, or involve independent workstreams that don't share state. For simple tasks, sequential operations, single-file edits, or tasks needing shared context across steps, work directly rather than delegating.
 ```
 
-When to encourage subagent usage specifically on Opus 4.7 (which spawns fewer by default):
+When to encourage subagent usage specifically on Opus 4.7 / 4.8 (which spawn fewer by default):
 
 ```
 Do not spawn a subagent for work you can complete directly in a single response (e.g. refactoring a function you can already see). Spawn multiple subagents in the same turn when fanning out across items or reading multiple files.
 ```
+
+When to **damp** subagent usage — Fable 5 and Opus 5 spawn readily, and delegation multiplies cost on small tasks. This is the snippet to reach for when porting a prompt from 4.7/4.8, where the encouragement above was correct:
+
+```
+Delegate to a subagent only for large tasks that are genuinely independent and parallelizable, such as a wide multi-file investigation. Do not delegate work you can finish yourself in a handful of tool calls, and do not use subagents to verify or double-check your own work. If one subagent can complete the task, use one rather than several, and keep spawn counts low.
+```
+
+On Opus 5 the "do not use subagents to verify" clause is load-bearing twice over — see §20.
 
 ---
 
@@ -403,6 +411,40 @@ Increase verbosity / get summaries:
 After completing a task that involves tool use, provide a quick summary of the work you've done.
 ```
 
+### Opus 5: verbosity no longer calibrates, and effort is not the lever
+
+Every other current Claude shortens simple answers and lengthens open-ended ones on its own, so the snippets above are a fallback. On Opus 5 they're mandatory: default responses run long, and lowering `effort` cuts thinking volume without reliably shortening the visible answer. Prompt for it, and repeat the reminder near the end of a long system prompt:
+
+```
+Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend most of the response on the main answer. When asked to explain something, give a high-level summary unless an in-depth explanation is specifically requested.
+```
+
+```
+<tone_preference>
+Keep outputs reasonably concise.
+</tone_preference>
+```
+
+**Written files are a separate axis.** Reports and Markdown documents Opus 5 writes to disk run long even when chat output is tuned short:
+
+```
+Match the length of written documents to what the task needs: cover the substance, but do not pad with filler sections, redundant summaries, or boilerplate.
+```
+
+### Narration cadence in agentic sessions
+
+Opus 5 narrates more between tool calls than Opus 4.8; Fable 5 narrates less. Describe the shape rather than a schedule — the same snippet tunes in either direction depending on which model you're correcting:
+
+```
+Before your first tool call, say in one sentence what you're about to do. While working, give a brief update only when you find something important or change direction. When you finish, lead with the outcome: your first sentence should answer "what happened" or "what did you find," with supporting detail after it for readers who want it.
+```
+
+Opus 5 also narrates corrections to its own earlier statements more than prior models — undesirable in user-facing products:
+
+```
+Only correct an earlier statement when the error would change the user's code, conclusions, or decisions. State corrections plainly and briefly, then continue the task. For slips that change nothing for the user, make the fix and move on without noting it.
+```
+
 ---
 
 ## 20. Self-check / verification
@@ -417,6 +459,24 @@ If any criterion fails, revise before returning your answer.
 ```
 
 Reliably catches errors especially in coding and math work. More effective than "think carefully" or "double-check".
+
+### Exception: strip this on Claude Opus 5
+
+**Do not apply this technique when the target is Opus 5.** It verifies its own work unprompted; a carried-over verification instruction compounds with that behavior and adds tokens and latency with no quality gain. Anthropic's guidance is to *remove* such instructions when migrating, not to reword them — including harness scaffolding that adds a separate verification step, and "use a subagent to verify" variants.
+
+The distinction that matters: strip instructions telling the model to **re-check itself** ("double-check your answer", "include a final verification step", "re-verify before responding"). Keep verification that belongs to the **task** — running the test suite, checking a claim against a tool result, validating output against a schema. Those are work, not ritual.
+
+For everything else in the family — Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, Haiku 4.5 — the snippet above stands.
+
+### Opus 5: scope boundary instead
+
+The failure this technique used to cover on narrow tasks (model doing too little) is now the opposite one — Opus 5 can widen scope, adding unrequested steps. The replacement:
+
+```
+Deliver what was asked, at the scope intended. Make routine judgment calls yourself, and check in only when different readings of the request would lead to materially different work. If the request seems mistaken or a better approach exists, say so in a sentence and continue with the task as asked rather than quietly narrowing, widening, or transforming it. Finish the whole task, and stop short of actions that are clearly beyond what was asked.
+```
+
+Keep the "make routine judgment calls yourself" clause — without it the constraint turns the model clarification-happy.
 
 ---
 

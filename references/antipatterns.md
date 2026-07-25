@@ -207,6 +207,8 @@ Prompts that ask for work without defining what "done" looks like.
 
 **Fix**: include the verification path — tests to run, expected outputs, screenshots to compare, a script to invoke, or a checklist to verify against. The single highest-leverage change for agentic coding prompts.
 
+**Opus 5 caveat**: this stays true for *task* verification (what "done" means, which tests prove it). It does **not** license a self-review instruction — see anti-pattern 37.
+
 ---
 
 ## 18. Leaky abstractions across CLAUDE.md and subagents
@@ -447,3 +449,33 @@ A Codex subagent with `model_reasoning_effort: high` is already reasoning deeply
 **Fix**: drop step prescriptions from the body. Keep success criteria, output format, and anti-failure-mode snippets. The reasoning depth is the parameter's job; the body specifies *what* to produce, not *how* to think.
 
 **Inverse case**: a Codex subagent with `model_reasoning_effort: low` or `none` performing a task that genuinely needs reasoning — *that* one benefits from explicit step prompts in the body, because the parameter isn't doing the work. Wording fix in that case is "either raise effort or keep the step structure".
+
+---
+
+## 37. Carried-over self-verification instructions on Claude Opus 5
+
+The Claude-family analog of #36: the model already does the thing the prompt is paying for. Opus 5 catches and fixes its own mistakes without being told to, so instructions like "double-check your answer", "re-verify before responding", "include a final verification step for any non-trivial task", or "use a subagent to verify" compound with its own behavior — producing over-verification that costs tokens and latency with no quality gain.
+
+This one is unusually common because it was *correct advice* on every earlier Claude, so it's sitting in most prompts written before July 2026 (`techniques.md §20`).
+
+**Signs**: target is Opus 5; the prompt or its harness contains a standalone self-review, double-check, or verifier-subagent step that isn't tied to a concrete artifact (a test suite, a schema, a tool result).
+
+**Fix**: remove it rather than soften it — Anthropic's migration guidance is explicit about removal. Keep verification that belongs to the task ("run the test suite and report failures", "check each claim against a tool result from this session"); strip verification that's aimed at the model's own confidence.
+
+**Do not generalize**: on Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, and Haiku 4.5 the instruction still earns its keep. In a universal-Claude prompt, phrase verification as part of the task instead of as a self-review pass.
+
+---
+
+## 38. Telling the model not to think
+
+Lines like "don't overthink this", "answer directly without reasoning", or "do not think before responding" fail in two distinct ways.
+
+As a reasoning-depth control they're inert prose — the lever is the parameter (#31). Worse, on **Opus 5 with thinking disabled** such a rule measurably *increases* leakage of internal XML tags (`<thinking>` and friends) into the visible response. The instruction produces the opposite of its intent.
+
+**Fix**: delete the rule. If the goal was cost or latency, lower `effort` out-of-band — on Opus 5, thinking enabled at `low` effort outperforms thinking disabled at comparable cost. If the goal was clean output from an integration that must keep thinking off, use the general form and **don't name the tags** (naming them is less effective than a blanket rule):
+
+```
+When you use a tool, you may say a brief sentence first. If no tool can express what the user asked for, say so instead of guessing. Do not include internal or system XML tags in your response.
+```
+
+**Related artifact**: with thinking disabled, Opus 5 can also write a tool call into its text output instead of emitting a `tool_use` block. The call never runs, and in agentic loops the leaked text stays in history and affects later turns — most common on tool-heavy workloads like search. The permission-to-speak-first clause above is the documented mitigation.

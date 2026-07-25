@@ -90,9 +90,116 @@ In long tool-heavy sessions Fable 5 can carry working shorthand (arrow chains, i
 
 ---
 
+## Claude Opus 5
+
+Current Opus-tier frontier (July 2026; `claude-opus-5`), and Anthropic's default recommendation for complex agentic coding — Opus 4.8 and 4.7 move to the legacy table. It "performs well out of the box on existing Claude Opus 4.8 prompts", so migration is not a rewrite. But **more Opus-5 deltas invert prior advice than any Claude release so far** — four snippets that were correct on 4.7/4.8 now actively hurt. 1M context (default and max), 128k max output, thinking **on by default**, $5/$25 unchanged. Sources: "Prompting Claude Opus 5", "What's new in Claude Opus 5", migration guide (all official).
+
+### The four inversions — check these first on any migrated prompt
+
+This is the review checklist that matters. Everything else on this page is nuance.
+
+| Prompt content | Correct on Opus 4.7 / 4.8 | On Opus 5 |
+|---|---|---|
+| "Include a final verification step", "double-check your answer", "use a subagent to verify" | recommended (`techniques.md §20`) | **strip** — causes over-verification, burns tokens, no quality gain |
+| "Spawn a subagent only when you must" / encouragement to delegate | encouragement needed (4.8 undertriggers) | **boundaries needed** — delegates readily, cap the spawn count |
+| Verbosity left to the model ("it calibrates to task") | true | **false** — defaults run long, and effort does not shorten them; prompt for concision |
+| "Default to silence between tool calls" | added to quiet 4.8 | still useful — Opus 5 narrates *more* than 4.8 (opposite of Fable 5, which went quiet) |
+
+### Verbosity: the calibration default is gone
+
+Every prior Opus calibrated response length to task complexity. Opus 5 does not — its default user-facing responses "run longer than prior Opus models'". Critically, **`effort` is not the lever**: it controls how much the model thinks, not how much it says, so lowering effort cuts thinking volume without reliably shortening the visible answer. The only fix is wording.
+
+> Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend most of the response on the main answer. When asked to explain something, give a high-level summary unless an in-depth explanation is specifically requested.
+
+In a long system prompt, pair that with a short reminder near the end — the official guide recommends the repetition explicitly:
+
+```
+<tone_preference>
+Keep outputs reasonably concise.
+</tone_preference>
+```
+
+### Written deliverables run long too — a separate axis
+
+Distinct from conversational verbosity: **files the model writes to disk** (reports, Markdown docs, summaries) are longer than on prior models. A prompt can be tuned for concise chat and still produce padded documents. If the product ships Claude-authored files, calibrate them separately:
+
+> Match the length of written documents to what the task needs: cover the substance, but do not pad with filler sections, redundant summaries, or boilerplate.
+
+### Remove verification instructions — do not rewrite them
+
+**The highest-severity Opus-5 finding, and the one most likely to be already present** in any prompt tuned on earlier Claude. Opus 5 verifies its own work unprompted. Carried-over verification instructions "compound with the model's own behavior and add cost without improving results". The official migration guidance is *remove*, not soften — so this is one of the rare cases where the prime directive's "keep the scar tissue" default is overridden by vendor guidance. Same for legacy harness scaffolding that bolts on a separate verification step.
+
+Applies to: "include a final verification step for any non-trivial task", "use a subagent to verify", "double-check your answer", "re-verify before responding".
+
+Does **not** apply to verification the *task* genuinely needs — running tests, checking a claim against a tool result. The target is instructions telling the model to re-check itself.
+
+### Scope expansion — constrain narrow tasks explicitly
+
+Opus 5 can widen a task: adding unrequested steps, applying its own judgment about what the task should have been. For narrow work, state the boundary:
+
+> Deliver what was asked, at the scope intended. Make routine judgment calls yourself, and check in only when different readings of the request would lead to materially different work. If the request seems mistaken or a better approach exists, say so in a sentence and continue with the task as asked rather than quietly narrowing, widening, or transforming it. Finish the whole task, and stop short of actions that are clearly beyond what was asked.
+
+Note the shape: it constrains scope **without** making the model timid or clarification-happy — it explicitly licenses routine judgment calls. Don't replace it with a blunt "do exactly what I said and nothing more".
+
+### Subagent default flips: it delegates readily (like Fable 5)
+
+Opposite of Opus 4.8/4.7, which undertriggered. Opus 5 delegates more readily and coordinates subagent teams well (effective writer-verifier patterns, few overwrite collisions) — but delegation "multiplies cost and time when applied to small tasks". Wording shifts from encouragement to boundaries, plus a hard cap where the harness allows one:
+
+> Delegate to a subagent only for large tasks that are genuinely independent and parallelizable, such as a wide multi-file investigation. Do not delegate work you can finish yourself in a handful of tool calls, and do not use subagents to verify or double-check your own work. If one subagent can complete the task, use one rather than several, and keep spawn counts low.
+
+The "do not use subagents to verify" clause does double duty — it's also part of the over-verification fix above.
+
+### Narration up — opposite direction from Fable 5
+
+Opus 5 "narrates readily during agentic work": it announces what it's about to do, and per-message output in agentic sessions runs longer than prior models'. This is the reverse of the Fable 5 field observation (quiet between tool calls), so **a shared Claude prompt cannot carry one narration setting for both**. Describe the cadence and shape you want:
+
+> Before your first tool call, say in one sentence what you're about to do. While working, give a brief update only when you find something important or change direction. When you finish, lead with the outcome: your first sentence should answer "what happened" or "what did you find," with supporting detail after it for readers who want it.
+
+To tune narration *up* instead, the same lever applies in reverse — and positive examples of the style you want beat instructions about what to avoid.
+
+### Correction narration — new, and visible to end users
+
+Opus 5 narrates corrections to its own earlier statements more than prior models. Harmless in a coding session, bad in a user-facing product. Wording fix:
+
+> Only correct an earlier statement when the error would change the user's code, conclusions, or decisions. State corrections plainly and briefly, then continue the task. For slips that change nothing for the user, make the fix and move on without noting it.
+
+### Code review: coverage language is now *more* load-bearing
+
+Same direction as Opus 4.7 / Sonnet 5, and Opus 5 raises the stakes: it "finds real bugs at a high rate per pass" with few false positives, so a filtering instruction throws away good findings. "Only report high-severity issues" or "be conservative" is followed literally. Accuracy also holds at lower effort, which makes a cheap fast pass plus a thorough later pass a viable harness design.
+
+Use the same coverage snippet as the Opus 4.7 section: report everything, filter in a separate pass.
+
+### Running with thinking disabled — two wording-visible artifacts
+
+Thinking is on by default and can be disabled only at effort `high` or below (`xhigh`/`max` + disabled → 400; API concern). With thinking **off**, two artifacts leak into visible output:
+
+1. **Tool calls written as text** instead of a `tool_use` block — the call never runs, the turn completes normally, and in agentic loops the leaked text stays in history and poisons later turns. Most common on tool-heavy workloads like search.
+2. **Internal XML tags** (`<thinking>` and friends) in the visible response.
+
+Two wording rules follow, both counterintuitive:
+
+- **Strip any rule telling the model not to think or not to reason.** Such instructions *increase* tag leakage. A "don't overthink this, answer directly" line in a system prompt is now a liability.
+- **Don't name the tags.** Instructions that call out thinking tags specifically are less effective than a general prohibition.
+
+The combined mitigation from the official guide:
+
+> When you use a tool, you may say a brief sentence first. If no tool can express what the user asked for, say so instead of guessing. Do not include internal or system XML tags in your response.
+
+The primary mitigation is not wording at all: keep thinking enabled and control cost with lower effort. Thinking on at `low` beats thinking off at comparable cost. Surface that out-of-band.
+
+### Effort, vision, and long context — surface out-of-band
+
+- **Effort**: full ladder `low`…`max`, default `high`. Opus 5 converts effort into quality more reliably than any earlier Opus, and `low`/`medium` are unusually strong — Anthropic recommends using them "liberally" as the primary cost/latency control. Carried-over effort defaults should get a fresh sweep, not a copy. Never paste into the prompt body.
+- **Vision**: re-validate prompt-side vision workarounds tuned for earlier models — they may be unnecessary now. Giving the model crop/verify tools beats adding thinking.
+- **Long context**: 1M tokens default and max; instruction following and tool calling stay consistent across the window, so mid-file rule placement is less risky here than on most models. Don't generalize that to other models in a universal prompt.
+- **Sampling parameters**: the Opus 5 docs don't restate the `temperature`/`top_p`/`top_k` restriction, and it isn't listed among the breaking changes from 4.8 — so the 4.7-era constraint carries over unchanged. *This is inference from the absence of a documented change, not a quoted statement.* Treat as "assume rejected, verify if a prompt depends on it".
+- **Prompt cache minimum** drops to 512 tokens (from 1,024) and **Priority Tier is not supported** — API concerns, mention only if the user is planning a migration.
+
+---
+
 ## Claude Opus 4.7
 
-The most important shifts versus older Claude generations.
+The most important shifts versus older Claude generations. **Claude Opus 4.8 is covered by this section** — Anthropic's 4.8 guidance is a superset of 4.7's with no wording reversals; the 4.8-specific notes are called out inline. Both are now legacy-table models (current Opus tier is Opus 5, above).
 
 ### It's more literal
 
@@ -302,14 +409,14 @@ Avoid over-engineering. Only make changes that are directly requested or clearly
 
 ### Prompting language is similar to Opus 4.8/4.7
 
-Most advice from the Opus 4.8 section applies to Sonnet 4.6 too. The main differences:
+Most advice from the Opus 4.7/4.8 section applies to Sonnet 4.6 too. The main differences:
 
 - Sonnet 4.6 is a bit less literal than Opus 4.8/4.7 — it still generalizes a little more. Explicit scope is still helpful but less critical.
 - Tone is similar to Opus 4.8/4.7 (direct, less validation-forward).
 
-### When to use Sonnet 5 vs Sonnet 4.6 vs Opus 4.8
+### When to use Sonnet 5 vs Sonnet 4.6 vs Opus 5
 
-(A model-choice question that affects wording only indirectly.) **Sonnet 5** is a same-price capability upgrade over 4.6 and the default choice for new Sonnet work — it's an option for workloads needing more than 4.6 without moving to Opus-class. Keep **Sonnet 4.6** only where you specifically need sampling-parameter tuning (Sonnet 5 rejects it) or haven't re-tuned `max_tokens` for the new tokenizer yet. **Opus 4.8** still wins for multi-hour autonomous work, deep research, and large-scale migrations. Between Sonnet 5 and 4.6, Sonnet 5 wins for interactive sessions, high-volume repetitive work, and anything speed-sensitive.
+(A model-choice question that affects wording only indirectly.) **Sonnet 5** is a same-price capability upgrade over 4.6 and the default choice for new Sonnet work — it's an option for workloads needing more than 4.6 without moving to Opus-class. Keep **Sonnet 4.6** only where you specifically need sampling-parameter tuning (Sonnet 5 rejects it) or haven't re-tuned `max_tokens` for the new tokenizer yet. **Opus 5** is now Anthropic's default recommendation for complex agentic coding and wins for multi-hour autonomous work, deep research, large-scale migrations, and code review; it supersedes Opus 4.8 for new work. Between Sonnet 5 and 4.6, Sonnet 5 wins for interactive sessions, high-volume repetitive work, and anything speed-sensitive.
 
 ---
 
@@ -346,13 +453,13 @@ Haiku is the right default when the subagent's job is bounded and read-only: sea
 
 ## Universal / multi-model prompts
 
-Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Fable 5, Opus 4.8 or 4.7, Sonnet 5 or 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
+Most CLAUDE.md and AGENTS.md files — and most skills and subagents used across different sessions — need to work across multiple models. The user of the project may be running Fable 5, Opus 5, Opus 4.8 or 4.7, Sonnet 5 or 4.6, or Haiku 4.5 on any given day, or even configure subagents to use different models. A universal prompt is not the same as a model-specific prompt with the model name stripped out.
 
 ### How to ask the user about model target
 
 When it's unclear, ask one short question:
 
-> "Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
+> "Под какую модель этот промпт — Fable 5, Opus 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"
 
 If they don't know, the safest default is **universal** — write for the lowest-common-denominator behavior across 4.5+ models.
 
@@ -398,8 +505,26 @@ These work consistently across all models. Negative-only rules without alternati
 - "After every 3 tool calls, summarize" → Opus 4.7 already does this; still harmless on Sonnet 4.6 but adds noise.
 - "Be thorough, use X tool when in doubt" → now causes overtriggering on 4.5+. Soften to "Use X when it enhances your understanding".
 - "Show / explain your reasoning in the answer" → if Fable 5 may be in scope, strip: triggers the `reasoning_extraction` refusal classifier (see the Fable 5 section). Harmless-but-unnecessary on Opus/Sonnet/Haiku.
+- **"Verify your work before finishing" / "use a subagent to double-check"** → if Opus 5 may be in scope, strip: causes over-verification (see the Opus 5 section). Still helpful on Haiku and Sonnet 4.6, which is exactly what makes it the hardest universal-Claude call in the family — see rule 9.
+- **"Don't think / don't reason, just answer"** → strip unconditionally. Inert as a reasoning knob everywhere, and on Opus 5 with thinking disabled it actively *increases* internal-XML-tag leakage into visible output.
 
-**7. Don't name a specific model in the prompt unless you have to.**
+**7. Three axes now diverge *inside* the Claude family — don't write one-directional guidance.**
+
+Universal wording has to survive models that want opposite things:
+
+| Axis | Fable 5 | Opus 5 | Opus 4.8 / 4.7 | Sonnet 4.6 / Haiku 4.5 |
+|---|---|---|---|---|
+| Self-verification instruction | neutral | **hurts — strip** | helps | helps |
+| Subagent delegation | spawns readily | spawns readily | undertriggers | mid |
+| Narration between tool calls | quiet | **narrates more** | moderate | moderate |
+
+Safe universal phrasings state the *condition*, not the direction — they read as a boundary on the eager models and as permission on the reluctant ones:
+
+> Delegate independent, sizeable subtasks; work directly when you can finish in a handful of tool calls.
+
+> Verification belongs to the task, not the ritual: run the tests and check claims against tool results, but don't add a separate self-review pass.
+
+**8. Don't name a specific model in the prompt unless you have to.**
 
 Naming Claude in a prompt that might run on any model locks you to that model. Instead of "You are Claude Opus 4.8", use "You are a helpful coding assistant". Reserve the model name for cases where identity matters (e.g. the user will see the model string).
 
@@ -411,9 +536,11 @@ If a prompt really needs different behavior per model, don't try to cram all var
 
 Example:
 
-> Additional: if you have adaptive thinking or extended reasoning available, use it to verify your answer against the success criteria before responding. If not, quickly re-read the question and your answer one more time before finalizing.
+> Additional: if you have adaptive thinking or extended reasoning available, use it to reason through the success criteria before responding. If not, quickly re-read the question and your answer one more time before finalizing.
 
 This lets stronger models take advantage of their features without breaking weaker ones.
+
+Note the wording of that example: it says *reason through the criteria*, not *verify your answer*. On a set that includes Opus 5, a re-check instruction gated behind "if you have extended reasoning" lands on exactly the model that needs it least. Aim the conditional clause at weaker models, not stronger ones.
 
 ### Universal prompt checklist
 
@@ -421,14 +548,17 @@ Before calling a prompt "universal", verify:
 
 - [ ] No hard dependency on model-specific features (adaptive thinking, high-res vision, `xhigh` effort, etc.)
 - [ ] Specificity high enough for Haiku 4.5 to follow
-- [ ] Explicit scope stated for Opus 4.8/4.7 and Sonnet 5 literalism (Sonnet 5 is now Opus-literal, not 4.6-loose)
+- [ ] Explicit scope stated for Opus 5 / 4.8 / 4.7 and Sonnet 5 literalism (Sonnet 5 is now Opus-literal, not 4.6-loose)
 - [ ] Overengineering/over-exploration guards for Sonnet 4.6
 - [ ] Emphasis used sparingly (no "CRITICAL:" stack)
 - [ ] No model name hardcoded unless required
 - [ ] Uses XML/headings for structure, not emphasis, to signal important parts
-- [ ] If thinking-related: phrased as "consider" / "verify" / "reason through" rather than "think harder"
+- [ ] If thinking-related: phrased as "consider" / "reason through" rather than "think harder"
 - [ ] No "echo / show / explain your reasoning" instructions (refusal trigger if Fable 5 is in scope)
-- [ ] No `temperature` / `top_p` / `top_k` tuning assumed if Opus 4.7+/4.8, Fable 5, or Sonnet 5 is in scope (non-default returns 400) — steer tone/variety with wording instead
+- [ ] No standalone self-verification / double-check instruction if Opus 5 is in scope (over-verification); phrase verification as part of the task instead
+- [ ] Subagent guidance stated as a condition, not a direction — the family default now diverges (Fable 5 and Opus 5 spawn readily, Opus 4.8/4.7 undertrigger)
+- [ ] Length is prompted for, not assumed — Opus 5 does not calibrate verbosity to task like the rest of the family, and effort won't shorten it
+- [ ] No `temperature` / `top_p` / `top_k` tuning assumed if Opus 4.7+/4.8/5, Fable 5, or Sonnet 5 is in scope (non-default returns 400) — steer tone/variety with wording instead
 
 ---
 
@@ -438,7 +568,7 @@ These apply regardless of which model you're targeting:
 
 ### Sampling parameters are now fixed on the newest Claude models
 
-`temperature`, `top_p`, and `top_k` at non-default values return a 400 error on **Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** (the constraint began on Opus 4.7 and reached Sonnet-class with Sonnet 5). Sonnet 4.6 and Haiku 4.5 still accept them. Practical consequences for wording:
+`temperature`, `top_p`, and `top_k` at non-default values return a 400 error on **Fable 5, Opus 4.8, Opus 4.7, and Sonnet 5** (the constraint began on Opus 4.7 and reached Sonnet-class with Sonnet 5). **Opus 5 carries it over** — the constraint isn't restated in its docs and isn't listed among its breaking changes from 4.8, so treat it as unchanged (inference from absence, not a quoted statement). Sonnet 4.6 and Haiku 4.5 still accept them. Practical consequences for wording:
 
 - Don't design a prompt that relies on lowering temperature for determinism or raising it for variety on these models — the lever is gone. Steer tone and variety through the system prompt instead.
 - For design/creative variety across runs, the "propose N options, then implement the chosen one" pattern replaces temperature (see the Sonnet 5 and Opus 4.7 design sections).

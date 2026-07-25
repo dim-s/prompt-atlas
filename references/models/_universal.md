@@ -30,7 +30,7 @@ Most production CLAUDE.md / AGENTS.md fall into one of these — pure single-mod
 
 If unclear, one short question:
 
-> *"Под какую модель этот промпт — Fable 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
+> *"Под какую модель этот промпт — Fable 5, Opus 5, Opus 4.8 / 4.7, Sonnet 5 / 4.6, Haiku 4.5 или универсальный (должен работать на всех сразу)?"*
 
 Default to **universal** when in doubt — write for lowest-common-denominator behavior across 4.5+ models.
 
@@ -43,10 +43,12 @@ If Haiku 4.5 is in scope, be MORE specific — Haiku handles vague prompts worse
 **2. Avoid leaning on single-model features.**
 
 - Don't assume Haiku will do deep multi-step reasoning — break complex tasks into concrete steps.
-- **State scope explicitly** — Opus 4.7/4.8 AND now Sonnet 5 are literal and won't generalize an instruction across items. Only Sonnet 4.6 / Haiku still generalize a little; write for the literal majority.
+- **State scope explicitly** — Opus 5 / 4.8 / 4.7 AND now Sonnet 5 are literal and won't generalize an instruction across items. Only Sonnet 4.6 / Haiku still generalize a little; write for the literal majority. On Opus 5 state the *upper* boundary too — it can widen a narrow task rather than only under-applying.
 - Don't write tone instructions assuming one model's default — "be less formal" reads differently on Opus 4.7 vs Haiku.
-- **Don't rely on `temperature` for determinism or variety** — non-default `temperature`/`top_p`/`top_k` returns a 400 on Fable 5 / Opus 4.8 / 4.7 / Sonnet 5 (only Sonnet 4.6 / Haiku still accept it). Steer tone/variety with wording; for design variety use "propose N directions, then implement the chosen one."
-- Don't write subagent guidance assuming one direction — the default **diverges inside the family**: Fable 5 delegates readily, Opus 4.8/4.7 undertrigger, Sonnet 5 reaches for tools/self-verification readily but has no documented subagent-spawn flip. Universal wording states *when delegation is appropriate* ("delegate independent subtasks; work directly for single-file reads") — that reads as a boundary on Fable 5 and as encouragement on Opus.
+- **Don't rely on `temperature` for determinism or variety** — non-default `temperature`/`top_p`/`top_k` returns a 400 on Fable 5 / Opus 4.8 / 4.7 / Sonnet 5, and Opus 5 carries the constraint over (only Sonnet 4.6 / Haiku still accept it). Steer tone/variety with wording; for design variety use "propose N directions, then implement the chosen one."
+- Don't write subagent guidance assuming one direction — the default **diverges inside the family**: Fable 5 and Opus 5 delegate readily, Opus 4.8/4.7 undertrigger, Sonnet 5 reaches for tools/self-verification readily but has no documented subagent-spawn flip. Universal wording states *when delegation is appropriate* ("delegate independent subtasks; work directly for single-file reads") — that reads as a boundary on the eager models and as encouragement on 4.7/4.8.
+- **Don't add a self-verification pass** — it helps on Fable 5 / Opus 4.8 / 4.7 / Sonnet / Haiku and *hurts* on Opus 5 (over-verification; `models/claude.md § Claude Opus 5`). Universal wording ties verification to the task, not to the model's confidence: "run the tests and check claims against tool results" survives the whole family; "double-check your answer before responding" does not.
+- **Don't assume verbosity self-calibrates** — every Claude except Opus 5 shortens simple answers on its own. If output length matters, prompt for it: that's a no-op on the calibrating models and the only working lever on Opus 5 (`effort` does not shorten its visible output).
 
 **3. Be moderate with emphasis.**
 
@@ -77,6 +79,8 @@ Negative-only rules without alternatives and unexplained mandates are fragile.
 - Old "avoid AI slop" long frontend prompts → trim for 4.7
 - "After every 3 tool calls, summarize" → 4.7 already does this; harmless on 4.6 but adds noise
 - "Be thorough, use X tool when in doubt" → causes overtriggering on 4.5+; soften to "Use X when it enhances your understanding"
+- "Verify / double-check your work before finishing" → strip if Opus 5 is in scope (over-verification); rephrase as task verification
+- "Don't think / answer directly without reasoning" → strip unconditionally; inert everywhere, and on Opus 5 with thinking off it increases internal-tag leakage
 
 **7. Don't name a specific model in the prompt.**
 
@@ -92,9 +96,11 @@ Baseline for the weakest model + an "additional guidance" section that cites str
 
 - [ ] No hard dependency on model-specific features (adaptive thinking, high-res vision, `xhigh` effort)
 - [ ] Specificity high enough for Haiku 4.5 to follow
-- [ ] Explicit scope stated for Opus 4.7/4.8 and Sonnet 5 literalism (Sonnet 5 no longer generalizes like 4.6)
+- [ ] Explicit scope stated for Opus 5 / 4.7 / 4.8 and Sonnet 5 literalism (Sonnet 5 no longer generalizes like 4.6; Opus 5 also needs the upper bound)
 - [ ] Overengineering / over-exploration guards for Sonnet 4.6
-- [ ] No `temperature` / `top_p` / `top_k` tuning assumed (non-default → 400 on Fable 5 / Opus 4.7+/4.8 / Sonnet 5)
+- [ ] No standalone self-verification pass if Opus 5 is in scope — verification phrased as task work
+- [ ] Output length prompted for, not assumed (Opus 5 doesn't calibrate it)
+- [ ] No `temperature` / `top_p` / `top_k` tuning assumed (non-default → 400 on Fable 5 / Opus 4.7+/4.8/5 / Sonnet 5)
 - [ ] Emphasis used sparingly (no "CRITICAL:" stack)
 - [ ] No model name hardcoded
 - [ ] Structure (XML/headings) used to signal important parts, not emphasis
