@@ -468,9 +468,11 @@ This one is unusually common because it was *correct advice* on every earlier Cl
 
 ## 38. Telling the model not to think
 
-Lines like "don't overthink this", "answer directly without reasoning", or "do not think before responding" fail in two distinct ways.
+Lines like "don't overthink this", "answer directly without reasoning", or "do not think before responding" fail in three distinct ways.
 
 As a reasoning-depth control they're inert prose — the lever is the parameter (#31). Worse, on **Opus 5 with thinking disabled** such a rule measurably *increases* leakage of internal XML tags (`<thinking>` and friends) into the visible response. The instruction produces the opposite of its intent.
+
+And on **Moonshot Kimi K3 and K2.7-Code it cannot be honored at all**: K3 *"always has thinking enabled"* (depth via `reasoning effort`), and K2.7-Code *"forces thinking and preserve_thinking as True"* — there is no disabled mode to reach. The prompt asks for a state the model cannot enter, which is worse than inert: it's a visible mismatch between the instruction and every response the model produces. This is the first family in the atlas where the off-switch simply doesn't exist, and it's a reason to strip the pattern unconditionally rather than per-target.
 
 **Fix**: delete the rule. If the goal was cost or latency, lower `effort` out-of-band — on Opus 5, thinking enabled at `low` effort outperforms thinking disabled at comparable cost. If the goal was clean output from an integration that must keep thinking off, use the general form and **don't name the tags** (naming them is less effective than a blanket rule):
 

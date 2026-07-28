@@ -111,13 +111,21 @@ Baseline for the weakest model + an "additional guidance" section that cites str
 
 ## Universal GPT-5.x
 
-A prompt that must work across two or more 5.x versions (e.g., a Codex agent prompt that runs on 5.3-codex *and* 5.5).
+A prompt that must work across two or more 5.x versions (e.g., a Codex agent prompt that runs on 5.3-codex *and* 5.6).
 
 ### Rules
 
 **1. Write for the most literal version in scope.**
 
-If 5.5 is in scope, default to outcome-first phrasing — earlier versions tolerate it; 5.5 punishes the alternative.
+If 5.5 or 5.6 is in scope, default to outcome-first phrasing — earlier versions tolerate it; 5.5 and 5.6 punish the alternative.
+
+**1a. Say each thing once — 5.6 charges for repetition.**
+
+OpenAI measured leaner system prompts at ~10–15% higher eval scores with 41–66% fewer tokens on 5.6. Belt-and-braces restatement that older versions merely ignored is now a cost. One statement, in the section where it belongs.
+
+**1b. Length is a task requirement, not a disposition.**
+
+5.6 is terser by default than 5.5, so a global "be concise" written for 5.5 overshoots, and a global "be thorough" written for 5.6 bloats the older versions. "At most 5 bullets" reads identically on every version; `text.verbosity` carries the default.
 
 **2. Don't lean on 5.5-only features.**
 
@@ -141,7 +149,9 @@ Wording-based reasoning prompts ("think step by step") work inconsistently acros
 
 - [ ] No hard dependency on 5.5-only context length (>200K) or 5.5-only hallucination rate
 - [ ] Output contract is in `json_schema` if stack supports it; otherwise format described once, not via few-shot
-- [ ] Reasoning depth configured via `reasoning_effort`, not "think step by step" in prose
+- [ ] Reasoning depth configured via `reasoning_effort`, not "think step by step" in prose (`max` exists only from 5.6 — don't pin it in a cross-version stack)
+- [ ] No instruction restated across sections (measured cost on 5.6)
+- [ ] Length expressed as a task requirement, not a global "be brief" / "be thorough"
 - [ ] No 5.4-era process-step prescription that 5.5 would treat as noise (or it's tagged "step suggestions, not requirements")
 - [ ] No model name hardcoded
 - [ ] Tool-specific guidance inside tool descriptions, not system prompt
@@ -151,17 +161,19 @@ Wording-based reasoning prompts ("think step by step") work inconsistently acros
 
 ## Universal Gemini
 
-A prompt that works across Gemini 3.1 Pro + 3 Flash + 3.1 Flash-Lite.
+A prompt that works across Gemini 3.1 Pro + 3.6 / 3.5 / 3 Flash + 3.5 / 3.1 Flash-Lite.
 
 ### Rules
 
 **1. Concise wording is critical** — Flash-Lite needs it most for latency.
 
-**2. No CoT scaffolding** — all three Gemini 3.x variants internalize reasoning via `thinking_level`.
+**2. No CoT scaffolding** — every Gemini 3.x variant internalizes reasoning via `thinking_level`.
 
-**3. Identity-based persona helps all three** — add a 1-line "You are a [role]" — measurable boost.
+**3. Identity-based persona helps them all** — add a 1-line "You are a [role]" — measurable boost.
 
-**4. Don't mention temperature in the body** — all three default to 1.0 and Google explicitly recommends not lowering.
+**4. Don't mention sampling parameters in the body** — `temperature`, `top_p` and `top_k` are **deprecated API-wide as of 2026-07-21**; variety comes from "propose N directions", not from sampling.
+
+**4a. Don't set a global length disposition** — 3.6 Flash is ~17% terser than 3.5 Flash. A "be brief" line tuned on an older Flash overcorrects on the newer one; state length per task instead.
 
 **5. Pick XML or Markdown, not both** — stricter than Claude/GPT.
 
@@ -177,7 +189,8 @@ A prompt that works across Gemini 3.1 Pro + 3 Flash + 3.1 Flash-Lite.
 
 - [ ] Concise (Flash-Lite-friendly)
 - [ ] No CoT scaffolding
-- [ ] No temperature in body
+- [ ] No sampling parameters in body (and none relied on in the surrounding code — deprecated 2026-07-21)
+- [ ] No global length disposition (3.6 Flash is terser than 3.5)
 - [ ] Identity-based persona present
 - [ ] XML or Markdown — not both
 - [ ] Negative constraints at end
@@ -190,9 +203,11 @@ A prompt that works across Gemini 3.1 Pro + 3 Flash + 3.1 Flash-Lite.
 
 ## Universal Kimi
 
-A prompt that works across Kimi K2.6 and (still-deployed) K2.5. K2 itself retires May 25, 2026 — if you see K2 in scope, the prompt is due for migration, not universalization.
+A prompt that works across K3, K2.7-Code, K2.6 and (still-deployed) K2.5. K2 itself retired May 25, 2026 — if you see K2 in scope, the prompt is due for migration, not universalization.
 
 ### Rules
+
+**0. The thinking toggle is not universal any more.** K2.5/K2.6 have Thinking *and* Instant modes; **K3 always thinks** (depth via `reasoning effort`); **K2.7-Code cannot stop thinking at all**. A cross-version Kimi prompt must not assume a fast non-reasoning path, and must not contain "answer immediately without reasoning" — inert on K2.x, impossible on the newer two. Multi-turn flows must round-trip reasoning content on K3.
 
 **1. Write for K2.6's multimodal default.** Don't write "this is a text-only model" assumptions — K2.6 supports vision (MoonViT). K2.5 was text-only; assumption that worked on K2.5 will be wrong on K2.6.
 
@@ -211,7 +226,9 @@ A prompt that works across Kimi K2.6 and (still-deployed) K2.5. K2 itself retire
 - [ ] Functional persona present (helps both K2.5 and K2.6)
 - [ ] No temperature hardcoded in body
 - [ ] Tool calling described as standard OpenAI tools format
-- [ ] No "think step by step" in body — use `extra_body.thinking` parameter
+- [ ] No "think step by step" in body — use the version's own knob (`extra_body.thinking` on K2.x, `reasoning effort` on K3)
+- [ ] No "answer without reasoning" / Instant-mode assumption if K3 or K2.7-Code is in scope
+- [ ] Multi-turn history round-trips the complete assistant message (K3 requirement)
 
 ---
 
@@ -322,7 +339,9 @@ The hardest classic case: an `AGENTS.md` or system prompt meant to work on **two
 | Subagent spawning | Opus 4.7 spawns fewer | Codex spawns what's defined | Spawns what's defined; supports remote subagents | Be explicit when you want delegation |
 | Output format | Prose constraints work | Push to `json_schema` | Push to `response_json_schema` | Prefer schema for all three |
 | Aggressive emphasis | Overuse → overtriggering 4.5+ | Mostly inert noise | Inert noise | Reserve ALL-CAPS / "CRITICAL:" for safety invariants only |
-| **Temperature in body** | **Fable 5 / Opus 4.7+/4.8 / Sonnet 5: non-default → 400; Sonnet 4.6 / Haiku still tunable** | Tunable; mentioning OK | **Don't tune (1.0 fixed); don't mention** | Don't reference temperature in body — the newest Claude and all Gemini reject it; let API config handle per vendor |
+| **Sampling params in body** | **Fable 5 / Opus 4.7+/4.8 / Sonnet 5: non-default → 400; Sonnet 4.6 / Haiku still tunable** | Tunable; mentioning OK | **Deprecated API-wide 2026-07-21** (`temperature`, `top_p`, `top_k`) | Don't reference sampling anywhere, and don't build variety on it — two of three vendors have removed the lever. Use "propose N directions" |
+| **Response length default** | **Opus 5 runs long and does not calibrate** (effort won't shorten it) — concision must be prompted | **5.6 is terser than 5.5** — a carried-over "be brief" overcorrects | 3.6 Flash ~17% terser than 3.5 Flash | ⚠️ **Live contradiction.** State length as a task requirement ("at most 5 bullets", "one paragraph per finding"); never as a global disposition |
+| Instruction repetition | Tolerated; a short concision reminder near the end is recommended on Opus 5 | **Measured cost on 5.6** (leaner prompts: +10–15% score, −41–66% tokens) | Concise input is a family rule; verbose prompts get over-analyzed | Say each thing once, in its own section; if an echo is needed for Opus 5, keep it to one short line |
 | **Negative constraint position** | Anywhere | Anywhere | **At end (drops early negatives)** | Place at end of file (strictest wins) |
 | **XML + Markdown mixing** | Tolerated | Tolerated | **Pick one** | Pick one consistently (strictest wins) |
 | **Blanket "do not" instructions** | Tolerated | Tolerated | **Over-indexes — fails basic logic** | Replace with positive scoped instructions ("Use the provided context for deductions") |
@@ -385,9 +404,13 @@ OpenAI's strong recommendation; Anthropic and Google both tolerate either. Pick 
 
 "When using Opus 4.7, do X" / "GPT-5.5 should Y" / "On Gemini 3 Pro, Z" defeats cross-vendor purpose. Functional descriptions only.
 
-**6. Don't reference temperature in body.**
+**6. Don't reference sampling parameters in body — and don't design around them.**
 
-Gemini requires 1.0, and the newest Claude models (Fable 5 / Opus 4.7+/4.8 / Sonnet 5) reject non-default sampling with a 400; only GPT-5.x and older Claude (Sonnet 4.6 / Haiku) still tune. Don't write "use temperature 0.3" in any cross-vendor body — let each vendor's API config handle it, and steer variety through wording (e.g. "propose N directions").
+Google **deprecated** `temperature` / `top_p` / `top_k` API-wide on 2026-07-21; the newest Claude models (Fable 5 / Opus 4.7+/4.8 / Sonnet 5) reject non-default sampling with a 400. Only GPT-5.x and older Claude (Sonnet 4.6 / Haiku) still tune. Don't write "use temperature 0.3" in any cross-vendor body, and don't build a prompt whose variety depends on the knob — steer it through wording ("propose N directions, then implement the chosen one").
+
+**6a. Don't set a global length disposition.**
+
+The vendors' defaults now point in **opposite** directions: Opus 5 runs long and won't calibrate, while GPT-5.6 and Gemini 3.6 Flash are terser than the versions they replace. "Be concise" starves the newer GPT/Gemini models; "be thorough" bloats them and does nothing useful for Opus 5. Express length where it's actually needed, as a requirement of the deliverable.
 
 **7. Place negative constraints at the end of the file.**
 
@@ -403,7 +426,8 @@ Gemini over-indexes on "do not infer" / "do not guess" and may fail basic logic.
 - [ ] No model-name pinning
 - [ ] Persona resolved per persona-problem section above (anchors / drop / conditional)
 - [ ] Tool-specific guidance migrated into tool descriptions
-- [ ] No temperature mentioned in body (leave to API config)
+- [ ] No sampling parameters mentioned in body, and no behavior depending on them
+- [ ] Length stated as a task requirement, not as a global disposition
 - [ ] Anti-hallucination snippets explicit
 - [ ] Total file size well under 32 KiB (target <8 KiB load-bearing)
 - [ ] Aggressive emphasis used on safety invariants only
@@ -420,7 +444,7 @@ When checklists conflict, the **three-vendor opposite-default table** above deci
 
 ## Cross-vendor (4+)
 
-A single prompt meant to run on any mix of four or more current frontier vendors — Claude, GPT-5.x, Gemini 3.x, Kimi K2.6, Z.ai GLM, frontier Qwen, DeepSeek V4. This is the hardest case in the skill and **usually a design mistake to attempt as a single universal artifact.**
+A single prompt meant to run on any mix of four or more current frontier vendors — Claude, GPT-5.x, Gemini 3.x, Kimi K3, Z.ai GLM, frontier Qwen, DeepSeek V4, xAI Grok, Mistral frontier, Meta Muse Spark. This is the hardest case in the skill and **usually a design mistake to attempt as a single universal artifact.**
 
 ### Why "universal across everything" is usually a trap
 
@@ -464,7 +488,10 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Self-verification | **explicit "review for coverage" instruction present** | Qwen (load-bearing) |
 | Reasoning depth | **API knob only, no prose CoT** | All frontier vendors (universal) |
 | Output format | **`json_schema` / `json_object` API + JSON demanded in prose** | DeepSeek (both required) |
-| Temperature | **no mention in body** | Gemini (1.0 fixed) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) |
+| Sampling params | **no mention in body, no behavior depending on them** | Gemini (deprecated 2026-07-21) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) |
+| Response length | **stated per deliverable ("at most 5 bullets"), never as a global disposition** | GPT-5.6 / Gemini 3.6 Flash (already terse) vs Opus 5 (runs long, won't calibrate) — the two directions cancel |
+| Instruction repetition | **each rule stated once** | GPT-5.6 (measured token/score cost) |
+| Reasoning off-switch | **never write "answer without reasoning"** | Kimi K2.7-Code / K3 (thinking forced on) + Opus 5 (increases tag leakage) |
 | Aggressive emphasis | **safety invariants only** | Claude 4.5+ (overtriggers) |
 | Negative constraints | **at end of file, positive-scoped phrasing preferred** | Gemini (drops early; over-indexes on blanket negatives) |
 | XML + Markdown | **markdown skeleton, XML inline only** | Gemini (strict) |
@@ -485,7 +512,10 @@ Following all of these produces a prompt that's safe on every current frontier v
 - [ ] Persona is functional-role only, no identity pinning, no credential naming
 - [ ] No CoT scaffolding; reasoning lever is API knob
 - [ ] Output contract is `json_schema`/`json_object` AND JSON demanded in prose
-- [ ] No temperature in body
+- [ ] No sampling parameters in body; variety comes from "propose N directions"
+- [ ] Length stated per deliverable; no global "be brief" / "be thorough"
+- [ ] Each rule stated once (no cross-section restatement)
+- [ ] No "answer without reasoning" anywhere in the body
 - [ ] Negative constraints at end, positive-scoped
 - [ ] Markdown skeleton, XML inline only
 - [ ] Tool guidance in tool descriptions

@@ -8,19 +8,20 @@ License: [CC-BY-SA 4.0](./LICENSE). Built on the methodology of [matrix-citation
 
 ## Coverage
 
-### Class 1 — Frontier agent-facing prompts (9 vendor families)
+### Class 1 — Frontier agent-facing prompts (10 vendor families)
 
 | Vendor | Models covered |
 |---|---|
 | **Anthropic Claude** | **Fable 5** (Jun 2026, tier above Opus) / **Opus 5** (Jul 2026) / Opus 4.8 / 4.7 / **Sonnet 5** (Jun 2026) / Sonnet 4.6 / Haiku 4.5 + legacy 4.6 |
-| **OpenAI GPT-5.x** in Codex CLI | GPT-5.5 (+ Instant variant) / 5.4 / 5.3 / 5.3-codex / 5.2 / 5.1 |
-| **Google Gemini 3.x** in Gemini CLI | 3.1 Pro / 3 Flash / **3.5 Flash** (May 2026) / 3.1 Flash-Lite + 2.5 legacy |
-| **Moonshot Kimi** | K2.6 / K2.5 / K2 (retires 2026-05-25) |
+| **OpenAI GPT-5.x** in Codex CLI | **GPT-5.6 Sol / Terra / Luna** (Jul 2026) / 5.5 (+ Instant) / 5.4 / 5.3 / 5.3-codex / 5.2 / 5.1 |
+| **Google Gemini 3.x** in Gemini CLI | 3.1 Pro / **3.6 Flash** (Jul 2026) / 3.5 Flash / 3 Flash / **3.5 Flash-Lite** (Jul 2026) / 3.1 Flash-Lite + 2.5 legacy |
+| **Moonshot Kimi** | **K3** (Jul 2026) / **K2.7-Code** (Jun 2026) / K2.6 / K2.5 (K2 retired 2026-05-25) |
 | **Z.ai GLM** | **GLM-5.2** (Jun 2026) / GLM-5.1 / GLM-5 / GLM-4.6 |
 | **Alibaba Qwen frontier** | Qwen3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview / 3-Max-Thinking |
-| **DeepSeek** | V4-Pro / V4-Flash / V3.2 / R1 |
-| **xAI Grok** | Grok 4.3 (Grok 5 pending Q2 2026) |
-| **Mistral frontier** | Mistral Large 3 / Mistral Small 4 / Ministral 3-8B+ reasoning |
+| **DeepSeek** | V4-Pro / V4-Flash / V3.2 / R1 (legacy `deepseek-chat` / `deepseek-reasoner` aliases retired 2026-07-24) |
+| **xAI Grok** | **Grok 4.5** (Jul 2026, 500K context) / Grok 4.3 (1M context) — Grok 5 still unshipped |
+| **Mistral frontier** | Mistral Large 3 / **Mistral Medium 3.5** (Apr 2026) / Mistral Small 4 / Ministral 3-8B+ reasoning |
+| **Meta Muse Spark** | **Muse Spark 1.1** (Jul 2026, public-preview Meta Model API) — facts documented, behavioral axes `?` |
 
 Covers CLAUDE.md, AGENTS.md (Claude Code / Codex / Gemini variants), GEMINI.md, AGENTS.override.md, vendor-specific overrides (`AGENTS.deepseek.md`, `AGENTS.glm.md`, etc.), SKILL.md, subagent definitions, slash commands, ad-hoc prompts including headless `codex exec` / Gemini CLI invocations.
 
@@ -141,7 +142,7 @@ prompt-atlas/
     ├── principles.md              universal principles — applies to BOTH classes
     │
     ├── # Class 1 — Frontier agent-facing
-    ├── matrix.md                  frontier model × axis (9 vendors × 5 tables)
+    ├── matrix.md                  frontier model × axis (10 vendors × 5 tables)
     ├── artifacts.md               per-artifact checklists — CLAUDE.md / AGENTS.md / SKILL.md /
     │                              subagent / slash-command / ad-hoc
     ├── techniques.md              frontier wording snippets — outcome-first, output contracts,
@@ -157,14 +158,15 @@ prompt-atlas/
     │
     ├── models/                    vendor-specific deltas
     │   ├── claude.md              Fable 5 / Opus 5 / Opus 4.8 / 4.7 / Sonnet 5 / Sonnet 4.6 / Haiku 4.5
-    │   ├── gpt.md                 GPT-5.1 → 5.5 + Instant variant
-    │   ├── gemini.md              Gemini 3.1 Pro / Flash / 3.5 Flash / Flash-Lite
-    │   ├── kimi.md                Kimi K2.6 / K2.5 / K2 — Agent Swarms protocol
+    │   ├── gpt.md                 GPT-5.1 → 5.6 (Sol / Terra / Luna) + 5.5 Instant
+    │   ├── gemini.md              Gemini 3.1 Pro / 3.6 / 3.5 / 3 Flash / 3.5 / 3.1 Flash-Lite
+    │   ├── kimi.md                Kimi K3 / K2.7-Code / K2.6 / K2.5 — forced thinking, Agent Swarms
     │   ├── glm.md                 Z.ai GLM-5.2 / 5.1 / 5 / 4.6 — reasoning_effort + Claude-Code-router pattern
     │   ├── qwen-frontier.md       Qwen3.7-Max / 3.6 Plus / Max-Preview / 3-Max-Thinking
     │   ├── deepseek.md            V4-Pro / V4-Flash / V3.2 — user-prompt-priority pattern
-    │   ├── grok.md                xAI Grok 4.3
-    │   ├── mistral-frontier.md    Mistral Large 3 / Small 4 / Ministral 3-8B+
+    │   ├── grok.md                xAI Grok 4.5 / 4.3 — the 1M → 500K window regression
+    │   ├── mistral-frontier.md    Mistral Large 3 / Medium 3.5 / Small 4 / Ministral 3-8B+
+    │   ├── meta.md                Meta Muse Spark 1.1 — Meta Model API; most axes `?` by design
     │   ├── _universal.md          single-vendor universals + cross-vendor (3-way and 4+)
     │   └── small-local.md         Gemma 3/4, small Qwen, small Ministral, Phi-4-mini, Llama 3.2,
     │                              fine-tunes saiga / T-lite / Hermes / HORROR-Imatrix

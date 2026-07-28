@@ -8,7 +8,7 @@ When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via file
 
 ## Family-wide rules (apply to all Gemini 3.x versions)
 
-These hold across 3.0 → 3.1. Version-specific notes follow below.
+These hold across 3.0 → 3.6. Version-specific notes follow below.
 
 ### 1. Reasoning model — concise prompts win
 
@@ -26,14 +26,21 @@ When porting a 2.5-tuned prompt: **strip CoT scaffolding entirely**. Don't leave
 
 When reviewing a Gemini 3 prompt that says *"think step by step"*, *"first do X, then Y, then Z"*, *"break this down"* → flag as `[IMPROVE]` and recommend deletion + raise `thinking_level` if reasoning is shallow.
 
-### 3. Temperature — DON'T tune (Google's strong recommendation)
+### 3. Sampling parameters — deprecated as of 2026-07-21 (was: don't tune)
+
+Google's long-standing recommendation was to leave temperature alone:
 
 > *"For Gemini 3, we strongly recommend keeping the temperature parameter at its default value of 1.0. Changing the temperature (setting it below 1.0) may lead to unexpected behavior, looping, or degraded performance, particularly with complex mathematical or reasoning tasks."*
 
-This is **opposite to Claude and GPT-5.x** where temperature is freely tunable. When reviewing a Gemini prompt:
+**As of July 21, 2026 the recommendation became a deprecation.** The Gemini API changelog for that date: *"The sampling parameters `temperature`, `top_p` and `top_k` are now deprecated."* Steering tone, determinism and variety through sampling is no longer an option on this vendor — only through wording.
+
+When reviewing a Gemini prompt:
 - If the prompt body mentions temperature → flag for removal (don't reference API params in prompt body anyway)
-- If the surrounding code sets `temperature < 1.0` → flag as a non-wording finding ("setting fix, not wording change")
-- For cross-vendor `AGENTS.md`: don't reference temperature at all; let each vendor's API config handle it
+- If the surrounding code sets `temperature`, `top_p` or `top_k` → flag as a non-wording finding, and note it's now deprecated, not merely inadvisable
+- For variety across runs (design work, naming, creative options), use the **propose-N-directions** pattern instead of sampling — the same replacement the sampling-locked Claude models needed
+- For cross-vendor `AGENTS.md`: don't reference sampling parameters at all; let each vendor's API config handle what it still supports
+
+**This is now a cross-vendor trend, not a Gemini quirk.** Anthropic got there first (non-default `temperature`/`top_p`/`top_k` → 400 from Opus 4.7 onward, and on Sonnet 5), Google followed in July 2026. Only GPT-5.x and the older Claude models (Sonnet 4.6 / Haiku 4.5) still tune freely. The safe universal rule is now the strict one: **treat sampling as unavailable and steer with words.** See `_universal.md § Cross-vendor`.
 
 ### 4. Identity-based prompting — `+5%` reasoning boost
 
@@ -165,7 +172,50 @@ Flash is the default for interactive sessions, agentic loops, and high-volume wo
 
 ---
 
-## Gemini 3.5 Flash (May 19, 2026 — current Flash frontier)
+## Gemini 3.6 Flash (July 21, 2026 — current Flash frontier)
+
+`gemini-3.6-flash`, GA on release. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
+
+### Behaviors that shape wording
+
+- **Output is ~17% shorter than 3.5 Flash** at equal or better quality (up to 65% fewer tokens on DeepSWE-class agentic coding). Like GPT-5.6, this inverts carried-over concision instructions: a "be brief / no preamble" line written against 3.5 Flash now stacks on an already-terser model. Express length as a task requirement, not as a disposition.
+- **Fewer unwanted edits and fewer execution loops** — Google reports higher precision on agentic coding (DeepSWE 49% vs 37%). Scaffolding added to stop 3.5 Flash from thrashing (retry rules, "don't edit files you weren't asked to" walls) is a candidate for trimming — re-test before keeping it.
+- **Family rules unchanged**: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format.
+- **Sampling parameters deprecated on the same date** — see family rule #3.
+
+### When 3.6 Flash specific tuning helps
+
+- Cost/latency-sensitive agentic loops migrating off 3.5 Flash — re-check any length instructions and loop-damping scaffolding while you're there
+- High-volume workloads where a 17% output reduction compounds
+
+**No model-specific prompting guide was published for 3.6 Flash** — Google documented the model, not new prompting advice. Everything above is derived from documented behavior; the wording rules remain the family ones.
+
+---
+
+## Gemini 3.5 Flash-Lite (July 21, 2026 — the vendor's designated subagent model)
+
+`gemini-3.5-flash-lite`, GA on release. Google's changelog positions it explicitly: *"a low-latency, highly cost-effective subagent option designed for high-volume automation."* This is the first time a vendor in this atlas ships a model **named for the subagent role** rather than merely suited to it.
+
+### Behaviors that shape wording
+
+- Same regime as 3.1 Flash-Lite: concise wording, bounded scope, few-shot helps more than on Pro, tool guidance pushed into tool descriptions.
+- **Stronger than the previous Lite tier at agentic work** — SWE-Bench Pro 54.2% vs 49.6% for 3 Flash, at ~350 output tokens/sec. Tasks previously escalated from Lite to Flash on capability grounds are worth re-testing.
+
+### As a subagent
+
+When a Gemini-side prompt review involves a subagent fleet, this is the default worker: bounded, read-only or narrowly-scoped jobs (search, classification, extraction, pre-filtering), with the orchestrator on Pro or Flash. The wording implications are the standard ones for a cheap executor — spell out the success criteria, name the tools, keep the scope small, and put the format contract in `response_json_schema` rather than prose.
+
+The mirror-image models across vendors: Claude Haiku 4.5, Gemini 3.1 Flash-Lite, GPT-5.6 Luna. A subagent prompt written for one usually ports to the others with only the format-contract syntax changing.
+
+---
+
+## Gemini 3.5 Flash Cyber (July 21, 2026 — closed access)
+
+A 3.5 Flash fine-tune for finding and fixing security vulnerabilities, announced alongside the two models above but **not generally available** — access is limited to governments and trusted partners through CodeMender. Noted here so a future coverage pass doesn't re-investigate it: there is nothing to tune against, and a prompt targeting it can't be validated.
+
+---
+
+## Gemini 3.5 Flash (May 19, 2026 — previous Flash frontier)
 
 A larger jump than the version number suggests. Beats Gemini 3.1 Pro on **coding and agentic benchmarks** (Terminal-Bench 2.1 76.2%, MCP Atlas 83.6%, GDPval-AA 1656 Elo) while 3.1 Pro still wins **abstract reasoning** (Humanity's Last Exam +4.2 pts, ARC-AGI-2 +5).
 
@@ -232,7 +282,7 @@ Older generation. When migrating from 2.5 to 3.x, the changes are large enough t
 | Anti-pattern | Symptom | Fix |
 |---|---|---|
 | **Chain-of-thought scaffolding** | "Think step by step" + numbered mental moves in the body | Strip; raise `thinking_level` to medium or high |
-| **Temperature in prompt body** | "Set temperature to 0.3" mentioned in body | Remove from body; the API param itself should stay at 1.0 default |
+| **Sampling params in prompt body** | "Set temperature to 0.3" / `top_p` / `top_k` mentioned in body | Remove from body — and note the params themselves are **deprecated as of 2026-07-21**, so the code around it needs a fix too. For variety, use propose-N-directions |
 | **Mixed XML + Markdown** | `<context>...</context>` and `## Section` in same prompt | Pick one structure; prefer XML for inline, Markdown for top-level structure |
 | **Blanket "do not"** | `"do not infer / do not guess / do not hallucinate"` | Replace with positive scoped instructions |
 | **Negative constraints at top** | "Don't include X" in the first paragraph | Move to end; model drops early negatives |
@@ -247,10 +297,11 @@ Older generation. When migrating from 2.5 to 3.x, the changes are large enough t
 
 When the prompt is **cross-vendor** (Claude + GPT-5.x + Gemini), several Gemini-specific defaults conflict with other vendors:
 
-| Axis | Gemini 3 | Claude | GPT-5.5 | Cross-vendor compromise |
+| Axis | Gemini 3 | Claude | GPT-5.5 / 5.6 | Cross-vendor compromise |
 |---|---|---|---|---|
 | Persona / "act as" | **+5% boost — keep** | Neutral | Hurts | **Conditional persona** OR drop with -5% Gemini cost |
-| Temperature in body | Don't tune | Tunable | Tunable | Don't reference temperature in body; let API config handle |
+| Sampling params | **deprecated 2026-07-21** | non-default → 400 on Fable 5 / Opus 4.7+ / Sonnet 5 | Tunable | Don't reference sampling in body, and don't design around it — two of three vendors have removed it |
+| Response length default | 3.6 Flash ~17% terser than 3.5 | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults now move in opposite directions per vendor |
 | Negative constraint position | At end (strict) | Anywhere | Anywhere | Place at end (strictest wins) |
 | Structure mixing | XML or Markdown, not both (strict) | Tolerates mixing | Tolerates mixing | Pick one (strictest wins) |
 | CoT scaffolding | Hurts | Tolerated | Hurts | Strip — works for all three |
@@ -270,8 +321,9 @@ When this conflict shows up in a review, the `/prompt-atlas` skill must **flag a
 A prompt that works across Pro / Flash / Flash-Lite:
 
 - [ ] Concise (Flash-Lite needs it most)
-- [ ] No CoT scaffolding (all three internalize reasoning)
-- [ ] No temperature in body (all three default 1.0)
+- [ ] No CoT scaffolding (all internalize reasoning)
+- [ ] No sampling params in body (deprecated API-wide since 2026-07-21)
+- [ ] Length stated as a task requirement, not a disposition (3.6 Flash is terser than 3.5 — a global "be brief" overcorrects)
 - [ ] Identity-based persona present (helps all three)
 - [ ] XML or Markdown, not both
 - [ ] Negative constraints at end

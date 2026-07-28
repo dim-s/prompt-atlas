@@ -1,6 +1,6 @@
 # Model-specific wording differences — xAI Grok family
 
-What changes about how you should PHRASE prompts for **Grok 4.3** (xAI's current cost-efficient flagship, April 30 / May 4, 2026) and the lineage leading to it. Companion to other model files in this directory.
+What changes about how you should PHRASE prompts for **Grok 4.5** (xAI's current recommended model, July 2026), **Grok 4.3**, and the lineage leading to them. Companion to other model files in this directory.
 
 Coverage here is deliberately compact — xAI publishes less explicit prompting guidance than Anthropic / OpenAI / Google, and many of the documented behaviors are inferred from release notes and independent reviews rather than first-party docs.
 
@@ -35,13 +35,15 @@ Grok 4.3 added native video input, slide generation, document/spreadsheet editin
 
 **Wording implication:** when a prompt assumes text-only context, audit for video/image-handling cases that Grok 4.3 can take but a Grok 4.2-era prompt didn't anticipate.
 
-### 5. 1M context window — long-context patterns apply
+### 5. Long-context patterns apply — but check the window per version
 
-Same patterns as Claude / Gemini / Qwen / DeepSeek with 1M:
+Standard long-context patterns:
 - Documents at top, question at bottom
 - Quote-grounded answers
 - Permission to say "I don't know"
 - Stable content first for prompt caching
+
+⚠️ **The window is not monotonic in this family.** Grok 4.3 has 1M; **Grok 4.5 has 500K** (both figures from xAI's own models page). Upgrading to the newer model *halves* the window — see the Grok 4.5 section.
 
 ### 6. OpenAI-compatible API surface
 
@@ -63,7 +65,37 @@ Put tool-specific guidance inside tool descriptions, not the system prompt. Same
 
 ---
 
-## Grok 4.3 (April 30 / May 4, 2026 — current cost-efficient flagship)
+## Grok 4.5 (July 2026 — xAI's recommended model)
+
+xAI's models page names it the default choice: *"For everything else, including code, use Grok 4.5. It is the most intelligent and fastest model we've built."* Release date isn't stated on the page; secondary sources put it at July 8, 2026.
+
+### Headline facts
+
+- **500K context** — down from Grok 4.3's 1M
+- **Knowledge cutoff:** February 1, 2026
+- **Two-step pricing by prompt length:** $2.00 / $6.00 per M tokens (in / out) below 200K tokens of prompt, **doubling to $4.00 / $12.00 at 200K and above**
+- **No reasoning-effort parameter documented** — family rule #1 still holds: the model decides depth
+
+### The migration trap: newer model, smaller window
+
+This is the rare case where an upgrade **narrows** a capability, and it fails silently in the direction people don't check. A prompt architecture built on Grok 4.3's 1M window — whole-repo dumps, full session history replayed each turn, long document sets in one pass — does not fit 4.5.
+
+On any Grok prompt review, ask which version is actually in use before recommending long-context patterns. If the artifact assumes 1M and the target is 4.5, that's a `[CRITICAL]` finding: the fix is chunking, retrieval or summarization of the carried context, not rewording.
+
+### The 200K pricing step makes prompt bloat directly expensive
+
+Grok is now the vendor where a fat persistent-context file has a visible price cliff rather than a gradual cost. A system prompt plus `AGENTS.md` plus accumulated history that crosses 200K flips the whole request to double rate — including the output tokens.
+
+Practical review consequence: on Grok 4.5, "trim the persistent context" stops being hygiene advice and becomes a budget argument. The atlas's standing target (under 8 KiB of load-bearing rules) is nowhere near the cliff on its own; the risk is in what the harness *accumulates* around it.
+
+### Wording-side behaviors
+
+- Family rules apply unchanged — outcome-first, no reasoning-depth prose, tool guidance in tool descriptions
+- xAI published **no prompting guide** for 4.5; there is no documented wording delta versus 4.3. Don't invent one — the differences that matter for a review are the window, the price step, and the vendor recommendation
+
+---
+
+## Grok 4.3 (April 30 / May 4, 2026 — previous flagship, 1M context)
 
 ### Headline facts
 
@@ -88,6 +120,7 @@ Put tool-specific guidance inside tool descriptions, not the system prompt. Same
 - Cost-sensitive agentic loops where the 40% input price cut shifts the economics
 - Workloads where leaderboard-leading tool-call quality matters more than reasoning depth
 - Video-input tasks (other current frontier vendors trail or don't support)
+- **Workloads that genuinely need a 1M window on Grok** — 4.3 is now the only Grok that has one
 
 ### When NOT to invest in Grok-specific tuning
 
@@ -116,7 +149,7 @@ Grok 4.3 fits cleanly into a cross-vendor compromise prompt because most of its 
 | Reasoning lever | built-in, no toggle | doesn't conflict with any vendor's parameter |
 | Tool guidance location | tool description | matches all current frontier vendors |
 | Output format | OpenAI-compatible API surface | safe with `json_schema` across vendors |
-| Long context | 1M | same patterns as others |
+| Long context | **500K on 4.5, 1M on 4.3** | Grok 4.5 is now the *binding* window in a cross-vendor set that includes it — size the carried context for 500K |
 | Aggressive emphasis | likely inert | matches GPT / Gemini / Kimi / GLM / Qwen / DeepSeek inert behavior |
 
 If a cross-vendor prompt already works on Claude + GPT + Gemini, expect it to also work on Grok 4.3 with minimal adjustment.
@@ -127,6 +160,7 @@ If a cross-vendor prompt already works on Claude + GPT + Gemini, expect it to al
 
 xAI publishes less detailed prompting guidance than Anthropic / OpenAI / Google. The behaviors documented here come from:
 
+- xAI's own models page ([docs.x.ai/docs/models](https://docs.x.ai/docs/models), read 2026-07-28) — Grok 4.5 recommendation, 500K context, Feb 1 2026 cutoff, the two-step pricing threshold at 200K, and Grok 4.3's 1M window. **No prompting guide and no reasoning-effort parameter are documented for 4.5.** The July 8, 2026 release date is from secondary coverage only
 - Artificial Analysis post on Grok 4.3 release ([artificialanalysis.ai/articles/xai-launches-grok-4-3](https://artificialanalysis.ai/articles/xai-launches-grok-4-3-with-improved-agentic-performance-and-lower-pricing))
 - Apiyi.com migration guide for Grok 4.3 API
 - Independent reviews (TimesOfAI, ChatlyAI, Releasebot)

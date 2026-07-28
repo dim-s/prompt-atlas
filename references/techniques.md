@@ -431,6 +431,20 @@ Keep outputs reasonably concise.
 Match the length of written documents to what the task needs: cover the substance, but do not pad with filler sections, redundant summaries, or boilerplate.
 ```
 
+### GPT-5.6 and Gemini 3.6 Flash: the same snippets now overcorrect
+
+The opposite problem, and it appeared in the same month. Both models are **terser by default than the version they replace** — OpenAI states 5.6 *"tends to be more concise by default than GPT-5.5"*, and Google reports ~17% fewer output tokens on 3.6 Flash. A concision snippet carried over from the older version stacks on an already-short default and starves the answer.
+
+For those targets:
+- Delete the global concision instruction from the body; set the default out-of-band (`text.verbosity` on GPT-5.x).
+- Keep only **task-scoped** limits, which are safe everywhere: "the summary is at most 5 bullets", "one paragraph per finding".
+
+**Cross-vendor rule.** A prompt that may run on Opus 5 *and* on GPT-5.6 / Gemini 3.6 Flash cannot carry one disposition — the two defaults cancel out. Express length as a requirement of the deliverable, never as a personality trait of the assistant:
+
+```
+Each finding gets one paragraph: what's wrong, why it matters, what to change. The summary at the top is at most 5 bullets.
+```
+
 ### Narration cadence in agentic sessions
 
 Opus 5 narrates more between tool calls than Opus 4.8; Fable 5 narrates less. Describe the shape rather than a schedule — the same snippet tunes in either direction depending on which model you're correcting:

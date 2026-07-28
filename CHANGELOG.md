@@ -2,6 +2,38 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.5.0] — 2026-07-28
+
+Coverage catch-up for the May–July 2026 window, driven by the model-watch mandate: the findings board (`FINDINGS.md`, 2026-07-28 pass) is now worked through. Every claim below was re-verified against the vendor's own page before being written into the atlas, and two claims from the findings board were **corrected** in the process (noted under *Not verified / corrected*).
+
+### Added
+
+- **OpenAI GPT-5.6 — Sol / Terra / Luna** (`gpt-5.6-sol` / `-terra` / `-luna`, bare `gpt-5.6` aliases Sol; public July 9, 2026). A whole missing family — the atlas stopped at 5.5. New `models/gpt.md § GPT-5.6`, rows across matrix tables A–E, SKILL.md Step 2b/2c routing + updates block + a gap-analysis row, `_universal.md` Universal-GPT rules, README coverage. Model-card facts: 1,050,000-token context (input ≤922,000, output ≤128,000), knowledge cutoff 2026-02-16. Sourced from OpenAI's latest-model guide and model card.
+- **Moonshot Kimi K3** (API July 16, open weights July 26, 2026) and **Kimi K2.7-Code** (June 12, 2026). Two missed releases in a row. New `models/kimi.md § Kimi K3` and `§ Kimi K2.7-Code`, matrix rows A–E (plus a Kimi row in table E), family-rule rewrite for the thinking toggle, `_universal.md` Universal-Kimi, README coverage. Sourced from the HuggingFace model cards.
+- **Google Gemini 3.6 Flash** and **Gemini 3.5 Flash-Lite** (both GA July 21, 2026), plus a note on **3.5 Flash Cyber** as closed-access and therefore untunable. New sections in `models/gemini.md`, matrix rows A–E, README coverage. Sourced from the Gemini API changelog.
+- **xAI Grok 4.5** (July 2026) — now the vendor's recommended model. New `models/grok.md § Grok 4.5`, matrix rows A–E including a table-E row for the xAI API, gap-analysis row. Sourced from xAI's models page.
+- **Meta Muse Spark 1.1** (July 9, 2026) — **new vendor file** `models/meta.md`. Meta moved from "closed preview, most axes `?`" to an addressable API vendor (public-preview Meta Model API, OpenAI-compatible, 1M self-managed context, documented planning mode / goal conditioning / subagent delegation / context compaction). SKILL.md Step 3 now routes to the file instead of saying none exists; README lists Meta as the 10th vendor family. Behavioral axes stay `?` — see below.
+- **Mistral Medium 3.5** (`mistral-medium-3-5-26-04`, April 28, 2026) — new section in `models/mistral-frontier.md` plus matrix rows. Facts only, by design.
+
+### Changed — the July 2026 cross-vendor shifts
+
+- **Sampling-parameter lockout is now a cross-vendor trend, not a Claude quirk.** Google **deprecated `temperature` / `top_p` / `top_k` API-wide on 2026-07-21**, joining Anthropic (non-default → 400 from Opus 4.7 onward). The matrix's "Temperature gotcha" is rewritten as a **sampling gotcha** covering both vendors; `models/gemini.md` family rule #3 changes from "don't tune" to "deprecated"; the three-vendor and 4+ cross-vendor tables, every temperature checklist item, and the Step 4 contradiction list follow. Practical consequence stated once and reused: tone and variety are a wording problem now, and "propose N directions" replaces the knob.
+- **Response-length defaults now contradict across vendors — new Step 4 contradiction axis.** GPT-5.6 and Gemini 3.6 Flash are *terser* than the versions they replace (a carried-over "be brief" overcorrects), while Opus 5 runs long and doesn't calibrate (concision must be prompted, `effort` won't fix it). The atlas previously carried only the Claude half. New guidance, stated in `techniques.md §19`, `models/gpt.md`, `models/gemini.md`, matrix reading guide, and `_universal.md`: **express length as a requirement of the deliverable, never as a disposition of the assistant.**
+- **Instruction repetition became a measured cost.** OpenAI reports leaner system prompts scoring ~10–15% higher while using 41–66% fewer tokens on 5.6. On a 5.6-targeted review, deleting duplicated instructions and verbose tool descriptions outranks rewriting them — the gap-analysis row for GPT-5.6 says so explicitly ("expect strips to outnumber adds", for the opposite reason to Opus 5's).
+- **Anti-pattern #38 ("telling the model not to think") gained a third failure mode.** On **Kimi K3 and K2.7-Code the instruction cannot be honored at all** — thinking is forced on with no disabled mode. First family in the atlas without an off-switch, which turns the pattern from target-dependent into an unconditional strip. Mirrored in the matrix reasoning-depth rule and the 4+ compromise matrix.
+- **Grok's context window regressed on upgrade: 1M (4.3) → 500K (4.5).** Rare enough that the atlas had no warning for it. Recorded as a `[CRITICAL]`-class migration finding wherever the prompt architecture assumes 1M, plus the **200K pricing step** that gives accumulated persistent context a hard cost boundary on xAI.
+- **Gemini 3.5 Flash-Lite is the first vendor-designated subagent model** — Google's own changelog wording. Documented in the subagent-relevant cells (matrix table C) and in `models/gemini.md`, alongside the cross-vendor observation that Haiku 4.5 / Flash-Lite / GPT-5.6 Luna are interchangeable in that role modulo the format-contract syntax.
+- **DeepSeek legacy aliases removed from the live vendor signals.** `deepseek-chat` / `deepseek-reasoner` were discontinued 2026-07-24 per DeepSeek's official changelog; SKILL.md Step 2b now treats them as a migration finding (dead endpoint) rather than as an indicator of which current model is in use. Small edit, but it was producing wrong advice as of the day it shipped.
+
+### Not verified / corrected
+
+- **Kimi K2.7-Code's system prompt is illustrative, not mandated.** The findings board recorded the vendor as "dictating a literal system prompt". The card shows `You are Kimi, an AI assistant created by Moonshot AI.` in a chat example and states no requirement — `models/kimi.md` says so explicitly, and the identity-pinning section was not rewritten on the strength of an example.
+- **Gemini 3.5 Flash Cyber is not in the API changelog** — it appears in the launch blog post only, with access limited to governments and trusted partners via CodeMender. Recorded as existing-but-untunable rather than as a covered model.
+- **No prompting guidance exists for Grok 4.5, Mistral Medium 3.5, Muse Spark 1.1, or the two new Gemini Flash models.** Their cells inherit family defaults and their sections say so. The absence is written down deliberately so a later coverage pass doesn't re-investigate — and so no version-specific wording delta gets invented to fill the gap.
+- **Muse Spark's OpenAI-compatibility / structured-output / parallel-tool-call wording comes from an early-partner testimonial** in Meta's post, not from Meta's specification text. Treated as an availability claim, not a behavioral guarantee.
+- **Alibaba Qwen3.8-Max-Preview was deliberately not added.** Announced July 19 at WAIC, but there is no model card, no benchmark table, no price and no license, and it isn't listed in Alibaba Cloud Model Studio. Held as a lead in `FINDINGS.md § П10`.
+- **The Class 2 boundary question (`2-9B` vs `≤~9B active parameters`) is left open.** MoE models like `Qwen3.6-35B-A3B` and `Gemma 4 26B-A4B` behave like small local models by active parameters and hardware, but fall outside the class as currently defined. That's a redefinition of the skill's frame, not a coverage gap — recorded in `FINDINGS.md § П8` for the owner to decide.
+
 ## [1.4.0] — 2026-07-25
 
 ### Added

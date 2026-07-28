@@ -8,11 +8,13 @@ When the artifact runs in OpenAI Codex CLI specifically (AGENTS.md, Codex subage
 
 ## Family-wide rules (apply to all GPT-5.x versions)
 
-These hold across 5.1 → 5.5. Version-specific notes follow below.
+These hold across 5.1 → 5.6. Version-specific notes follow below.
 
 ### 1. Outcome-first beats process-prescription
 
 OpenAI's prompt-guidance is explicit: GPT-5.x performs best when you describe the **target outcome and success criteria**, not the steps to get there. From the official guide: *"GPT-5.5 treats detailed step-by-step instructions as interference: redundant instructions create noise, narrow the solution space, and make responses overly mechanical."* Earlier 5.x versions are less strict but trend the same way.
+
+**On GPT-5.6 OpenAI put a number on it.** The latest-model guide reports that *"configurations with leaner system prompts improved evaluation scores by roughly 10–15% while reducing total tokens by 41–66% and cost by 33–67%."* That makes trimming the single highest-value edit on a 5.6-targeted review — not a stylistic preference. The guide's operational rule: remove repeated instructions, simplify tool descriptions, and state each instruction **once**.
 
 | Weak (process-heavy) | Strong (outcome-first) |
 |---|---|
@@ -69,13 +71,15 @@ This composes naturally with rule #6 from the long-context section in `claude.md
 
 ### 8. Reasoning is a knob, not a wording trick
 
-GPT-5.x exposes `reasoning_effort` with values `none` / `low` / `medium` / `high` / `xhigh`. This is **the** lever for reasoning depth. "Think step by step" in the prompt body is essentially obsolete on GPT-5.x — it's a poor substitute for raising `reasoning_effort`, and on agentic frames where preambles or `phase: 'commentary'` updates already exist, it adds noise.
+GPT-5.x exposes `reasoning_effort` with values `none` / `low` / `medium` / `high` / `xhigh` — and **`max` from GPT-5.6 onward**, positioned by OpenAI for the heaviest quality-first workloads. This is **the** lever for reasoning depth. "Think step by step" in the prompt body is essentially obsolete on GPT-5.x — it's a poor substitute for raising `reasoning_effort`, and on agentic frames where preambles or `phase: 'commentary'` updates already exist, it adds noise.
 
 When the user complains "the model isn't reasoning carefully enough", check `reasoning_effort` first. The same advice applies to Claude (`effort` setting), but on GPT-5.x the effect is more dramatic.
 
 ### 9. Tone is direct by default — prompt for warmth if needed
 
 GPT-5.5 default style: *"efficient, direct, and task-oriented… responses stay focused, behavior is easier to steer, and the model avoids unnecessary conversational padding."* If you need a warmer tone for end-user-facing copy, ask explicitly (e.g., "Match a supportive coach tone, acknowledge the user's framing before answering"). Verbosity is adjustable via `text.verbosity` (`low` / `medium` / `high`); use the parameter rather than prose where possible.
+
+**Ask for tone as behavior, not as a label.** OpenAI's 5.6 guidance: *"Broad labels such as 'friendly' or 'empathetic' can be ambiguous. Describe the writing choices that define your product's tone."* So instead of "be friendly", write what the model should actually do — state the answer directly, name the trade-off before the recommendation, acknowledge a problem when one exists. Same class of fix as the methodological-anchor rule for personas (`../techniques.md` §6): name the behavior, not the adjective.
 
 ### 10. Preambles for tool-heavy / multi-step tasks
 
@@ -115,11 +119,65 @@ Community consensus on GPT-5.x: outcome-first prompts beat persona-first prompts
 
 GPT-5.x can produce visible reasoning when asked, but — same caveat as for Claude — the displayed reasoning isn't a guaranteed reflection of the actual computation. Use it for UX (showing the user the model is working) but not as ground truth for debugging prompt behavior. Test on held-out cases.
 
+### 14. State the autonomy boundary for each request
+
+New in OpenAI's 5.6 guidance, and worth applying family-wide: *"Define what level of action each request authorizes so the model can continue safe, in-scope work without unnecessary pauses while stopping before external, destructive, costly, or scope-expanding actions."*
+
+This is the wording fix for both failure directions in an agentic prompt — a model that stops to ask about every routine step, and a model that runs on into irreversible territory. One line covers both:
+
+> Make routine, reversible changes inside the stated scope without checking in. Stop and ask before anything external, destructive, costly, or outside that scope.
+
 ---
 
-## GPT-5.5 (frontier as of 2026-04-23)
+## GPT-5.6 — Sol / Terra / Luna (frontier as of 2026-07-09)
 
-The current flagship for agentic, long-context, and reasoning-heavy work.
+OpenAI's current family: **`gpt-5.6-sol`** (flagship), **`gpt-5.6-terra`** (strong at lower price), **`gpt-5.6-luna`** (efficient, high-volume). The bare alias `gpt-5.6` routes to Sol. Model-card facts for Sol: 1,050,000-token context (input up to 922,000, output up to 128,000), knowledge cutoff 2026-02-16. The July 9 launch date comes from press coverage — OpenAI's card doesn't carry one.
+
+Wording-wise the three variants are one family: same guidance, differing capability and price. Treat "which of Sol / Terra / Luna" as a cost decision, not a prompting decision — with the usual caveat that the cheapest tier is least forgiving of vague scope (same rule as `5.4-mini`, Haiku 4.5, Gemini Flash-Lite).
+
+### Headline behaviors
+
+- **Leaner system prompts are now a measured win, not a taste call.** See family rule #1 — 10–15% better eval scores at 41–66% fewer tokens. On a 5.6 review, deleting duplicated instructions outranks rewriting them.
+- **More concise by default than GPT-5.5** — the guide states it plainly. This inverts a common carried-over instruction; see below.
+- **Reasoning effort gains `max`** — the ladder is `none` / `low` / `medium` / `high` / `xhigh` / `max`.
+- **Autonomy boundaries are the guide's recommended framing** for agentic work (family rule #14).
+- **Tone is specified as behavior, not as an adjective** (family rule #9).
+
+### Verbosity inverted — the finding most likely to already be in the prompt
+
+GPT-5.6 *"tends to be more concise by default than GPT-5.5."* A "be brief" / "keep it short" / "no preamble" line carried over from a 5.5-era prompt now **over**corrects: it stacks on an already-terse default and produces answers too thin to be useful. The fix is not to rewrite the instruction but to move the default out of prose entirely — set `text.verbosity` (`low`/`medium`/`high`) and leave only task-specific length rules in the body ("the summary section is at most 5 bullets").
+
+**This is a cross-vendor trap, not just a GPT one.** The same review, targeting Claude Opus 5, needs the opposite edit: Opus 5's defaults run long, it does not calibrate to task, and `effort` won't shorten it — concision has to be prompted (`claude.md § Claude Opus 5`). One `AGENTS.md` cannot carry a single verbosity setting for both. When the prompt is cross-vendor, state length as a task requirement ("at most 5 bullets") rather than as a global disposition ("be concise" / "be thorough") — a requirement lands the same on both defaults.
+
+### Migration 5.5 → 5.6
+
+OpenAI's rule for effort is explicit and unusual: *"Preserve your current reasoning effort as the baseline, then compare one level lower."* The expected direction of travel is **down**, not sideways — 5.6 does more with less thinking. (If you're on `none`, keep it as the latency baseline and also test `low` where the workflow benefits from reasoning or tool use.)
+
+| Old 5.5-style | 5.6-style |
+|---|---|
+| The same instruction restated in three sections "so the model doesn't miss it" | State it once. Repetition is measured cost, not insurance. |
+| "Be brief. Be concise. No preamble." | Delete; set `text.verbosity`. Keep only task-scoped limits ("at most 5 bullets"). |
+| Long tool-usage prose in the system prompt | Simplify the tool descriptions themselves (family rule #3); the guide names tool-description bloat specifically. |
+| `reasoning_effort` copied over from 5.5 unchanged | Test the same level **and one level lower**; keep the cheaper one if quality holds. |
+| "Be friendly and helpful." | Describe the writing choices: state the answer first, name trade-offs, acknowledge a real problem instead of smoothing it over. |
+| Silent about how far the model may go | Add the autonomy boundary line (family rule #14). |
+
+### When 5.6-specific tuning matters most
+
+- Any prompt stack ported forward from 5.5 or earlier — the trimming pass is where the measured gain sits.
+- Agentic loops where the model either stalls asking permission or overreaches — the autonomy-boundary line is the targeted fix.
+- Cost-sensitive high-volume work on Terra / Luna, where the token reduction compounds.
+
+### When NOT to invest
+
+- Cross-vendor `AGENTS.md` that must also serve Claude — trim what's redundant, but don't adopt 5.6's concision default as the file's global disposition.
+- Prompts already lean and stable on 5.5: the fresh-baseline advice (family rule #2) is about *bloat*, not about rewriting healthy text.
+
+---
+
+## GPT-5.5 (previous frontier, 2026-04-23)
+
+The prior flagship for agentic, long-context, and reasoning-heavy work — still widely deployed, and the version most in-the-wild prompt stacks are tuned for.
 
 ### Headline behaviors
 
@@ -235,7 +293,11 @@ A prompt that must work across two or more 5.x versions (e.g., a Codex agent pro
 
 **1. Write for the most literal version in scope.**
 
-If 5.5 is in scope, default to outcome-first phrasing — earlier versions tolerate it; 5.5 punishes the alternative.
+If 5.5 or 5.6 is in scope, default to outcome-first phrasing — earlier versions tolerate it; 5.5 and 5.6 punish the alternative. If **5.6** is in scope, also apply the leanness rule: a duplicated instruction that older versions merely ignored is measured cost here.
+
+**1a. Verbosity defaults diverge inside the family.**
+
+5.6 is terser out of the box than 5.5. A global "be concise" written for 5.5 overshoots on 5.6; a global "be thorough" written for 5.6 bloats 5.5. Express length as a task requirement ("at most 5 bullets", "one paragraph per finding") — that reads the same on every version — and leave the disposition to `text.verbosity`.
 
 **2. Don't lean on 5.5-only features.**
 
@@ -285,6 +347,8 @@ The hardest case: an `AGENTS.md` or system prompt meant to work on **both** Clau
 | Subagent spawning | Opus 4.7 spawns fewer; may need explicit "do spawn" | Codex spawns subagents you defined; rarely speculative | Be explicit when you want delegation; don't assume default behavior |
 | Output format | Prose constraints work | Push to `json_schema` when possible | Prefer `json_schema` for both; falls back to prose constraints if API doesn't support it |
 | Aggressive emphasis | Overuse causes overtriggering on 4.5+ | Mostly inert / mild noise | Reserve ALL-CAPS / "CRITICAL:" for genuine safety invariants only |
+| **Response length default** | **Opus 5 runs long and does not calibrate** — concision must be prompted, `effort` won't shorten it | **5.6 is already terse** — a carried-over "be brief" overcorrects | State length as a **task requirement** ("at most 5 bullets"), never as a global disposition ("be concise" / "be thorough") |
+| Repeated instructions | Tolerated; repetition near the end is even recommended on Opus 5 for concision | **Measured cost on 5.6** (leaner prompts: +10–15% score, −41–66% tokens) | State each rule once, in the section where it belongs; if a rule must be echoed, keep the echo to one short line |
 
 ### Rules for cross-vendor `AGENTS.md`
 
@@ -341,7 +405,7 @@ Mirror of the section in `claude.md`. These hold across all GPT-5.x versions:
 
 ### Use `reasoning_effort` over wording for reasoning depth
 
-`reasoning_effort` (`none` / `low` / `medium` / `high` / `xhigh`) is the load-bearing knob. Wording-based reasoning prompts are inferior across the family.
+`reasoning_effort` (`none` / `low` / `medium` / `high` / `xhigh`, plus `max` from 5.6) is the load-bearing knob. Wording-based reasoning prompts are inferior across the family. When migrating a version forward, test **one level lower** than the current setting — that's OpenAI's own 5.6 migration rule, and the direction newer versions keep moving.
 
 ### Prefer "verify" / "evaluate" / "consider" over "think"
 

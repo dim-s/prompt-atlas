@@ -1,6 +1,6 @@
 # Model-specific wording differences — Mistral frontier family
 
-What changes about how you should PHRASE prompts for **Mistral Large 3** (Dec 2025, 675B MoE / 41B active) and the still-evolving Mistral frontier ecosystem (Mistral Small 4 in March 2026, Ministral 3 series for edge use).
+What changes about how you should PHRASE prompts for **Mistral Large 3** (Dec 2025, 675B MoE / 41B active) and the still-evolving Mistral frontier ecosystem (**Mistral Medium 3.5** in April 2026, Mistral Small 4 in March 2026, Ministral 3 series for edge use).
 
 **This file covers Mistral frontier only.** Smaller Ministral 3B / 8B / 14B edge variants and older Ministral / Mistral 7B-class variants live in `small-local.md`. Don't confuse them — the prompting regime differs (frontier tolerates abstract principles; small Ministral regresses on the same wording).
 
@@ -68,6 +68,27 @@ Ministral 3 family variants (and Large 3) have image-understanding capabilities.
 
 ---
 
+## Mistral Medium 3.5 (April 28, 2026)
+
+`mistral-medium-3-5-26-04` — the mid-tier the family previously lacked, sitting between Small 4 and Large 3.
+
+### Headline facts
+
+- **256K context**, open weights under a Modified MIT license
+- **$1.50 / $7.50** per M tokens (in / out)
+- Vendor positioning: *"Our frontier-class multimodal model optimized for agentic and coding use cases"*
+- Supports function calling, agents & conversations, built-in tools, structured outputs, prefix, predicted outputs, FIM, OCR/document processing, batching
+
+### Wording-side behaviors
+
+**Nothing model-specific is documented.** The model card carries no prompting guidance, no system-prompt recommendation, no reasoning mode and no temperature advice — this was checked directly, and the absence is the finding, not an omission in this file. Apply the family-wide rules above and the Large 3 defaults (functional persona, few-shot fine, step naming tolerated, long-context patterns at 256K).
+
+Left explicit so a future coverage pass doesn't re-derive it: *if* Mistral publishes prompting guidance for the Medium tier, that's the trigger to expand this section — the model's existence alone doesn't warrant more than the facts above.
+
+Mistral's news feed dates it 22.05.2026 ("powering remote coding agents in Vibe") while the model card says April 28 — the card date is used here.
+
+---
+
 ## Mistral Small 4 (March 2026)
 
 ### Headline facts
@@ -117,6 +138,7 @@ Mistral Large 3 fits cleanly into Claude-direction cross-vendor compromises. If 
 Mistral docs are less detail-heavy on prompting than Anthropic / OpenAI / Google. Behaviors documented here come from:
 
 - Mistral's own release post ([mistral.ai/news/mistral-3](https://mistral.ai/news/mistral-3))
+- Model card for `mistral-medium-3-5-26-04` ([docs.mistral.ai](https://docs.mistral.ai/models/model-cards/mistral-medium-3-5-26-04), read 2026-07-28) — facts only; the card contains no prompting guidance
 - IntuitionLabs Mistral Large 3 explainer
 - DataCamp Mistral 3 benchmark review
 - Mistral's developer-guide community resources
