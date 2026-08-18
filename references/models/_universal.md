@@ -234,47 +234,48 @@ A prompt that works across K3, K2.7-Code, K2.6 and (still-deployed) K2.5. K2 its
 
 ## Universal GLM
 
-A prompt that works across GLM-5.2, GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The family-wide rule about heavy host system prompts suppressing thinking applies to all of them — but the mitigation differs by version: **GLM-5.2 has the `reasoning_effort` param, earlier versions only have prose re-injection.** Write the re-injection block for the older versions and note that 5.2 can use the param instead.
+A prompt that works across GLM-5.3, GLM-5.2, GLM-5.1, GLM-5, and (still-deployed) GLM-4.6. The family-wide rule about heavy host system prompts suppressing thinking applies to all of them — but the mitigation differs by version: **GLM-5.3 has `reasoning_effort` (`low`/`high`/`max`, default `max`) with no off-switch; GLM-5.2 has `reasoning_effort` (`high`/`max`) plus the `thinking` toggle; earlier versions only have prose re-injection.** Write the re-injection block for the older versions and note that 5.2/5.3 can use the param instead.
 
 ### Rules
 
 **1. Keep host-side overhead in mind.** If the prompt runs through Claude Code Router, OpenCode, Cline, or similar — every kilobyte stacks on top of the router's injection. Target <4 KiB load-bearing for GLM-routed deployments.
 
-**2. Don't pin model identity.** All three versions have the "I am Claude" distillation artifact. Use functional roles only.
+**2. Don't pin model identity.** All versions have the "I am Claude" distillation artifact. Use functional roles only.
 
-**3. Re-open thinking under a heavy host.** On GLM-5.2, set `reasoning_effort` (`high`/`max`) out-of-band — the cleanest lever. On GLM-5.1 and earlier (or routers that don't forward the param), inject custom `<reasoning_content>` markers + "write detailed reasoning before answering" in the prompt body. For a cross-version prompt, keep the re-injection block (works on all) and note the param as the 5.2-preferred alternative.
+**3. Re-open thinking under a heavy host.** On GLM-5.3, set `reasoning_effort` (`low`/`high`/`max`) out-of-band — the cleanest lever (thinking cannot be disabled; treat "don't think" as unimplementable). On GLM-5.2, `reasoning_effort` (`high`/`max`) is the cleanest lever. On GLM-5.1 and earlier (or routers that don't forward the param), inject custom `<reasoning_content>` markers + "write detailed reasoning before answering" in the prompt body. For a cross-version prompt, keep the re-injection block (works on all) and note the param as the 5.2/5.3-preferred alternative.
 
-**4. `json_schema` preferred** over `json_object` — works on all three; gives stricter shape control.
+**4. `json_schema` preferred** over `json_object` — works on all versions; gives stricter shape control.
 
 **5. Outcome-first beats step prescription** — process steps tolerated but unnecessary.
 
 ### Universal-GLM checklist
 
-- [ ] Total system + AGENTS.md size <4 KiB load-bearing (GLM-5.2's 1M lossless context does not lift this — it's a reasoning-gate ceiling, not a length one)
-- [ ] No identity pinning ("You are GLM-5.2") — functional roles only
-- [ ] Reasoning lever handled: `reasoning_effort` param on 5.2, `<reasoning_content>` re-injection on 5.1 and earlier / non-forwarding routers
+- [ ] Total system + AGENTS.md size <4 KiB load-bearing (5.3's 1M context does not lift this — it's a reasoning-gate ceiling, not a length one)
+- [ ] No identity pinning ("You are GLM-5.3") — functional roles only
+- [ ] No "answer without reasoning" line — on 5.3 it is unimplementable (thinking cannot be disabled)
+- [ ] Reasoning lever handled: `reasoning_effort` param on 5.3 / 5.2, `<reasoning_content>` re-injection on 5.1 and earlier / non-forwarding routers
 - [ ] `json_schema` over `json_object` for structured output
 - [ ] No "think step by step" in body
-- [ ] Long-horizon framing where applicable (8-hour autonomous on 5.1; 5.2 stronger long-horizon + 1M lossless)
+- [ ] Long-horizon framing where applicable (8-hour autonomous lineage; 5.3 strongest post-training gain)
 - [ ] No model name hardcoded
 
 ---
 
 ## Universal frontier Qwen
 
-A prompt that works across Qwen3.7-Max, 3.7 Plus, 3.6 Plus, 3.6 Max-Preview, and (still-deployed) Qwen3-Max-Thinking. **Frontier Qwen only** — small-local Qwen 2-9B has its own universal section in `small-local.md`.
+A prompt that works across Qwen3.8-Max, Qwen3.7-Max, 3.7 Plus, 3.6 Plus, 3.6 Max-Preview, and (still-deployed) Qwen3-Max-Thinking. **Frontier Qwen only** — small-local Qwen 2-9B has its own universal section in `small-local.md`.
 
 ### Rules
 
-**1. Write for the most granular target in scope.** Qwen 3.7 Plus is more likely than 3.7-Max to skip un-emphasized sections — write for Plus, accept overhead on Max.
+**1. Write for the most granular target in scope.** Qwen 3.7 Plus is more likely than 3.7-Max to skip un-emphasized sections — write for Plus, accept overhead on Max. 3.8-Max keeps the same granularity-first character.
 
 **2. Add self-verification.** Free on other vendors, load-bearing on Qwen. Always include "before finishing, review your response and check that every requested element is covered."
 
 **3. Number requirements explicitly.** Avoid "address the following considerations" when you mean "address each of: A, B, C, D."
 
-**4. Don't assume 1M context reliability.** Validate before committing to long-context patterns. The Max-Preview's 256K context is the safest assumption for cross-version Qwen prompts.
+**4. Don't assume 1M context reliability.** Validate before committing to long-context patterns. 3.8-Max's 1M has documented limits (input ≤991,808; 983,616 thinking); the Max-Preview's 256K context was the previous conservative floor.
 
-**5. Thinking mode toggle is the lever.** Don't write "think step by step"; set the toggle.
+**5. The thinking lever is a parameter, not prose.** On 3.8-Max: `reasoning_effort` (low/medium/xhigh, default xhigh) + `enable_thinking` on the hosted model; the **open weights (thinking-only) cannot disable thinking** — a "don't think" line is unimplementable there. On 3.7-Max: the toggle. Never write "think step by step".
 
 **6. Granular constraints over inferred intent** — restore detail stripped during GPT-5.5 tuning.
 
@@ -309,7 +310,7 @@ A prompt that works across DeepSeek V4-Pro, V4-Flash, and (still-deployed) V3.2.
 
 **6. Tool calls in thinking mode work on V4 only.** If V3 is in scope, don't write prompts that depend on mixing reasoning and tool calls in the same response.
 
-**7. Three-level thinking lever is V4-only** (`off`/`high`/`max`). V3.2 / R1 used a single-toggle. Don't write prompts that pick a specific level — set via API config.
+**7. Thinking lever is an effort model on the current V4 builds** (since the 2026-08-13 GA: `thinking` toggle + `reasoning_effort` `low`/`high`/`max`, default enabled with effort `high`; the old `off`/`high`/`max` triplet is obsolete). V3.2 / R1 used a single-toggle. Don't write prompts that pick a specific level — set via API config, and don't write "answer without reasoning" (at most a `low`-effort request).
 
 ### Universal-DeepSeek checklist
 
@@ -491,7 +492,7 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Sampling params | **no mention in body, no behavior depending on them** | Gemini (deprecated 2026-07-21) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) |
 | Response length | **stated per deliverable ("at most 5 bullets"), never as a global disposition** | GPT-5.6 / Gemini 3.6 Flash (already terse) vs Opus 5 (runs long, won't calibrate) — the two directions cancel |
 | Instruction repetition | **each rule stated once** | GPT-5.6 (measured token/score cost) |
-| Reasoning off-switch | **never write "answer without reasoning"** | Kimi K2.7-Code / K3 (thinking forced on) + Opus 5 (increases tag leakage) |
+| Reasoning off-switch | **never write "answer without reasoning"** | Kimi K2.7-Code / K3, GLM-5.3, Grok 4.5/4.6, Qwen3.8 open weights (thinking forced on / cannot be disabled) + Opus 5 (increases tag leakage) |
 | Aggressive emphasis | **safety invariants only** | Claude 4.5+ (overtriggers) |
 | Negative constraints | **at end of file, positive-scoped phrasing preferred** | Gemini (drops early; over-indexes on blanket negatives) |
 | XML + Markdown | **markdown skeleton, XML inline only** | Gemini (strict) |

@@ -1,6 +1,6 @@
 # Model-specific wording differences — Z.ai GLM family
 
-What changes about how you should PHRASE prompts for GLM-5.2, GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
+What changes about how you should PHRASE prompts for GLM-5.3, GLM-5.2, GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
 
 GLM lives in a different agentic ecosystem than Claude / GPT / Gemini: it's most commonly accessed **through cross-tool routers** (Claude Code Router, OpenCode, Cline, Kilo Code, Cursor, OpenClaw) rather than a vendor-native CLI. That fact dominates how prompts must be shaped — see § *The Claude-Code-router pattern* below.
 
@@ -8,7 +8,7 @@ GLM lives in a different agentic ecosystem than Claude / GPT / Gemini: it's most
 
 ## Family-wide rules (apply to all current GLM versions)
 
-These hold across GLM-4.6 → GLM-5 → GLM-5.1. Version-specific notes follow.
+These hold across GLM-4.6 → GLM-5 → GLM-5.1 → GLM-5.2 → GLM-5.3. Version-specific notes follow.
 
 ### 1. Thinking is enabled by default — but heavy system prompts suppress it
 
@@ -31,6 +31,8 @@ Notes on the markers:
 If you're writing a prompt targeting GLM specifically **without** a host system prompt (direct API usage), you can rely on the endpoint default — but flag the assumption so future readers know why the prompt has no explicit reasoning instruction.
 
 **GLM-5.2 update (June 2026):** GLM-5.2 exposes an explicit `reasoning_effort` parameter (`"high"` / `"max"`) alongside the `thinking` toggle — reasoning depth is now a runtime knob like every other frontier vendor. This demotes the `<reasoning_content>` prose re-injection to a **fallback** for routers that don't forward `reasoning_effort` to Z.ai's endpoint. Where the parameter reaches the endpoint, set `reasoning_effort` instead of injecting prose markers. The heavy-host-prompt suppression concern above is not documented as fixed, so keep re-injection in your toolkit — but reach for the parameter first. See § *GLM-5.2*.
+
+**GLM-5.3 update (August 2026):** GLM-5.3 raises the effort lever to `low` / `high` / `max` (default `max`) and **removes the off-switch entirely** — `thinking.type: "disabled"` is no longer supported, and a request that still sends it will fail. "Don't think / answer immediately" becomes **structurally unimplementable** on GLM-5.3, the same class of antipattern as Kimi K3 / K2.7-Code and the Qwen3.8 open weights (`antipatterns.md` #38). Existing integrations that toggle thinking off must migrate to `enabled` + `reasoning_effort: low` before naming the model. The `<reasoning_content>` fallback remains for routers that don't forward `reasoning_effort` (and for 5.1 and earlier). See § *GLM-5.3*.
 
 ### 2. Outcome-first, but explicit step naming tolerated
 
@@ -88,7 +90,35 @@ Z.ai is the rebranded name as of late 2025 / early 2026. The same company, same 
 
 ---
 
-## GLM-5.2 (Z.ai, June 16, 2026 — current frontier)
+## GLM-5.3 (Z.ai, mid-August 2026 — current frontier)
+
+Released in mid-August 2026 (launch post 17.08, per coverage cited in the briefing). **Same base model as GLM-5.2 — every gain comes from post-training scaling.** Z.ai frames it as the most capable open-weights coding model yet.
+
+### Headline facts
+
+- **Same base as 5.2; all gains from post-training** — no architecture change; the migration is behavioral, not architectural
+- **+50% on Z.ai Code Bench** (in-house benchmark) over GLM-5.2; open-weight SOTA on **Terminal Bench 3.0 (28.3** vs 4.6 on 5.2) and **Agents' Last Exam (28.5** vs 23.8)
+- **Emergent cyber:** **CyberGym 84.5** (best published result; ahead of GPT-5.6 Sol 83.6) and **ExploitBench 54.4** — more than double GLM-5.2's 24.4 (gains largest further up the exploitation chain)
+- **Text-only, 1M context, 128K max output**
+- **Reasoning is always on and cannot be disabled**: `thinking.type` only accepts `enabled`; `reasoning_effort` `low` / `high` / **`max`** (default `max`; vendor recommends `max` for coding). Requests sending `thinking.type: "disabled"` fail — migrate to `enabled` + effort `low` first
+- **Open weights in ~two weeks after launch** (once safety evaluation completes)
+
+### Wording behaviors that matter
+
+- Family rules #1–#4 apply (heavy host prompts still suppress thinking-gate engagement — the 1M context and new knobs do not lift the <4 KiB AGENTS.md ceiling; `reasoning_effort` is the primary mitigation, `<reasoning_content>` re-injection the fallback)
+- **The "don't think" request is now a migration error, not just inert prose** — on 5.3 there is no mode without reasoning; the only knob is depth (`low`/`high`/`max`)
+- Long-horizon framing remains GLM's wheelhouse — outcome-defined success criteria, verification loops, stop conditions
+- Identity-pinning still fails (family rule #3) — functional roles only
+
+### Migration from GLM-5.2 → GLM-5.3
+
+- **Mandatory parameter migration:** anything sending `thinking.type: disabled` (or relying on a no-reasoning mode) breaks on 5.3 — switch to `enabled` + `reasoning_effort: low` for the old no-thinking workloads
+- Prompts tuned around thinking-suppression on 5.1/5.2 run forward-compatibly; re-test the `<reasoning_content>` scaffolding — you may be able to rely on `reasoning_effort` alone
+- Budget for the default `max` effort on coding tasks — it consumes more thinking tokens than 5.2's normal mode
+
+---
+
+## GLM-5.2 (Z.ai, June 16, 2026 — previous frontier)
 
 ### Headline facts
 
@@ -235,7 +265,7 @@ Mirror of the family-wide section, distilled into rules for cross-model reviews:
 
 - **Heavy system prompts suppress GLM thinking** — not a Claude/GPT problem, very real on GLM
 - **Functional persona OK, identity-pinning fails** (distillation artifact)
-- **Reasoning lever is out-of-band, not prose** — GLM-5.2 has an explicit `reasoning_effort` param (`high`/`max`); earlier versions rely on the endpoint default. Either way, don't write "think step by step"
+- **Reasoning lever is out-of-band, not prose** — GLM-5.3 has `reasoning_effort` (`low`/`high`/`max`, default `max`) and **no off-switch**; GLM-5.2 has `high`/`max` + toggle; earlier versions rely on the endpoint default. Either way, don't write "think step by step"
 - **Outcome-first beats step prescription**, but not as aggressively as GPT-5.5
 - **`json_schema` over `json_object`** for structured output
 - **Long-horizon framing is GLM's wheelhouse** — write success criteria and stop conditions, not turn-by-turn steps
@@ -251,6 +281,6 @@ If a prompt must run on GLM **and** Claude / GPT / Gemini:
 - The 4 KiB AGENTS.md ceiling for GLM is **stricter** than Codex's 32 KiB and Claude Code's "soft 300-line" ceiling. **Strictest constraint wins** → write to GLM's budget.
 - Identity pinning is fine on Claude / GPT / Gemini but breaks GLM. **Strip identity pinning.**
 - `json_schema` over `json_object` works on Claude / GPT / Gemini / GLM alike — safe default.
-- Heavy system prompts hurt GLM specifically. On GLM-5.2, the first mitigation is the `reasoning_effort` parameter (out-of-band, costs nothing on other vendors). If the router doesn't forward it, or you're on GLM-5.1 and earlier, fall back to injecting explicit `<reasoning_content>` directives at the top of your `AGENTS.md` as the family-wide mitigation.
+- Heavy system prompts hurt GLM specifically. On GLM-5.3 the first mitigation is `reasoning_effort` (`low`/`high`/`max`); on GLM-5.2 it's `reasoning_effort` (`high`/`max`); if the router doesn't forward the parameter, or you're on GLM-5.1 and earlier, fall back to injecting explicit `<reasoning_content>` directives at the top of your `AGENTS.md` as the family-wide mitigation. And don't write "answer without reasoning" for any 5.3 target — there is no mode without it.
 
 When in doubt: tune for GLM, then check the result reads well on the other vendors. The reverse usually fails.

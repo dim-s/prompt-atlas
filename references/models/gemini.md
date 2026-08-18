@@ -8,7 +8,7 @@ When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via file
 
 ## Family-wide rules (apply to all Gemini 3.x versions)
 
-These hold across 3.0 → 3.6. Version-specific notes follow below.
+These hold across 3.0 → 3.7. Version-specific notes follow below.
 
 ### 1. Reasoning model — concise prompts win
 
@@ -172,7 +172,26 @@ Flash is the default for interactive sessions, agentic loops, and high-volume wo
 
 ---
 
-## Gemini 3.6 Flash (July 21, 2026 — current Flash frontier)
+## Gemini 3.7 Flash (August 13, 2026 — current Flash frontier)
+
+`gemini-3.7-flash`, GA on release, three weeks after 3.6 Flash. Google positions it as "our most intelligent workhorse model yet for coding and agents." It is the new default model powering the **Antigravity agent** (Gemini Managed Agents / Antigravity SDK) and the engine behind **Gemini Spark** (Google AI Pro / Ultra personal agent).
+
+### Behaviors that shape wording
+
+- **Better instruction-following fidelity and first-pass accuracy** — Google reports stronger gains on coding / issue resolution; FrontierCode 1.1 Main **43.6% vs 34.4%** (3.6 Flash), DeepSWE v1.1 **65.3 vs 49.0**, AutomationBench **30.4 vs 17.0**
+- **`thinking_level` values `low` / `medium` / `high`, default `medium`** — same default level as 3.5 Flash, not `high`; re-check prompts that assumed 3.6-era defaults (default level is a silent-regression risk on naive ports, same class as the 3.5 Flash migration gotcha)
+- **1M context, 64K max output** — long-context patterns apply unchanged
+- Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling params still deprecated
+- Intro price **$0.75 / $3.75 per MTok — half of 3.6 Flash's original rate** — through 31.12.2026, then $1.50 / $7.50; Google applied the same new rate to 3.6 Flash
+
+### When 3.7 Flash specific tuning helps
+
+- Agentic coding / agent loops migrating off 3.6 Flash — the first-pass / instruction-fidelity gains are the pitch; re-check any scaffold added to stop 3.6-era thrashing
+- Web-dev and knowledge-dense work (GDP.pdf 34.0 vs 22.0), enterprise workflow automation (AutomationBench 30.4 vs 17.0)
+
+---
+
+## Gemini 3.6 Flash (July 21, 2026 — previous Flash frontier)
 
 `gemini-3.6-flash`, GA on release. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
 
@@ -323,7 +342,7 @@ A prompt that works across Pro / Flash / Flash-Lite:
 - [ ] Concise (Flash-Lite needs it most)
 - [ ] No CoT scaffolding (all internalize reasoning)
 - [ ] No sampling params in body (deprecated API-wide since 2026-07-21)
-- [ ] Length stated as a task requirement, not a disposition (3.6 Flash is terser than 3.5 — a global "be brief" overcorrects)
+- [ ] Length stated as a task requirement, not a disposition (3.6 / 3.7 Flash are terser than 3.5 — a global "be brief" overcorrects)
 - [ ] Identity-based persona present (helps all three)
 - [ ] XML or Markdown, not both
 - [ ] Negative constraints at end

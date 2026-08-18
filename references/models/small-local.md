@@ -18,6 +18,10 @@ When the user's model is listed here — read its section. When not listed — m
 - **Gemma 4: Apache 2.0** (Google switched from custom Gemma license for v4). Clean for commercial deployment.
 - Gemma 3 and earlier: custom Gemma Terms of Use (restrictive on redistribution but permissive for inference).
 
+### ⚠️ Weight re-pull note — Gemma 4 stealth update (2026-07-16)
+
+Google re-published the Gemma 4 weights **under the same name** (no version bump, no "4.1") on 2026-07-16: it fixes broken tool calling and prematurely truncated / incomplete responses, and adds Flash Attention 4 (FA4) prefill acceleration on Nvidia Hopper GPUs (prompt-processing +25–70%, time-to-first-token −31% — Hopper H100+ only; Ada/RTX 40-series excluded from the FA4 gains, though they get the fixes). **If the local harness is running any Gemma 4 weights pulled before 2026-07-16, re-pull from Hugging Face** — the improvements live in the weights, not in config. This matters for prompt review because a harness sitting on the broken weights will misattribute tool-call failures or truncation to the prompt. Record the weight download date alongside any benchmark result as a de facto version identifier.
+
 ### The defining quirk: no system role
 
 Gemma instruction-tuned models have only `user` and `model` roles. System-level instructions go into the **first user turn**. Different inference engines handle the API-level `system` field inconsistently — some merge into user turn, some drop, some throw.
@@ -106,6 +110,10 @@ This isn't a bug, it's a stylistic preference baked into instruction tuning. Mis
 3. 4-5 examples at END
 4. **Try 2-pass (analyze → emit) for tasks with complex rules** — Ministral is the one small model where this consistently wins
 5. **Never use same-model self-verify** — biggest single regression source on this family
+
+### Mistral-adjacent guard model: Shieldstral (3B, 2026-08-04)
+
+Mistral's Shieldstral (`mistralai/Shieldstral-1.0-3B`, **3B, open weights under Apache 2.0**) is a **multimodal safety classifier**, not a generative model: it frames moderation as a policy-adaptive Q&A task (you write the policy as a plain-language question at inference; it returns a calibrated safety score over a single token — no retraining, one interface for text and images). Vendor reports it matches open guard models **up to 7× its size** on text-safety / refusal benchmarks and sets SOTA on multimodal moderation; runs on a single 16GB GPU. Niche for prompt work: **guard-model for task pipelines**, not a prompt target itself — noted here so a later coverage pass doesn't re-investigate it.
 
 ### When Ministral is the right pick
 - Tasks where you can pay 3-4× latency for 2-pass → +10pp gain

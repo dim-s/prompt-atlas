@@ -77,23 +77,19 @@ V4 supports tool calls while reasoning. R1 forced a choice: reason **or** call t
 
 Wording implication: agentic loops can mix reasoning and tool calls in the same response without prompt-side workarounds. Prompts that previously instructed "first reason about the task, then in a separate response call the tool" can be simplified.
 
-### 5. Three-level thinking lever: `thinking: "off" | "high" | "max"`
+### 5. Effort-model thinking lever: `thinking` toggle + `reasoning_effort` (`low` / `high` / `max`)
 
-DeepSeek V4 exposes reasoning depth as a three-step API parameter:
+Since the **V4-Pro GA update (2026-08-13)** DeepSeek exposes reasoning depth as an **effort model**, like the other frontier vendors — the old three-level `thinking: "off" | "high" | "max"` parameter set is **obsolete**:
 
-- `"off"` — no reasoning
-- `"high"` — moderate reasoning depth
-- `"max"` — maximum reasoning effort for hardest tasks
+| Format | Thinking toggle | Effort control |
+|---|---|---|
+| OpenAI (Chat Completions) | `extra_body={"thinking": {"type": "enabled/disabled"}}` | `reasoning_effort` (`low`/`high`/`max`) |
+| Anthropic | `reasoning.effort` (`none`/`low`/`high`/`max` — `none` disables thinking) | same field |
+| Responses API | — | `output_config.effort` (`low`/`high`/`max`) |
 
-This is fewer levels than GPT-5.5's five-step `reasoning_effort` (`none/low/medium/high/xhigh`) or Claude's `effort` (`low/medium/high/xhigh`). It maps roughly:
+**Thinking is enabled by default, default effort `high`.** Actual mapped effort: requested `low` → `low`; `medium` → `high`; `high` → `high`; `xhigh` → `high`; `max` → `max` (identical for V4-Pro and V4-Flash).
 
-| Claude `effort` / GPT `reasoning_effort` | DeepSeek `thinking` |
-|---|---|
-| low / none | `"off"` |
-| medium | `"high"` |
-| high / xhigh | `"max"` |
-
-Wording-side: same rule as other vendors — don't write "think step by step" in the body. Set the parameter.
+Wording-side: same rule as other vendors — don't write "think step by step" in the body, and don't ask the model to *lower* its own reasoning via prose. Set the parameter. A "don't think / answer immediately" line is now a **reduced-reasoning** request (set effort `low`), not an off-switch equivalent — and on the Anthropic surface `none` is the only true disable.
 
 ### 6. Demand JSON in the user prompt even with `response_format` set
 
@@ -140,21 +136,23 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 
 ---
 
-## DeepSeek V4-Pro (April 24, 2026 — current frontier)
+## DeepSeek V4-Pro (April 24, 2026 — current frontier; GA update 2026-08-13)
 
 ### Headline facts
 
-- **Architecture:** 1.6 T total parameters, 49 B activated per token, MoE
+- **Architecture:** 1.6 T total parameters, 49 B activated per token, MoE (reported figure — not restated in the 08-13 launch post)
 - **Context:** 1 M tokens (with reasoning degradation past ~500 K)
 - **Training:** 32 T tokens
-- **Benchmarks:** LiveCodeBench 93.5, Codeforces ELO 3206, SimpleQA-Verified 57.9
-- **SWE-Bench Pro gap to closed-flagship:** 55.4 vs 64.3 (Claude Opus 4.7) — V4-Pro still lags on long-horizon agentic coding
+- **GA update (2026-08-13, `deepseek-v4-pro` name unchanged):** released out of preview on APP / Web / API; notable agentic gains — HLE 42.7 (w/o tools) / 60.0 (w/ tools), Terminal-Bench 2.1 **87.9**, DeepSWE **62.7** (up from 12.8 on the preview), CyberGym 83.3, Toolathlon-Verified 74.1, AutomationBench (public) 31.8; Artificial Analysis moves V4-Pro from 45 → 53 on its Intelligence Index (secondary reporting)
+- **Native OpenAI Responses API support**, with a one-click Codex configuration — the Responses-API surface and its `output_config.effort` join the existing Chat Completions / Anthropic surfaces
+- **Thinking is effort-model since this update** — see family rule #5; default enabled with effort `high`
+- **Pricing switched to peak/off-peak from 16.08 16:00 UTC** — off-peak is half of peak; several tariffs rose sharply (input+output up to ~2–3.7×; cache-hit input from +52% up to **+1100%**), so the cached-prompt economics that the atlas's DSA rule (#8) relies on are now time-of-day dependent and measurably more expensive
 - **Available via:** DeepSeek's hosted API, self-hosted (open weights)
 
 ### Wording behaviors specific to V4-Pro
 
 - **All family rules** (user-prompt priority, XML-tagged context, JSON-in-prose) apply most strongly here
-- **Tool-use lag** vs Claude Opus 4.7 on long-horizon tasks — for agentic loops where tool reliability dominates, Claude may still be the right target. For pure reasoning + tool use, V4-Pro is competitive at a fraction of the cost.
+- **Tool-use gap vs the closed flagships has narrowed but not closed** with the 08-13 GA — V4-Pro 0813 (AA Index 53) still trails the top closed models on long-horizon agentic coding (Opus 5 / GPT-5.6 Sol / Grok 4.6). For agentic loops where tool reliability dominates, the closed frontier may still be the right target; for pure reasoning + tool use, V4-Pro is competitive at a fraction of the cost.
 
 ### When V4-Pro specific tuning helps
 
@@ -164,18 +162,19 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 
 ### When NOT to invest in V4-Pro specific tuning
 
-- Long-horizon autonomous agents — Opus 4.7 / GLM-5.1 / Qwen3.7-Max all lead on this axis
+- Long-horizon autonomous agents — Opus 5 / GLM-5.3 / Qwen3.8-Max / GPT-5.6 Sol all lead on this axis
 - Broad factual recall — V4-Pro abstention isn't as high as Qwen but factual accuracy lags closed flagships
 - Visual / multimodal — V4 is text-only
 
 ---
 
-## DeepSeek V4-Flash (April 24, 2026)
+## DeepSeek V4-Flash (April 24, 2026 — official release 2026-07-31)
 
 ### Headline facts
 
 - **Architecture:** 284 B total parameters, 13 B activated per token
 - Same 1 M context, same DSA, same family character as V4-Pro — at a much lower cost / latency profile
+- **Official release 2026-07-31** (`deepseek-v4-flash` name unchanged; the `-0731` build is the same architecture as the Preview, re-post-trained) — Terminal-Bench 2.1 82.7, DeepSWE 54.4, CyberGym 76.7, Toolathlon 70.3 (DeepSeek's own harness figures)
 - **Self-host viable** at a much smaller hardware footprint than V4-Pro
 
 ### Wording adjustments from V4-Pro → V4-Flash
@@ -237,7 +236,7 @@ Mirror of the family-wide section, distilled for cross-model reviews:
 - **Brief system prompt** — system overuse is the #1 failure mode
 - **XML-tagged context with `relevance` attrs** — 92% vs 45% accuracy gap
 - **Demand JSON in prose AND set `response_format`** — both, not either
-- **Three-step thinking lever** — `off`/`high`/`max`
+- **Effort-model thinking lever** — `thinking` toggle + `reasoning_effort` `low`/`high`/`max` (default enabled, effort `high`; Anthropic surface adds `none` as the disable); the old `off`/`high`/`max` triplet is obsolete since 2026-08-13
 - **Tool calls work in thinking mode** — V4 unified the lineage
 - **`reasoning_content` round-trip on V4 multi-turn** (API breaking change from V3)
 - **Slightly more literal than Claude** — spell scope, boundaries, success criteria
@@ -280,12 +279,13 @@ If the artifact is `AGENTS.md`, ship an `AGENTS.deepseek.md` override that repla
 
 ## Source notes
 
-DeepSeek V4 documentation and practitioner guides as of May 2026 are still maturing. The behaviors documented here come from:
+DeepSeek V4 documentation and practitioner guides are still maturing. The behaviors documented here come from:
 
-- DeepSeek's official model documentation (deepseekai.guide tutorials, where they exist)
-- V4 practitioner guides (skywork.ai mastering-deepseek-prompt-engineering, lightrains, deepseekai.guide)
-- The CodersEra V4 vs V3.2 comparison
-- The BentoML "Complete Guide to DeepSeek Models" overview
+- DeepSeek's official API changelog ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/), read 2026-08-18) — the 2026-08-13 V4-Pro GA entry (effort levels `low`/`high`/`max`, Responses API + Codex adaptation, peak/off-peak pricing from 16.08), and the 2026-07-31 V4-Flash official release
+- DeepSeek's official thinking-mode guide ([api-docs.deepseek.com/guides/thinking_mode](https://api-docs.deepseek.com/guides/thinking_mode)) — the OpenAI / Anthropic / Responses API parameter formats and the effort mapping table; **"thinking mode is enabled by default, with the default effort being `high`"**
+- Independent pricing reporting (computerworld.com, 2026-08) — cache-hit tariffs up +52% to +1100%; off-peak = half of peak
+- Datanorth's V4-Pro-0813 coverage (datanorth.ai, 2026-08-14) — GA date, benchmark context (AA Index 53), Harness v0.1 open-sourced under MIT
+- DeepSeek V4 practitioner guides (deepseekai.guide, skywork.ai), the CodersEra V4 vs V3.2 comparison, the BentoML "Complete Guide to DeepSeek Models"
 
 The strongest claims — **user-prompt-priority** and the **`reasoning_content` round-trip** — are documented across multiple practitioner sources and are repeatable. Treat them as load-bearing. Other axes (cache economics, 1 M context with 500 K reasoning ceiling) are more speculative and worth measuring before committing to a high-stakes prompt design.
 

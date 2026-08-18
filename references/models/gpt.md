@@ -173,6 +173,19 @@ OpenAI's rule for effort is explicit and unusual: *"Preserve your current reason
 - Cross-vendor `AGENTS.md` that must also serve Claude — trim what's redundant, but don't adopt 5.6's concision default as the file's global disposition.
 - Prompts already lean and stable on 5.5: the fresh-baseline advice (family rule #2) is about *bloat*, not about rewriting healthy text.
 
+### August 2026 update — the same name is now two post-trainings, split by surface
+
+On **August 6, 2026** OpenAI updated **GPT-5.6 Sol in ChatGPT** (Plus / Pro chat) and made **GPT-5.6 Luna** the default for Free / Go users. The review-relevant fact: **"GPT-5.6" is no longer one model — the version depends on the surface.**
+
+- **ChatGPT (Plus / Pro) = August Sol** — tuned for everyday conversation: more focused answers, tighter formatting, better fact-groundedness, an **effort slider** in ChatGPT for how much thought to put into a response. This August Sol "will only be available in the Chat experience in ChatGPT".
+- **ChatGPT Free / Go = Luna (August)** — default model with unlimited text chats plus a **Think button** for higher reasoning on harder questions.
+- **Work and Codex = July versions, unchanged** — OpenAI states explicitly: *"The version of GPT-5.6 Sol that powers Work and Codex is not changing as part of this release."* Codex / API reviews should target the **July** model behavior described above, not August.
+- **Successor to GPT-5.5 Instant's chat role** — the August update positions August Sol/Luna as the replacement for GPT-5.5 Instant in chat (all factuality comparisons are vs GPT-5.5 Instant).
+
+Measured deltas (August Sol vs GPT-5.5 Instant, OpenAI's system-card numbers): responses with at least one factual error ~**68% less common (Sol)** / ~62% (Luna) on high-stakes financial/medical/legal prompts; **HealthBench Professional +15.6** (54.0 vs 38.4), HealthBench +3.6, HealthBench Hard +8.5.
+
+**Review consequence:** when the artifact targets GPT-5.6, ask **which surface** — a ChatGPT-port tuned for the August chat model is not automatically valid for Codex/Work prompts (still July behavior), and vice versa. Wording guidance (family rules) is unchanged on both surfaces; the split is version identity, not wording.
+
 ---
 
 ## GPT-5.5 (previous frontier, 2026-04-23)
