@@ -29,6 +29,25 @@ Wording mitigation when porting Claude / GPT prompts to DeepSeek V4:
 
 Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85% of common DeepSeek V4 errors.** Treat the rule seriously.
 
+> **Field note (2026-08-19) — did not reproduce on V4-Flash under a system-only agent body.** A 10.2 KB
+> agent body consisting entirely of system-side methodology (route-read a 170 KB third-party document
+> by its table of contents → read only the matching sections → query HTTP endpoints → judge) was run as
+> the system prompt on `deepseek-v4-flash` (channel: `opencode/deepseek-v4-flash-free`). The task was
+> chosen to favour the failure mode above: it requires search in a large unfamiliar document plus a
+> conclusion about ABSENCE. Two runs — one with inherited MCP tools, one with an explicit
+> `read,grep,bash` allowlist and a `mktemp -d` cwd. Both executed the system methodology precisely: the
+> trace shows `grep -n '^## '` for the ToC, then `read` at exactly the two matching offsets out of
+> twenty-four sections, then the endpoint calls, then a refusal citing the sections by name. No
+> fabricated negative, no mis-scoped search.
+>
+> **Limits, stated plainly:** one agent, one task class, two runs — this is a non-reproduction on one
+> workload, not a refutation of the ~85% figure; the channel was the free route, not the direct
+> `deepseek/deepseek-v4-flash` API, and the two were not compared. DeepSeek's official changelog
+> (V4-Pro 2026-08-13, V4-Flash 2026-07-31; read 2026-08-19) says **nothing** about system-prompt
+> adherence in either direction, so neither this note nor the rule above can currently be settled from
+> the vendor. Rule #1 stands; treat this as a datapoint that it may be narrower than stated. Detail in
+> `FINDINGS.md § Заход 2026-08-19`.
+
 **Agentic failure mode.** A tool-using DeepSeek agent that carries its rules and search methodology in the system prompt tends to **fabricate confident false negatives** on absence questions ("X doesn't exist anywhere" for something that does) and mis-scope its searches — the under-weighted system methodology yields a shallow search that then asserts. Moving the bulk to the user turn (system kept to a one-line role) fixes it on the same model and tools — an instruction-authority effect, not a capability gain. Symptom → diagnosis: a confident "doesn't exist anywhere" from a DeepSeek agent → suspect system-prompt overuse and verify before trusting the negative.
 
 ### 2. Brief system prompt + structured user prompt = the canonical V4 pattern
