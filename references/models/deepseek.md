@@ -27,7 +27,34 @@ Wording mitigation when porting Claude / GPT prompts to DeepSeek V4:
 - **For role-play and thinking-mode work specifically:** put instructions at the **end of the first user message** — that's the position where DeepSeek's instruction-following is most stable (per V4 practitioner guides, this matches the model's training-data layout).
 - **Don't fight this with workarounds** like "in the system prompt, the rules are: X" referenced from the user prompt — V4 will ignore complex system-prompt content.
 
-Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85% of common DeepSeek V4 errors.** Treat the rule seriously.
+Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85% of common DeepSeek V4 errors.** The figure comes from practitioner guides written against earlier V4 builds — and it has now **failed to reproduce twice on the current ones**, on two unrelated task classes (field notes below). Apply the rule where you can cheaply comply; do not treat it as a reason to re-architect a working system-prompt agent before measuring it on the model you actually target.
+
+> **Field note (2026-08-21) — second non-reproduction, and the practical one: Claude-authored agent bodies port to V4-Flash unchanged.** A 12.7 KB
+> subagent body (Russian copy-editing methodology: ~23 numbered transformation rules in three blocks,
+> each with before/after pairs, plus register detection and a hard "high-stakes texts get minimal
+> intervention" boundary) was written for `claude-opus-5` and mirrored into the Pi harness **as the
+> system prompt, verbatim**, on `ollama/deepseek-v4-flash:0731` with `--thinking max`. Four fixtures,
+> each targeting a different failure class: apply-the-method, resist-invention under a "make it more
+> interesting" prompt, high-stakes medical dosage instruction, and API documentation (over-editing trap).
+>
+> V4-Flash executed the system-side methodology **more faithfully than `claude-sonnet-5` did** on the
+> same four fixtures across three transports. On the invention trap it added nothing and said plainly
+> that the text could not be enlivened without fabricating; on the medical instruction it made one
+> clarity edit and named the register's function; sonnet-5, by contrast, returned one fixture unedited
+> claiming "block A found nothing" while missing a copular filler verb the same body's rule A3 names
+> explicitly. The one flaw found on V4-Flash was a *mild over-application* (rhythm edit inside a
+> technical doc) — the opposite of the under-weighted-system-methodology failure rule #1 predicts.
+>
+> Practical consequence worth stating for reviewers: **an agent body authored against Opus/Sonnet
+> conventions can be pointed at V4-Flash without moving the bulk to the user turn.** Reviewing such a
+> port, do not open with "move the instructions to the user prompt" — measure first. `--thinking` level
+> mattered far more than instruction placement here: `high` rewrote impersonal medical prescriptions
+> into imperatives (a real safety-relevant over-application), `max` did not.
+>
+> **Limits:** one body, four fixtures, one run each, single channel (Ollama Cloud subscription route,
+> not the direct `api.deepseek.com`); no A/B against the same body served from the user turn, so this
+> shows "system-side works", not "system-side is equal or better". Judged by one human pass against a
+> rubric, on binary markers (removed the filler verb or not; rewrote the prescription or not).
 
 > **Field note (2026-08-19) — did not reproduce on V4-Flash under a system-only agent body.** A 10.2 KB
 > agent body consisting entirely of system-side methodology (route-read a 170 KB third-party document
