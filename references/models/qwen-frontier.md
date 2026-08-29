@@ -1,6 +1,6 @@
 # Model-specific wording differences — Alibaba Qwen frontier family
 
-What changes about how you should PHRASE prompts for **frontier-class Qwen models**: Qwen3.8-Max (August 2026), Qwen3.7-Max (May 2026), Qwen3.7 Plus, Qwen3.6 Plus / Max-Preview, and the Qwen3-Max-Thinking lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `deepseek.md`.
+What changes about how you should PHRASE prompts for **frontier-class Qwen models**: Qwen3.8-Max / **Qwen3.8-Flash** (August 2026), Qwen3.7-Max (May 2026), Qwen3.7 Plus, Qwen3.6 Plus / Max-Preview, and the Qwen3-Max-Thinking lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `deepseek.md`.
 
 **This file covers frontier Qwen only.** Small-local Qwen variants (Qwen3 2B / 4B / e2b / e4b that run on LM Studio, Ollama, llama.cpp, vLLM at consumer hardware tiers) are covered in `small-local.md § Qwen` — different prompting regime, different failure modes, different reference matrix (`matrix-small.md`). When a user names just "Qwen" without size or tier, ask which one before applying advice from either file.
 
@@ -10,7 +10,7 @@ Frontier Qwen runs via **QwenCloud** (the official hosted API, OpenAI- and DashS
 
 ## Family-wide rules (apply to all current frontier Qwen versions)
 
-These hold across Qwen3.6 Plus → Qwen3.6-Max-Preview → Qwen3-Max-Thinking → Qwen3.7-Max → Qwen3.8-Max.
+These hold across Qwen3.6 Plus → Qwen3.6-Max-Preview → Qwen3-Max-Thinking → Qwen3.7-Max → Qwen3.8-Max → Qwen3.8-Flash.
 
 ### 1. Granularity beats inference — more explicit than Claude/GPT/Gemini
 
@@ -123,6 +123,38 @@ Announced July 19, 2026 as "Qwen3.8-Max-Preview" and officially released (**GA 0
 - 3.7-era prompts run forward-compatibly; the main action is moving reasoning control from the old toggle/required-on assumption to the effort model (`reasoning_effort`, default `xhigh`)
 - Budget for the higher default effort: `xhigh` on 3.8 costs more thinking tokens than 3.7's required-on mode at its default
 - If the target is the self-hosted open weights, re-check multimodal assumptions — the open model is text-only
+
+---
+
+## Qwen3.8-Flash (Alibaba, August 25–27, 2026 — cost-tier sibling)
+
+Released as an open-weight, multimodal MoE with an **early preview of the Qwen4 architecture** (Alizila 27.08; ModelScope teaser 25.08). Positioned against DeepSeek-V4-Flash at a fraction of the price.
+
+### Headline facts
+
+- **Open weights: `Qwen/Qwen3.8-Flash-Next`** — 125B main + **51B N-gram embedding** + 4B MTP, **6B activated per token**; hybrid attention: Gated DeltaNet (GDN) + **Qwen Sparse Attention (QSA)** (micro-block-level indexer), Gated Residual (GR), Muon optimizer — the Qwen4-architecture preview
+- **License:** `qwen-community-1.0` (custom — **NOT Apache**; check terms before commercial self-hosting)
+- **Context:** **262,144 native, extensible to 1,000,000** on the open weights; hosted `qwen3.8-flash` defaults to **1M with official built-in tools** (QwenCloud) — the two surfaces differ more than an implementation detail: a prompt sized for hosted-1M breaks on a 262K self-host
+- **Multimodal:** image-text input (vision encoder); open weights are `image-text-to-text`
+- **Pricing:** ¥1 / ¥3 per M tokens (≈ **$0.16 / $0.47**) input/output (Model Studio / Qwen Cloud); powers QwenWork Standard mode (−75% tokens per task, ~2× generation speed per Alizila)
+- **Benchmarks** (vendor card): SWE-bench Pro **62.5** (vs DeepSeek-V4-Flash 56.0 / Opus-4.6 53.4), DeepSWE 1.1 58.7, SWE-bench Multilingual 81.0; competitive with DeepSeek-V4-Flash and Claude-Opus-4.6 across agentic coding, long-horizon office work (CoWorkBench), tool use (Toolathlon Verified), MathVision, AndroidWorld, ERQA
+
+### Wording behaviors that matter
+
+- **Family rules #1–#6 apply** (granularity, numbered sections, self-verification, iterative refinement, abstention, visual-polish lag) — Flash is a cheaper family member, not a different regime
+- **Thinking knobs are unpublished** — no prompt-relevant documentation of `reasoning_effort` / `enable_thinking` / `/think` `/no_think` for Flash as of 29.08. Do NOT claim values; surface as `?` and check the vendor before asserting
+- **The surface split is the review-critical fact** (hosted 1M + tools vs open 262K): establish which one the prompt targets before long-context or tool-heavy recommendations
+- **Agentic coding is the use case the card targets** — SWE-bench Pro 62.5 at this price tier puts it in the same review lane as DeepSeek-V4-Flash (tight scope, explicit success criteria, tool descriptions matter)
+
+### When Qwen3.8-Flash specific tuning helps
+
+- Cost-sensitive coding / tool-driven agents where the price-per-performance tier (≈$0.16/$0.47) beats V4-Flash or Opus-4.6 economics
+- Multimodal + high-volume workloads on the hosted 1M surface
+
+### When NOT to invest
+
+- Long-context reasoning on the **open weights** (262K native) where the hosted model's 1M is required
+- Any workload where thinking-knob behavior must be controlled today — undocumented on Flash; prefer the documented Qwen3.8-Max surface until Flash's knobs ship
 
 ---
 
@@ -259,6 +291,8 @@ Cross-vendor wording note: Qwen's wording defaults overlap heavily with Claude's
 ---
 
 ## Source notes
+
+- Qwen3.8-Flash: Alizila (27.08, [alizila.com](https://www.alizila.com/alibaba-releases-qwen3-8-flash-with-innovative-model-architecture-delivering-optimal-price-performance/)) — 125B+51B/6B-active specs, price tiers (¥1/¥3), QwenWork, benchmark positioning; Hugging Face card `Qwen/Qwen3.8-Flash-Next` (read 2026-08-29) — architecture details (GDN/QSA/GR, N-gram embedding, Muon), context numbers (262K/1M), license `qwen-community-1.0`, SWE-bench comparisons; QwenCloud model page for hosted `qwen3.8-flash` (1M default, built-in tools). Thinking knobs: **not documented as of 29.08 — marked `?` deliberately**
 
 Qwen3.7-Max was released too recently (May 20-21, 2026) for many independent prompting analyses to exist. Qwen3.8-Max facts come from the vendor's own pages:
 

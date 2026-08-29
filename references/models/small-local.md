@@ -288,6 +288,67 @@ Llama 3.2 3B is positioned by Meta for "assistant-like chat and agentic applicat
 
 ---
 
+## IBM Granite family (added 2026-08-29)
+
+### Lineup (2026)
+
+- **Granite 4.2 3B / 8B** — in the atlas's 2-9B class. Dense, decoder-only **reasoning** models, Apache 2.0, weights on Hugging Face (`ibm-granite/granite-4.2-3b` / `-8b`; also `-30b`)
+- **Granite 4.2 30B** — above the 2-9B range (like Gemma 4 31B / Qwen3.6-27B, noted but not covered by matrix-small)
+- First Granite generation built around **explicit reasoning**; earlier Granite 4.0/4.1 were instruction-following assistants
+
+### License
+
+- **Apache 2.0** (weights, quantized variants, docs) — clean for commercial deployment
+
+### The defining quirk: switchable thinking in the chat template
+
+Each Granite 4.2 model exposes **three operating modes through its chat template**:
+
+1. **Thinking** (default) — full chain of thought inside dedicated tags before the answer
+2. **Non-thinking** — answers directly
+3. **Low-effort** — short reasoning budget for easy questions
+
+**Mode is a template/serving choice, not prompt prose.** A compile-time task prompt should not contain "don't think" — pick the non-thinking / low-effort mode in the harness call (same class of rule as every frontier vendor's out-of-band reasoning knob; `antipatterns-small.md` thinking-on regression applies by default if you leave thinking on for 2-3B compile tasks).
+
+**Multi-turn gotcha:** in multi-turn conversations, previous turns' thinking is **stripped by default** (template behavior) — never write prompts that depend on visible CoT from earlier turns, and don't expect `reasoning_content`-style continuity.
+
+### Native tool calling
+
+The same template reasons about which tool to call and why before emitting the call, in **OpenAI function-calling format** — plugs into vLLM / SGLang harnesses without extra adapters. The small-model rule still applies: below ~7B, tool calls need 3-5 few-shot tool-call examples (`antipatterns-small.md § 4`).
+
+### Training context that affects prompting
+
+- Pre-trained on ~15T tokens, context window grown to **512K** via a five-phase schedule (small-model record; usable-window behavior at scale unverified)
+- SFT on ~7.2M samples (CoT, reasoning, agentic trajectories)
+- **8B (and 30B): multi-stage RL inside live environments** (OpenHands repo edits graded by hidden tests; terminal with up to 64 turns; multi-hop web search) — the only 2-9B models in the atlas with environment-RL training, which is why agentic-loop prompts are viable on the 8B where other small models regress (still: scope tightly, outcome-defined)
+- RLHF adds a **reasoning-length penalty** — verbose CoT chains are discouraged by training
+- 3B skips the agentic-RL block — treat it as a plain small reasoning model
+- 12 languages tested (EN, DE, JA, AR, KO, ZH, …) — non-EN coverage exists, per-model behavior unmeasured in our suites
+
+### Benchmarks (vendor-reported)
+
+| | 3B | 8B |
+|---|---|---|
+| SWE-Bench Verified | — | 47.67 |
+| Terminal-Bench 2.1 | — | 20.56 |
+| AIME25 | 78.33 | 86.67 |
+| GPQA | 54.80 | 64.14 |
+| RULER @128K | 55.30 | 71.41 |
+
+### Recommendations
+
+**For task-facing prompts on Granite 4.2 3B/8B:**
+1. Use the standard skeleton (`techniques-small.md`) — system role is supported, no Gemma-style fold-in
+2. **Pick the thinking mode at serving time** — non-thinking / low-effort for compile-time tasks; thinking default only where reasoning depth is the point
+3. Native tool calls OK, but add few-shot tool-call examples on the 3B; the 8B tolerates agentic loops better (environment-trained) — still define success criteria and stop conditions
+4. Failure-surface cells are **`?`-untested in our suites** — don't extrapolate from Gemma/Qwen numbers; run a small suite before committing
+
+### Quantized variants
+
+FP8 (no calibration), NVFP4 / MXFP4 (calibrated), fourteen GGUF formats via llama.cpp — same quant-choice testing advice as other families (Q4 vs Q8 is task-dependent).
+
+---
+
 ## Russian-tuned variants (when input is RU and target is small local)
 
 The EN-system unlock (`antipatterns-small.md § 6`) is the right default for base 2-3B models on RU input. **But** dedicated RU tunes invert this — same-language system can win.

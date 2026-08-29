@@ -445,7 +445,7 @@ When checklists conflict, the **three-vendor opposite-default table** above deci
 
 ## Cross-vendor (4+)
 
-A single prompt meant to run on any mix of four or more current frontier vendors — Claude, GPT-5.x, Gemini 3.x, Kimi K3, Z.ai GLM, frontier Qwen, DeepSeek V4, xAI Grok, Mistral frontier, Meta Muse Spark. This is the hardest case in the skill and **usually a design mistake to attempt as a single universal artifact.**
+A single prompt meant to run on any mix of four or more current frontier vendors — Claude, GPT-5.x, Gemini 3.x, Kimi K3, Z.ai GLM, frontier Qwen, DeepSeek V4, xAI Grok, Mistral frontier, Meta Muse Spark, Tencent Hunyuan (Hy4 preview). This is the hardest case in the skill and **usually a design mistake to attempt as a single universal artifact.**
 
 ### Why "universal across everything" is usually a trap
 
@@ -455,7 +455,7 @@ Each additional vendor adds at least one **opposite-default axis** that compromi
 - Gemini's "no temperature in body" + "negative constraints at end" + "no XML+Markdown mix"
 - GPT-5.5's "strip persona / strip few-shot / outcome-first"
 - GLM's "<4 KiB load-bearing + no identity pinning + reasoning-re-injection"
-- DeepSeek's "user-prompt-priority + brief system"
+- DeepSeek's "user-prompt-priority + brief system" and its vision sibling's **user-messages-only images**
 - Qwen's "granular constraints + self-verify + numbered requirements"
 - Kimi's "persona helps / few-shot helps" (which conflicts with GPT)
 
@@ -498,6 +498,8 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | XML + Markdown | **markdown skeleton, XML inline only** | Gemini (strict) |
 | Tool guidance | **inside tool description, not system body** | GPT-5.5 + DeepSeek (system overuse penalty) |
 | Instruction placement | **brief role in system + bulk in user message** | DeepSeek (user-prompt priority) — costs little on others |
+| Image content placement | **image blocks in user messages only** (system/assistant images 400 on DeepSeek V4-Flash-Vision-Exp; every other multimodal vendor accepts them only in user turns anyway) | DeepSeek V4-Flash-Vision-Exp (structural) — safe and standard everywhere |
+| Unverified new-family axes | **don't claim behavioral deltas for vendors without prompting guides — apply the strictest verified neighbor and mark `?`** | Tencent Hy4 preview, Muse Glimmer/Code, Mistral Medium 3.5 (no guides published) — anti-fabrication |
 | Granularity | **explicit constraints, hex colors, sizes, scopes** | Qwen (vagueness hurts) — costs little on others |
 | Numbered requirements | **A, B, C, D rather than "the following considerations"** | Qwen (skips un-emphasized) — costs nothing on others |
 | Identity check | **don't ask the model to name itself** | GLM (distillation artifact) |

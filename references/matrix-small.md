@@ -39,10 +39,12 @@ How to lay out the prompt body for this model.
 | **Qwen 3.5 9B** | yes | END | 4–5 | medium | low | EN system: neutral (model is large enough to handle non-EN well) |
 | **Phi-4-mini 3.8B** | yes (`<\|system\|>...<\|end\|>` chat format) | END | ? (likely 3–5; not tested in our suites) | medium (better than Gemma family) | low | ? — Microsoft docs warn "languages other than English will experience worse performance" |
 | **Llama 3.2 3B** | yes (standard Llama 3 chat template) | END | ? (likely 4–5) | medium | low | ? — RU tunes (saiga family) exist; base 3.2 weak on RU |
+| **Granite 4.2 3B / 8B** (IBM, Aug 25 2026) | yes (standard chat template with **explicit thinking-mode switch** — see reading guide) | END (family convention; untested in our suites) | ? (untested) | ? — reasoning-model training may raise tolerance, unmeasured | ? (untested) | ? (untested) |
 
 **Reading guide:**
 - *"END"* = critical/negative rules must be the final block before the user-input area. Anything earlier risks attentional decay.
 - *"none"* (system role) = Gemma instruct mode literally has no `system` role; if you pass one via API some inference engines silently merge it into the first user turn, others drop it. Verify with provider.
+*"switchable thinking"* (Granite 4.2) = the chat template exposes **three operating modes** — thinking (default, full CoT in dedicated tags), non-thinking (direct answer), low-effort (short reasoning budget). Mode is a template/serving choice, not prompt prose. In multi-turn, prior turns' thinking is stripped by default.
 - *"required"* on EN system = our `nl_dsl_game` experiments saw 2-3B models gain +4–8pp on RU input when system prompt was EN, with -35-60ms latency bonus from EN tokenization.
 - *"markdown emission high"* on Ministral = the model emits ```` ``` ```` fences as natural output style; building the parser to tolerate fences is cheaper than trying to suppress them (5+ prompt iterations failed to suppress in our suite).
 
@@ -58,6 +60,8 @@ What the model can and can't do, and how it responds to common prompting techniq
 | **Gemma 4 e2b** | **low** — fails on "but not", "except" | **low** — drops adjective in multi-rule, holds in single-rule | low | **−25pp** native thinking → unparseable | ? | **−22pp** (thinking-token leak without `--jinja`) | ? | JSON object (free); GBNF on llama.cpp |
 | **Gemma 4 e4b** | medium — holds explicit "except", fails subtle "but not" | high — holds adjective in multi-rule | low | **−44pp** native thinking → unparseable | ? | −19pp (same leak as e2b) | ? | JSON object / json_schema OK on lmstudio |
 | **Ministral 3B** | low — fails on "no X" preconditions, skips to easier rule | low | low | n/a (no native thinking) | n/a | **+10pp** with 2-pass analyze-then-emit (only model that wins) | **−40pp** confirmation anti-bias | JSON object; markdown-tolerant parser required |
+| **Granite 4.2 3B** | ? untested in our suites — 3B skips the agentic-RL block (see models file) | ? | ? | **thinking default-on in template — for compile-time tasks use low-effort/non-thinking mode** (mode switch, not prose) | ? (native OpenAI-format tool calls exist; small-model few-shot rule still applies) | ? | ? | JSON via OpenAI function-calling format / structured outputs claimed |
+| **Granite 4.2 8B** | ? untested | ? | ? | same template switch; 8B ran environment-RL (SE/terminal/search) so thinking behavior is more deliberate — still pick the mode explicitly | ? (same caveat) | viable — environment-trained multi-turn agentic loops are the 8B's documented strength | ? | JSON via OpenAI function-calling format / structured outputs claimed |
 | **Qwen 3.5 2B** | low — "every rule looks satisfied to me" | low — drops adjective like Gemma e2b | **high** — "fixes" rules ("milk" → "water_tank" because both liquids) | **−44pp** native thinking + `<think>` leak in content | ? | neutral (no gain, no loss) | ? | json_schema on lmstudio; json_object on llamacpp |
 | **Qwen 3.5 9B** | medium | medium | medium | hurts (-15…-25pp) | ? | ? | ? | json_schema / json_object |
 | **Phi-4-mini 3.8B** | ? | ? | ? | n/a (non-reasoning variant); `Phi-4-mini-reasoning` variant exists separately | **Microsoft documents hallucinated function names / URLs** in function-calling mode | ? | ? | JSON mode supported; tool tokens `<\|tool\|>...<\|/tool\|>` in system |

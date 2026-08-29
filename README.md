@@ -8,7 +8,7 @@ License: [CC-BY-SA 4.0](./LICENSE). Built on the methodology of [matrix-citation
 
 ## Coverage
 
-### Class 1 — Frontier agent-facing prompts (10 vendor families)
+### Class 1 — Frontier agent-facing prompts (11 vendor families)
 
 | Vendor | Models covered |
 |---|---|
@@ -16,12 +16,13 @@ License: [CC-BY-SA 4.0](./LICENSE). Built on the methodology of [matrix-citation
 | **OpenAI GPT-5.x** in Codex CLI | **GPT-5.6 Sol / Terra / Luna** (Jul 2026; August update: Chat = August model, Codex/Work stay July) / 5.5 (+ Instant) / 5.4 / 5.3 / 5.3-codex / 5.2 / 5.1 |
 | **Google Gemini 3.x** in Gemini CLI | 3.1 Pro / **3.7 Flash** (Aug 2026) / **3.6 Flash** (Jul 2026) / 3.5 Flash / 3 Flash / **3.5 Flash-Lite** (Jul 2026) / 3.1 Flash-Lite + 2.5 legacy |
 | **Moonshot Kimi** | **K3** (Jul 2026) / **K2.7-Code** (Jun 2026) / K2.6 / K2.5 (K2 retired 2026-05-25) |
-| **Z.ai GLM** | **GLM-5.3** (Aug 2026) / GLM-5.2 / GLM-5.1 / GLM-5 / GLM-4.6 |
-| **Alibaba Qwen frontier** | **Qwen3.8-Max** (GA Aug 2026, open weights 2.4T-A95B, QwenCloud) / Qwen3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview / 3-Max-Thinking |
-| **DeepSeek** | V4-Pro (GA update 2026-08-13) / V4-Flash / V3.2 / R1 (legacy `deepseek-chat` / `deepseek-reasoner` aliases retired 2026-07-24) |
+| **Z.ai GLM** | **GLM-5.3-Flash** (Aug 2026, multimodal cost sibling, a.k.a. ox-alpha) / **GLM-5.3** (Aug 2026) / GLM-5.2 / GLM-5.1 / GLM-5 / GLM-4.6 |
+| **Alibaba Qwen frontier** | **Qwen3.8-Max** (GA Aug 2026, open weights 2.4T-A95B, QwenCloud) / **Qwen3.8-Flash** (Aug 2026, 6B active, open `Qwen3.8-Flash-Next`) / Qwen3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview / 3-Max-Thinking |
+| **DeepSeek** | V4-Pro (GA update 2026-08-13) / V4-Flash / **V4-Flash-Vision-Exp** (Aug 21 2026, multimodal) / V3.2 / R1 (legacy `deepseek-chat` / `deepseek-reasoner` aliases retired 2026-07-24) |
 | **xAI Grok** | **Grok 4.6** (Aug 2026, 500K context) / **Grok 4.5** (Jul 2026, 500K) / Grok 4.3 (1M context) — Grok 5 still unshipped |
 | **Mistral frontier** | Mistral Large 3 / **Mistral Medium 3.5** (Apr 2026) / Mistral Small 4 / Ministral 3-8B+ reasoning |
-| **Meta Muse Spark** | **Muse Spark 1.1** (Jul 2026, public-preview Meta Model API) — facts documented, behavioral axes `?` |
+| **Meta Muse Spark** | **Muse Spark 1.2** (Aug 2026, public-preview Meta Model API) / **Muse Glimmer** (Aug 2026, open 30B local agentic, Apache 2.0) / Muse Code — facts documented, behavioral axes `?` |
+| **Tencent Hunyuan** | **Hy4 preview** (Aug 2026, open weights 770B/49B active, >1M ctx) — facts documented, behavioral axes `?` |
 
 Covers CLAUDE.md, AGENTS.md (Claude Code / Codex / Gemini variants), GEMINI.md, AGENTS.override.md, vendor-specific overrides (`AGENTS.deepseek.md`, `AGENTS.glm.md`, etc.), SKILL.md, subagent definitions, slash commands, ad-hoc prompts including headless `codex exec` / Gemini CLI invocations.
 
@@ -32,6 +33,7 @@ Covers CLAUDE.md, AGENTS.md (Claude Code / Codex / Gemini variants), GEMINI.md, 
 - **Mistral / Ministral** 3B / 7B / Nemo 12B — small variants only
 - **Microsoft Phi** 4-mini (3.8B) / Phi-4-mini-reasoning
 - **Meta Llama** 3.2 (1B / 3B)
+- **IBM Granite** 4.2 3B / 8B (reasoning models with switchable thinking; 30B is above the 2-9B range and not covered)
 - **Notable fine-tunes** — saiga (Russian Gemma), T-lite (Yandex), Hermes (Nous tune of Llama), HORROR-Imatrix, TrevorJS uncensored variants
 
 Covers `suites/<name>/system.md`, per-model overrides `system_<model>.md`, `prompts/<topic>/*.md`, and inline system strings for LM Studio / llama.cpp / Ollama / vLLM / MLX.
@@ -142,7 +144,7 @@ prompt-atlas/
     ├── principles.md              universal principles — applies to BOTH classes
     │
     ├── # Class 1 — Frontier agent-facing
-    ├── matrix.md                  frontier model × axis (10 vendors × 5 tables)
+    ├── matrix.md                  frontier model × axis (11 vendors × 5 tables)
     ├── artifacts.md               per-artifact checklists — CLAUDE.md / AGENTS.md / SKILL.md /
     │                              subagent / slash-command / ad-hoc
     ├── techniques.md              frontier wording snippets — outcome-first, output contracts,
@@ -150,7 +152,7 @@ prompt-atlas/
     ├── antipatterns.md            frontier anti-patterns with fixes
     │
     ├── # Class 2 — Small local task-facing
-    ├── matrix-small.md            small-model × axis — Gemma / small Qwen / Ministral / Phi / Llama
+    ├── matrix-small.md            small-model × axis — Gemma / small Qwen / Ministral / Phi / Llama / Granite
     ├── techniques-small.md        small-model snippets — skeleton, few-shot-at-end, named anti-patterns
     ├── antipatterns-small.md      12 anti-patterns specific to small models with reproduced regressions
     │
@@ -161,14 +163,15 @@ prompt-atlas/
     │   ├── gpt.md                 GPT-5.1 → 5.6 (Sol / Terra / Luna) + 5.5 Instant
     │   ├── gemini.md              Gemini 3.1 Pro / 3.7 / 3.6 / 3.5 / 3 Flash / 3.5 / 3.1 Flash-Lite
     │   ├── kimi.md                Kimi K3 / K2.7-Code / K2.6 / K2.5 — forced thinking, Agent Swarms
-    │   ├── glm.md                 Z.ai GLM-5.3 / 5.2 / 5.1 / 5 / 4.6 — reasoning_effort + Claude-Code-router pattern
-    │   ├── qwen-frontier.md       Qwen3.8-Max / 3.7-Max / 3.6 Plus / Max-Preview / 3-Max-Thinking
-    │   ├── deepseek.md            V4-Pro / V4-Flash / V3.2 — user-prompt-priority pattern
+    │   ├── glm.md                 Z.ai GLM-5.3-Flash / 5.3 / 5.2 / 5.1 / 5 / 4.6 — reasoning_effort + Claude-Code-router pattern
+    │   ├── qwen-frontier.md       Qwen3.8-Max / 3.8-Flash / 3.7-Max / 3.6 Plus / Max-Preview / 3-Max-Thinking
+    │   ├── deepseek.md            V4-Pro / V4-Flash / V4-Flash-Vision-Exp / V3.2 — user-prompt-priority pattern
     │   ├── grok.md                xAI Grok 4.6 / 4.5 / 4.3 — the 1M → 500K window regression
     │   ├── mistral-frontier.md    Mistral Large 3 / Medium 3.5 / Small 4 / Ministral 3-8B+
-    │   ├── meta.md                Meta Muse Spark 1.1 — Meta Model API; most axes `?` by design
+    │   ├── meta.md                Meta Muse Spark 1.2 / Code / Glimmer — Meta Model API; most axes `?` by design
+    │   ├── tencent.md             Tencent Hunyuan Hy4 preview — new family; facts + `?` by design
     │   ├── _universal.md          single-vendor universals + cross-vendor (3-way and 4+)
-    │   └── small-local.md         Gemma 3/4, small Qwen, small Ministral, Phi-4-mini, Llama 3.2,
+    │   └── small-local.md         Gemma 3/4, small Qwen, small Ministral, Phi-4-mini, Llama 3.2, Granite 4.2,
     │                              fine-tunes saiga / T-lite / Hermes / HORROR-Imatrix
     │
     └── agentic-systems/           system-specific deltas (Class 1)

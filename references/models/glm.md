@@ -1,6 +1,6 @@
 # Model-specific wording differences — Z.ai GLM family
 
-What changes about how you should PHRASE prompts for GLM-5.3, GLM-5.2, GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
+What changes about how you should PHRASE prompts for GLM-5.3 / GLM-5.3-Flash, GLM-5.2, GLM-5.1, GLM-5, and GLM-4.6. Companion to `claude.md`, `gpt.md`, `gemini.md`. This reference stays focused on wording — not API parameters, infrastructure, or pricing.
 
 GLM lives in a different agentic ecosystem than Claude / GPT / Gemini: it's most commonly accessed **through cross-tool routers** (Claude Code Router, OpenCode, Cline, Kilo Code, Cursor, OpenClaw) rather than a vendor-native CLI. That fact dominates how prompts must be shaped — see § *The Claude-Code-router pattern* below.
 
@@ -8,7 +8,7 @@ GLM lives in a different agentic ecosystem than Claude / GPT / Gemini: it's most
 
 ## Family-wide rules (apply to all current GLM versions)
 
-These hold across GLM-4.6 → GLM-5 → GLM-5.1 → GLM-5.2 → GLM-5.3. Version-specific notes follow.
+These hold across GLM-4.6 → GLM-5 → GLM-5.1 → GLM-5.2 → GLM-5.3 → GLM-5.3-Flash. Version-specific notes follow.
 
 ### 1. Thinking is enabled by default — but heavy system prompts suppress it
 
@@ -33,6 +33,8 @@ If you're writing a prompt targeting GLM specifically **without** a host system 
 **GLM-5.2 update (June 2026):** GLM-5.2 exposes an explicit `reasoning_effort` parameter (`"high"` / `"max"`) alongside the `thinking` toggle — reasoning depth is now a runtime knob like every other frontier vendor. This demotes the `<reasoning_content>` prose re-injection to a **fallback** for routers that don't forward `reasoning_effort` to Z.ai's endpoint. Where the parameter reaches the endpoint, set `reasoning_effort` instead of injecting prose markers. The heavy-host-prompt suppression concern above is not documented as fixed, so keep re-injection in your toolkit — but reach for the parameter first. See § *GLM-5.2*.
 
 **GLM-5.3 update (August 2026):** GLM-5.3 raises the effort lever to `low` / `high` / `max` (default `max`) and **removes the off-switch entirely** — `thinking.type: "disabled"` is no longer supported, and a request that still sends it will fail. "Don't think / answer immediately" becomes **structurally unimplementable** on GLM-5.3, the same class of antipattern as Kimi K3 / K2.7-Code and the Qwen3.8 open weights (`antipatterns.md` #38). Existing integrations that toggle thinking off must migrate to `enabled` + `reasoning_effort: low` before naming the model. The `<reasoning_content>` fallback remains for routers that don't forward `reasoning_effort` (and for 5.1 and earlier). See § *GLM-5.3*.
+
+**GLM-5.3-Flash update (August 2026):** the Flash sibling ships the same effort surface — `reasoning_effort` `low`/`high`/`max`, **defaults to `max` if not passed** (model-card wording), and the no-off-switch rule holds (`thinking.type: "disabled"` fails). Card-specific: the chat template has a `clear_thinking` flag that **defaults to `false`** — for chat scenarios pass `clear_thinking=true`, otherwise prior reasoning persists in the template (a multi-turn cost and possible context-leak lever, not a wording concern, but worth flagging when a harness mis-behaves on multi-turn). See § *GLM-5.3-Flash*.
 
 ### 2. Outcome-first, but explicit step naming tolerated
 
@@ -87,6 +89,37 @@ Unlike GPT-5.5 where few-shot examples can hurt reasoning, GLM treats few-shot e
 ### 10. The vendor name shifts: Zhipu AI → Z.ai
 
 Z.ai is the rebranded name as of late 2025 / early 2026. The same company, same models. Internal references in older docs may still say "Zhipu"; the API host is `api.z.ai`. Don't burn prompt tokens on vendor naming.
+
+---
+
+## GLM-5.3-Flash (Z.ai, August 26, 2026 — cost / multimodal sibling; the former stealth "Ox Alpha")
+
+First **natively multimodal** model in the GLM-5 series, and Z.ai's cheapest capable model. It launched anonymously as `stealth/ox-alpha` on OpenRouter on 2026-08-20 (free for one week, ~42T tokens consumed), was claimed by Z.ai on 08-26, and the MIT weights landed on Hugging Face the same day (`zai-org/GLM-5.3-Flash`).
+
+### Headline facts
+
+- **Architecture:** 320 B total / 18 B active per token, hybrid sparse+linear attention (Manifold-Constrained Hyper-Connections, mHC), trained on a 30T-token multimodal corpus — **native image+video input** (card specifies image/text; launch materials cite video)
+- **Context:** 1,048,576 claimed in launch messaging; **the vendor's own eval footnotes cap runs at 300,000 tokens** — the two numbers coexist unreconciled in Z.ai's documents, so treat 1M as a claim until the vendor reconciles it (`sean-kim / Ox Alpha catch #3`)
+- **Reasoning:** same effort model as GLM-5.3 — `reasoning_effort` `low`/`high`/`max`, **default `max`** when not passed; thinking cannot be disabled; a `clear_thinking` chat-template flag defaults to `false` (pass `true` for chat)
+- **Pricing:** $0.15 / $0.50 per M input/output, **cached input $0.03/M** (Z.ai claims ~10× cheaper to run than GLM-5.2) — the cached rate is the agent-workload headline: re-sending a stable system prompt on every step stops being the architecture driver
+- **Weights:** MIT, day-one on Hugging Face; FP8 set ≈306 GiB, **Hopper-class or newer GPUs** — self-hosting is a multi-GPU server question, not a workstation question; quantized builds via Ollama / llama.cpp / LM Studio / Jan
+- **First-party API + ecosystem:** Z.ai API, ZCode / GLM Coding Plan (3× GLM-5.3 quota), OpenRouter / OpenCode keep the endpoint post-rename
+- **Benchmarks** (vendor-reported): Terminal-Bench 2.1 84.3 (vs Opus 4.8's 85.0), **DeepSWE 63.4** (up from 5.2's 46.2 — the number to watch for third-party reproduction), Z.ai Code Bench 29.0 (a vendor-named benchmark — weak signal), GDPval-AA v2 highest per Z.ai; **vision is the admitted weak axis** (trails Gemini 3.7 Flash on BabyVision / MVbench)
+
+### Wording behaviors that matter
+
+- **Multimodal input doesn't change the wording rules.** Family rules #1–#4 hold (heavy host prompts suppress the thinking gate — the <4 KiB AGENTS.md ceiling survives; `reasoning_effort` is the primary mitigation, `<reasoning_content>` re-injection the fallback). Don't write vision-specific prose that the model can't act on; image content blocks ride in the message structure, not in wording.
+- **The "don't think" request is a migration error, same as GLM-5.3** — no mode without reasoning; depth is `low`/`high`/`max` only.
+- **Cached-input economics reward stable front matter** — like DeepSeek's DSA rule, a stable system block is now cheap to re-send; prefer stability over terseness in the persistent part.
+- **Verbosity / latency are real tradeoffs** (trade coverage: tuned for agentic task completion, spends tokens thinking) — for latency-critical UIs measure `reasoning_effort: low` before rewriting the prompt.
+- **Long-context sizing:** with 1M unverified, size retrieval/reasoning pipelines against the number you can verify (300K), then test upward — do not architect on the advertised figure.
+- Identity-pinning still fails (family rule #3) — functional roles only.
+
+### Migration from GLM-5.2 → GLM-5.3-Flash
+
+- Same parameter migration as GLM-5.3: anything sending `thinking.type: disabled` breaks — use `enabled` + effort `low`.
+- Prompts tuned for 5.2 run forward-compatibly; expect more thinking tokens at default `max`.
+- If the port is motivated by price (≈10× cheaper serving), treat it as a behavior re-test: benchmarks are close to GLM-5.3 on coding, but vision-heavy or long-context-at-1M loads are not covered by vendor numbers.
 
 ---
 
@@ -265,7 +298,7 @@ Mirror of the family-wide section, distilled into rules for cross-model reviews:
 
 - **Heavy system prompts suppress GLM thinking** — not a Claude/GPT problem, very real on GLM
 - **Functional persona OK, identity-pinning fails** (distillation artifact)
-- **Reasoning lever is out-of-band, not prose** — GLM-5.3 has `reasoning_effort` (`low`/`high`/`max`, default `max`) and **no off-switch**; GLM-5.2 has `high`/`max` + toggle; earlier versions rely on the endpoint default. Either way, don't write "think step by step"
+- **Reasoning lever is out-of-band, not prose** — GLM-5.3 / 5.3-Flash have `reasoning_effort` (`low`/`high`/`max`, default `max`, no off-switch, `clear_thinking` template flag on Flash); GLM-5.2 has `high`/`max` + toggle; earlier versions rely on the endpoint default. Either way, don't write "think step by step"
 - **Outcome-first beats step prescription**, but not as aggressively as GPT-5.5
 - **`json_schema` over `json_object`** for structured output
 - **Long-horizon framing is GLM's wheelhouse** — write success criteria and stop conditions, not turn-by-turn steps
@@ -281,6 +314,14 @@ If a prompt must run on GLM **and** Claude / GPT / Gemini:
 - The 4 KiB AGENTS.md ceiling for GLM is **stricter** than Codex's 32 KiB and Claude Code's "soft 300-line" ceiling. **Strictest constraint wins** → write to GLM's budget.
 - Identity pinning is fine on Claude / GPT / Gemini but breaks GLM. **Strip identity pinning.**
 - `json_schema` over `json_object` works on Claude / GPT / Gemini / GLM alike — safe default.
-- Heavy system prompts hurt GLM specifically. On GLM-5.3 the first mitigation is `reasoning_effort` (`low`/`high`/`max`); on GLM-5.2 it's `reasoning_effort` (`high`/`max`); if the router doesn't forward the parameter, or you're on GLM-5.1 and earlier, fall back to injecting explicit `<reasoning_content>` directives at the top of your `AGENTS.md` as the family-wide mitigation. And don't write "answer without reasoning" for any 5.3 target — there is no mode without it.
+- Heavy system prompts hurt GLM specifically. On GLM-5.3 / 5.3-Flash the first mitigation is `reasoning_effort` (`low`/`high`/`max`); on GLM-5.2 it's `reasoning_effort` (`high`/`max`); if the router doesn't forward the parameter, or you're on GLM-5.1 and earlier, fall back to injecting explicit `<reasoning_content>` directives at the top of your `AGENTS.md` as the family-wide mitigation. And don't write "answer without reasoning" for any 5.3-family target — there is no mode without it.
 
 When in doubt: tune for GLM, then check the result reads well on the other vendors. The reverse usually fails.
+
+---
+
+## Source notes
+
+- GLM-5.3-Flash Hugging Face model card ([huggingface.co/zai-org/GLM-5.3-Flash](https://huggingface.co/zai-org/GLM-5.3-Flash), read 2026-08-29) — 320B/18B params, MIT, mHC hybrid architecture, 30T-token multimodal corpus, `reasoning_effort` low/high/max with default `max`, `clear_thinking` chat-template flag (default `false`), 300K-context evaluation footnotes, serving stacks (SGLang/vLLM/TokenSpeed/KTransformers)
+- Third-party launch analysis (Sean Kim, 2026-08-29, [blog.imseankim.com](https://blog.imseankim.com/glm-5-3-flash-ox-alpha-42-trillion-tokens-openrouter-mit-open-weights-4-catches/)) — the stealth-launch timeline, the 1M-vs-300K context discrepancy, pricing ($0.15/$0.03/$0.50), ~306 GiB FP8 weight set on Hopper+, the weak-vision axis, and the "entirely on Chinese AI chips" claim (vendor-only, unverified)
+- Z.ai announcement / trade coverage (z.ai/blog/glm-5.3-flash, Bloomberg 26.08, SiliconANGLE 26.08) — Ox Alpha confirmation, coding-plan quota, terminal-bench/DeepSWE figures

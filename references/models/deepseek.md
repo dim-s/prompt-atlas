@@ -1,6 +1,6 @@
 # Model-specific wording differences — DeepSeek family
 
-What changes about how you should PHRASE prompts for DeepSeek V4-Pro / V4-Flash, V3.2 / V3.2-Speciale, and the R1 lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`.
+What changes about how you should PHRASE prompts for DeepSeek V4-Pro / V4-Flash / V4-Flash-Vision-Exp, V3.2 / V3.2-Speciale, and the R1 lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`.
 
 DeepSeek is the most opinionated of the current frontier vendors in **where to put instructions** — and its opinion is opposite to most other vendors. This file leads with that rule because the cost of getting it wrong is high.
 
@@ -210,7 +210,7 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 
 - Long-horizon autonomous agents — Opus 5 / GLM-5.3 / Qwen3.8-Max / GPT-5.6 Sol all lead on this axis
 - Broad factual recall — V4-Pro abstention isn't as high as Qwen but factual accuracy lags closed flagships
-- Visual / multimodal — V4 is text-only
+- Visual / multimodal — **V4-Pro itself is text-only**; multimodal input lives in the V4-Flash-Vision-Exp sibling (§ below)
 
 ---
 
@@ -234,6 +234,38 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 - Cost-sensitive production agents
 - High-volume batch tasks
 - Latency-critical interactive UIs where V4-Pro's reasoning depth isn't needed
+
+---
+
+## DeepSeek V4-Flash-Vision-Exp (August 21, 2026 — experimental vision sibling)
+
+The family's first multimodal model — the answer to "V4 is text-only". Released 2026-08-21 per the official changelog; accessed with `model='deepseek-v4-flash-vision-exp'`. It is the V4-Flash text model with image / screenshot understanding added; **on pure-text benchmarks it is on par with V4-Flash, and on agent benchmarks requiring visual understanding it lands close to Claude Opus 4.8** (official claim; third-party coverage: beats Opus 4.8 on 3 of 11 agent benchmarks).
+
+### Headline facts
+
+- **API id:** `deepseek-v4-flash-vision-exp` (experimental build — versioned like `-exp` models, no stability promise)
+- **Text capability:** on par with official V4-Flash (agent, reasoning, world knowledge)
+- **Vision-agent benchmarks** (DeepSeek Harness minimal mode, max effort, topp 0.95, temperature 1.0): Terminal Bench 2.1 83.9, NL2Repo 57.7, DeepSWE 59.3, DSBench-Hard 63.6, ApexBench (Pass@1) 36.5, Agents' Last Exam 27.3, Chartography 64.3, ZeroBench (Pass@5) 35.0
+- **Formats:** JPEG, PNG, GIF, WebP (detected from file content, not name/MIME); max 600 images per request; auto-resize → up to **384 tokens per image** (2000×2000 and 5000×5000 bill the same); max 8192 px per side (drops to 4096 px with 15+ images)
+- **Transport:** standard OpenAI-compatible Chat Completions (base64 / URL / Files API `file_id`), Anthropic-compatible `/messages` surface, and OpenAI Responses API (`input_image` parts)
+- **`detail` field** on image inputs: `low` (downscaled 512×512), `high`/`original` (kept), `auto` (currently = original) — a tuning lever for cost vs fidelity
+
+### Wording behaviors that matter
+
+1. **Images live in user messages only — structurally reinforced rule #1.** Images in `system` or `assistant` messages return a 400 error; only `deepseek-v4-flash-vision-exp` accepts images at all (other models 400 with "This model does not support image"). This is the family's user-prompt-priority made *structural* for multimodal content: the visual context *cannot* ride in the system turn. A prompt review on this model should never place task-critical visual data in system position — move it to user blocks even where the system body otherwise stays.
+2. **Same thinking regime as V4-Flash** — effort model (`thinking` toggle + `reasoning_effort` low/high/max, rule #5 applies); benchmarks above were run at `max`. Reasoning is not a prose lever here either.
+3. **Prompt the text around images explicitly** — the model does not invent which image deserves attention; name the image or the order ("in the first screenshot…", "comparing chart 2 and 3…") when the task is selective.
+4. **Family rules #2 (XML context structure) and #6 (JSON-in-prose) carry over unchanged** for mixed text+image tasks.
+
+### When V4-Flash-Vision-Exp specific tuning helps
+
+- Screenshot-driven agent loop (UI automation, visual QA, chart extraction) where DeepSeek economics beat the closed vision flagships
+- Cost-sensitive multimodal pipelines — text parity with V4-Flash means the vision surcharge buys only the encoder
+
+### When NOT to invest
+
+- Long-horizon closed-frontier agentic work (same gap as V4-Flash, see V4-Pro section)
+- Tasks where the vision benchmark gap to Opus-class multimodal models matters (official wording: "close to" Opus 4.8, not ahead)
 
 ---
 
@@ -327,7 +359,8 @@ If the artifact is `AGENTS.md`, ship an `AGENTS.deepseek.md` override that repla
 
 DeepSeek V4 documentation and practitioner guides are still maturing. The behaviors documented here come from:
 
-- DeepSeek's official API changelog ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/), read 2026-08-18) — the 2026-08-13 V4-Pro GA entry (effort levels `low`/`high`/`max`, Responses API + Codex adaptation, peak/off-peak pricing from 16.08), and the 2026-07-31 V4-Flash official release
+- DeepSeek's official API changelog ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/), read 2026-08-29) — the 2026-08-13 V4-Pro GA entry (effort levels `low`/`high`/`max`, Responses API + Codex adaptation, peak/off-peak pricing from 16.08), the 2026-07-31 V4-Flash official release, and the **2026-08-21 V4-Flash-Vision-Exp entry** (benchmark table under DeepSeek Harness minimal mode; "multimodal agent capabilities close to Opus-4.8")
+- DeepSeek's official vision guide ([api-docs.deepseek.com/guides/vision](https://api-docs.deepseek.com/guides/vision), read 2026-08-29) — image input methods (base64 / URL / Files API), `detail` levels, token billing (≤384 tokens/image), limits (600 images/request, 48 MiB body, 32/64 MiB per image), and the user-message-only restriction (400 on system/assistant)
 - DeepSeek's official thinking-mode guide ([api-docs.deepseek.com/guides/thinking_mode](https://api-docs.deepseek.com/guides/thinking_mode)) — the OpenAI / Anthropic / Responses API parameter formats and the effort mapping table; **"thinking mode is enabled by default, with the default effort being `high`"**
 - Independent pricing reporting (computerworld.com, 2026-08) — cache-hit tariffs up +52% to +1100%; off-peak = half of peak
 - Datanorth's V4-Pro-0813 coverage (datanorth.ai, 2026-08-14) — GA date, benchmark context (AA Index 53), Harness v0.1 open-sourced under MIT

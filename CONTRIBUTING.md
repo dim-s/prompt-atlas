@@ -26,7 +26,7 @@ Thanks for considering a contribution. prompt-atlas is built on the **matrix-cit
 
 ## How to add a new model row
 
-1. **Add a row to `references/matrix.md`** in all five tables (A through E). Use `?` for axes you can't document; `?` is honest, guesses are dangerous.
+1. **Add a row to `references/matrix.md`** in all five tables (A through E). Use `?` for axes you can't document; `?` is honest, guesses are dangerous. Norm on rows: where tables keep per-model rows (A, B), add a separate row; where the family is merged into one row (C–E, and B for e.g. "DeepSeek V4-Pro / Flash"), join the family row unless the new version has a **documented behavioral difference** — separate rows for undocumented deltas are fabrication. A brand-new vendor family gets its own row in all five tables.
 
 2. **Create a vendor model file** `references/models/<vendor>.md` if the quirks exceed one cell per table. Follow the layout of existing files (`kimi.md`, `glm.md`, `deepseek.md` are good references for structure):
    - Family-wide rules (the cross-version invariants)

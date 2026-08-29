@@ -8,9 +8,9 @@
 
 ---
 
-## Статус исполнения (обновлено 2026-07-28)
+## Статус исполнения (обновлено 2026-08-29)
 
-Владелец решил: находки по недостающим моделям внести в атлас. Внесено в **v1.5.0**.
+Владелец решил: находки по недостающим моделям вносить в атлас. Внесено в **v1.5.0** (заход 28.07), **v1.6.0** (заход 18.08, сверки по DeepSeek-филдноутам 19–23.08) и **v1.7.0** (заход 29.08).
 
 | Находка | Решение | Куда легло |
 |---|---|---|
@@ -458,3 +458,191 @@ skywork.ai), не вендор.
 поставить рядом field-note с датой, условиями и границами — чтобы следующий читатель знал, что
 правило проверялось и на этой нагрузке не сработало. Внесено в `models/deepseek.md` § Family-wide
 rules #1 по прямой санкции владельца (2026-08-19).
+
+---
+
+## Заход 2026-08-29 — сверка по мандату «новые модели» (внесено в v1.7.0)
+
+Сверка фронта покрытия `SKILL.md` (v1.6.0 + deepseek-филдноуты 19–23.08) против релизов за окно
+19–29.08. Первоисточники читались заново 29.08; правило файла соблюдено — утверждение без ссылки
+не пишется.
+
+**Итог: 5 новых моделей + 1 новое семейство + 1 новая Class-2 семья; по остальным — «проверено,
+нового нет»; 4 вне-скоупа пометки.**
+«Новый DeepSeek Flash» (директива владельца) идентифицирован как **DeepSeek-V4-Flash-Vision-Exp
+(21.08)** — в атласе отсутствовал; «DeepSeek Pro» = V4-Pro GA (13.08) — покрытие подтверждено полным,
+правок не требовалось, кроме одной устаревшей пометки «V4 is text-only».
+
+---
+
+### 🔴 П1 — DeepSeek-V4-Flash-Vision-Exp (это и есть «новый DeepSeek Flash»)
+
+| | |
+|---|---|
+| **Модель** | DeepSeek-V4-Flash-Vision-Exp |
+| **API id** | `deepseek-v4-flash-vision-exp` |
+| **Дата** | 21 августа 2026 (официальный changelog; последняя запись, после неё новых нет) |
+| **Атлас знал** | V4-Pro GA (13.08) и V4-Flash (31.07) — vision-модели не было; в V4-Pro-разделе стояло «V4 is text-only» |
+
+**Первоисточник:** [api-docs.deepseek.com/updates — запись от 21.08](https://api-docs.deepseek.com/updates/) +
+[Vision guide](https://api-docs.deepseek.com/guides/vision) (оба прочитаны 29.08).
+
+**Промпт-релевантное:** текст-капабилити на уровне V4-Flash; агентные vision-бенчмарки «близко
+к Opus-4.8» (Terminal Bench 2.1 83.9, NL2Repo 57.7, DeepSWE 59.3, DSBench-Hard 63.6; тест — DeepSeek
+Harness minimal, max effort, topp 0.95, temp 1.0). **Структурное правило:** картинки принимаются
+только в user-сообщениях — system/assistant → 400. Лимиты: 600 картинок/запрос, ≤384 токена/картинку
+(авто-ресайз), 48 MiB body, detail `low`/`high`/`original`. Три транспорта: Chat Completions /
+Anthropic `/messages` / Responses API.
+
+**Решение:** внесено в `models/deepseek.md § DeepSeek V4-Flash-Vision-Exp`, SKILL.md (сигналы, опции,
+Recent updates, knobs-таблица, кросс-вендорная ось «image content placement», gap-строка), matrix A/B,
+README, CHANGELOG v1.7.0. Пометка «V4 is text-only» исправлена.
+
+### 🟠 П2 — Z.ai GLM-5.3-Flash (бывший stealth «Ox Alpha»)
+
+| | |
+|---|---|
+| **Модель** | GLM-5.3-Flash |
+| **Дата** | stealth `stealth/ox-alpha` на OpenRouter c 20.08 (0$, ~42T токенов за 6 дней) → раскрыт Z.ai 26.08, MIT-веса в тот же день |
+| **Атлас знал** | GLM-5.3 (17.08) — Flash-ветки не было |
+
+**Первоисточники:** [HF-карточка `zai-org/GLM-5.3-Flash`](https://huggingface.co/zai-org/GLM-5.3-Flash)
+(прочитана 29.08), [z.ai/blog/glm-5.3-flash](https://z.ai/blog/glm-5.3-flash), Bloomberg/SiliconANGLE
+(26.08), разбор Sean Kim «Ox Alpha… 4 catches» (29.08).
+
+**Факты:** 320B-A18B, первый нативно-мультимодальный GLM-5 (текст+картинка; видео по launch-материалам),
+гибридная sparse+linear attention (mHC), 30T-токенов мультимодального корпуса, MIT. `reasoning_effort`
+low/high/max, **дефолт max** при отсутствии; `clear_thinking` в чат-шаблоне (дефолт false). Цены
+$0.15/$0.03(кэш)/$0.50 — «~10× дешевле GLM-5.2». Веса ≈306 GiB FP8, нужен Hopper+. Benchmarks
+(вендорские): Terminal-Bench 2.1 84.3 (Opus 4.8: 85.0), DeepSWE 63.4 (5.2: 46.2), Z.ai Code Bench 29.0.
+
+**Catch'и (записано в атлас честно):** 1M контекста заявлен, но **футы eval'ов самой карточки
+работали на 300K** — внутреннее расхождение вендора, 1M = заявка, не спецификация. Vision — слабая
+ось (BabyVision/MVbench позади Gemini 3.7 Flash). «Целиком на китайских чипах» — заявление без
+названного silicon, непроверяемо. Бенчмарк-лист вендорский (в т.ч. собственный Z.ai Code Bench).
+
+**Решение:** внесено в `models/glm.md § GLM-5.3-Flash` (+ семейное правило #1, кросс-модельные
+принципы, source notes), SKILL.md (сигналы `ox-alpha`/`stealth/ox-alpha`, опции, Recent updates,
+knobs), matrix A–D, footnote «no prompting guide», README, CHANGELOG.
+
+### 🟠 П3 — Alibaba Qwen3.8-Flash / Qwen3.8-Flash-Next
+
+| | |
+|---|---|
+| **Модель** | Qwen3.8-Flash (hosted) / Qwen3.8-Flash-Next (открытые веса) |
+| **Дата** | тизер ModelScope 25.08, релиз (Alizila) 27.08 |
+| **Атлас знал** | Qwen3.8-Max (GA 03.08) — Flash-ветки не было |
+
+**Первоисточники:** [Alizila (27.08)](https://www.alizila.com/alibaba-releases-qwen3-8-flash-with-innovative-model-architecture-delivering-optimal-price-performance/),
+[HF-карточка `Qwen/Qwen3.8-Flash-Next`](https://huggingface.co/Qwen/Qwen3.8-Flash-Next) (прочитана 29.08),
+QwenCloud-страница hosted `qwen3.8-flash`.
+
+**Факты:** 125B (+51B n-gram эмбеддинг + 4B MTP), **6B активных**, мультимодал (vision encoder);
+гибридная attention GDN+QSA — **превью архитектуры Qwen4**. **Ключевой для ревью факт — расщепление
+поверхностей:** открытые веса — 262 144 native (расширяется до 1M), hosted `qwen3.8-flash` на
+QwenCloud — 1M по умолчанию + встроенные инструменты. Лицензия открытых весов `qwen-community-1.0`
+(кастомная, НЕ Apache). Цены ¥1/¥3 за M (≈$0.16/$0.47). SWE-bench Pro 62.5 против DeepSeek-V4-Flash
+56.0 / Opus-4.6 53.4. **Thinking-ручки не задокументированы** — `?` (анти-фабрикация).
+
+**Решение:** внесено в `models/qwen-frontier.md § Qwen3.8-Flash` (+ source notes), SKILL.md (сигналы,
+опции, Recent updates, knobs `?`), matrix A–B (в C–E — семейная строка Qwen), README, CHANGELOG.
+
+### 🟡 П4 — Meta: Muse Spark 1.2, Muse Code (05.08) и Muse Glimmer (10.08)
+
+| | |
+|---|---|
+| **Модели** | Muse Spark 1.2 · Muse Code · Muse Glimmer (30B, open weights) |
+| **Дата** | 05.08 / 05.08 / 10.08 |
+| **Атлас знал** | Muse Spark 1.1 (09.07) — 1.6.0 оставил «Muse Glimmer» открытым пунктом (item 7) |
+
+**Первоисточники:** [research.meta.ai — Introducing Muse Glimmer](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model)
+(10.08, прочитан 29.08), research-индекс Meta (датировки 1.2/Code), вторичка (MarketScreener 10.08).
+
+**Факты:** Spark 1.2 — та же public-preview поверхность, поведенческой дельты вендор не задокументировал
+(глава переименована 1.1 → 1.2 во всех живых ячейках). Muse Code — coding-специалист, только факты
+доступности. **Muse Glimmer**: 30B, Apache 2.0, `Muse-Glimmer-30B` на HF, ~17–19 GB в 4-bit — один
+consumer GPU; тулзы + failure recovery (диагностика и ретрай), мультимодальный ввод (скриншоты,
+чарты, PDF), **controllable effort** (разные «strengths» — ручка сервинга, не проза), OpenClaw-sовместимость,
+speculative decoding (DFlash); >100 языков. Граница класса: 30B > 2–9B — записано как
+Class-1-adjacent open model, matrix-small НЕ расширялся.
+
+**Решение:** внесено в `models/meta.md` (1.2 + Code + Glimmer-глава, source notes), SKILL.md
+(Meta-сигналы/опции/Recent updates, harness-таблица и строка маршрутизации переименованы в 1.2),
+matrix A–E (строки 1.1 → 1.2 во всех пяти, Glimmer в A/B, сноска «no prompting guide» синхронизирована),
+README, CHANGELOG.
+
+### 🟡 П5 — Tencent Hunyuan Hy4 preview — НОВОЕ СЕМЕЙСТВО (11-е)
+
+| | |
+|---|---|
+| **Модель** | Tencent Hy4 preview (Hunyuan lineage) |
+| **Дата** | 28 августа 2026 |
+| **Атлас знал** | Tencent не покрыт вовсе — нового семейства нет ни в README, ни в маршрутизации |
+
+**Первоисточник:** [tencent.com — launch release (28.08)](https://www.tencent.com/tencent-releases-and-open-sources-tencent-hy4-preview/)
+(прочитан 29.08), Superpower Daily (28.08).
+
+**Факты:** 770B/49B активных, контекст >1M (заявлен), открытые веса; API через Tencent Cloud TokenHub
+и OpenRouter; продукты WorkBuddy/CodeBuddy/Yuanbao/ima; цены $0.834/$2.501/$0.042 (кэш-хит); слепой
+внутренний eval 2.99/4 против GLM-5.3 2.92 и Kimi K3 2.94 (163 эксперта, 203 инженерных задачи);
+«preview-first» роадмап вендора, следующая партия Hy4 скоро. Заявлен рекурсивный self-improvement
+(vendor-reported). **Промпт-гайда нет — поведенческие оси `?`.**
+
+**Решение:** добавлено как 11-е семейство: новый `models/tencent.md` (факты + `?`, по прецеденту
+Mistral Medium 3.5 / Muse), строки во всех пяти таблицах матрицы A–E, SKILL.md (description,
+Coverage, сигналы `hy4`/Tencent/TokenHub, опции, auto-trigger, Path A, knobs `?`, gap-строка),
+`_universal.md` (в перечень 4+ и анти-фабрикационное правило для guide-less семейств), README
+(11 families, дерево), CHANGELOG.
+
+### 🟢 П6 — IBM Granite 4.2 — новая Class-2 семья (3B/8B)
+
+| | |
+|---|---|
+| **Модель** | Granite 4.2 3B / 8B / 30B |
+| **Дата** | 25 августа 2026 |
+| **Атлас знал** | IBM в Class 2 не покрыт вовсе |
+
+**Первоисточники:** [HF walkthrough Granite Team](https://huggingface.co/blog/ibm-granite/granite-4-2),
+Unite.AI (25.08), HF-коллекция `ibm-granite/granite-4.2-*` (прочитано 29.08).
+
+**Факты (промпт-релевантные):** dense decoder-only **reasoning**-модели; Apache 2.0; **переключаемое
+мышление в чат-шаблоне** — thinking (дефолт, CoT в тегах) / non-thinking / low-effort; в мультитёрне
+thinking прошлых ходов **вырезается по умолчанию**; нативный tool calling в OpenAI-формате; контекст
+512K (пятифазный расписание); 8B/30B — RL в живых средах (OpenHands/терминал/веб-поиск); RLHF с
+penalty на длину рассуждений; 12 языков; 3B — без agentic-RL блока. 30B выше диапазона 2–9B — пометка
+по прецеденту Gemma 4 31B / Qwen3.6-27B.
+
+**Решение:** внесено в `models/small-local.md § IBM Granite family`, `matrix-small.md` (таблицы A–B,
+непроверенные ячейки `?`), README Class 2, SKILL.md (description, Step 2a, auto-trigger Class 2,
+gap-строка), CHANGELOG.
+
+---
+
+## Проверено — нового нет (по каждому семейству)
+
+- **Anthropic**: новых моделей за окно нет. Новости — продукт: cross-product memory (25.08),
+  Claude in Chrome GA (26.08). Покрытие Fable 5 / Opus 5 актуально.
+- **OpenAI**: GPT-5.6 — августовский апдейт чата уже покрыт (1.6.0); 24.08 GPT-5.6 (Sol/Terra/Luna)
+  доступна в AWS Kiro — **дистрибуция**, поведенческой дельты нет, вне скоупа (записано).
+- **Google**: новых текстовых моделей нет. **Gemini Omni 1.1 Flash GA (27.08)** — видео-генерация и
+  монтаж (вне скоупа промпт-атласа, как и ранее omni-flash-preview); **Gemini 3.5 Transcribe / Live
+  GA (26.08)** — speech-to-text (вне скоупа). Покрытие 3.7 Flash / 3.6 Flash актуально.
+- **Moonshot**: после K3 (16.07) новых моделей нет (moonshot.ai / kimi.com проверены 29.08); K3
+  low/high-effort-режимы, обещанные на запуске, в changelog не датированы — лид не заводится.
+- **xAI**: Grok 4.6 (12.08) уже покрыт (1.6.0); за окно — только расширение дистрибуции (GitHub
+  Copilot 14.08, Bedrock 19.08, Vertex 21.08).
+- **Mistral**: новых моделей нет; Shieldstral (04.08, 3B safety-классификатор) уже записан в 1.6.0
+  как вне скоупа.
+- **Gemma / Qwen small / Phi / Llama (Class 2)**: Granite — единственная новая семья в диапазоне
+  2–9B; у существующих новых вариантов нет.
+- **DeepSeek Pro (директива владельца)**: V4-Pro GA (13.08) покрыт атласом полностью — effort-модель
+  (low/high/max), Responses API + Codex, peak/off-peak цены с 16.08, cache-hit +1100%. Правок не
+  потребовалось; единственная затронутая строка — «V4 is text-only» (исправлена, см. П1).
+
+## Вне скоупа (записано, чтобы следующий заход не искал заново)
+
+- Gemini Omni 1.1 Flash (27.08) — генерация/монтаж видео.
+- Gemini 3.5 Transcribe / Transcribe Live (26.08) — распознавание речи.
+- Mistral Shieldstral 1.0 3B — safety-классификатор (записано ещё в 1.6.0).
+- OpenAI GPT-5.6 × AWS Kiro (24.08) — канал дистрибуции.
+- IBM Granite Speech 5.0 (25.08) — распознавание речи, вне языка-моделей.
