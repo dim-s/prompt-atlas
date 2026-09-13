@@ -187,7 +187,7 @@ A subagent body over ~150 lines is almost always too long. Subagents should be f
 
 Same wording rules above for description and body. Codex-specific frontmatter additions:
 
-- **`model_reasoning_effort`** (`none` / `low` / `medium` / `high` / `xhigh`) — biggest non-wording lever for reasoning depth. Surface it before rewriting the body. If effort is `high`, strip step prescriptions from the body — they're redundant.
+- **`model_reasoning_effort`** (`none` / `low` / `medium` / `high` / `xhigh`; GPT-6 Astra: no `none`, ladder `low` … `max`) — biggest non-wording lever for reasoning depth. Surface it before rewriting the body. If effort is `high`, strip step prescriptions from the body — they're redundant.
 - **`model`** — pin the GPT-5.x version when the body assumes specific behavior (e.g., 5.5-only outcome-first phrasing).
 - **Outcome-first body**: Codex subagents inherit GPT-5.x's outcome-first preference; bodies that prescribe steps verbatim are GPT-5-suboptimal. Replace step lists with outcome + "typical sub-tasks, choose order yourself".
 

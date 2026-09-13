@@ -71,7 +71,7 @@ Codex supports subagents conceptually similar to Claude Code's. The subagent def
 
 Optional fields the parent session inherits unless overridden:
 - `model` — e.g., `gpt-5.5`, `gpt-5.4`, `gpt-5.3-codex`. The body's wording must be tuned for this specific model — read the matching section in `../models/gpt.md`.
-- `model_reasoning_effort` — `none` / `low` / `medium` / `high` / `xhigh`. This is the **single biggest non-wording lever** affecting subagent behavior. If the user reports under-reasoning, raise this before rewriting the body.
+- `model_reasoning_effort` — `none` / `low` / `medium` / `high` / `xhigh` (GPT-6 Astra: no `none`; its ladder is `low` … `max`). This is the **single biggest non-wording lever** affecting subagent behavior. If the user reports under-reasoning, raise this before rewriting the body.
 - `description` — the delegation trigger. Same wording rules as Claude subagent descriptions in `../artifacts.md`.
 
 ### Wording differences from Claude subagents
@@ -237,6 +237,6 @@ This mirrors the subagent / skill description rules — same delegation heuristi
 | Hooks | settings.json hooks | `hooks.json` / `config.toml [hooks]` | Wording-equivalent: same "wording vs hook" trade-off applies |
 | Headless | one-shot CLI invocation | `codex exec` | Codex makes this a first-class mode; tune ad-hoc prompts for non-interactive execution |
 | MCP | supported | supported (STDIO + HTTP) | MCP tool descriptions are the same wording surface on both sides |
-| Reasoning depth control | `effort: low/medium/high/xhigh` | `model_reasoning_effort` (same values + `none`) | Both vendors prefer the parameter over wording; `none` is Codex-specific |
+| Reasoning depth control | `effort: low/medium/high/xhigh` | `model_reasoning_effort` (same values + `none` — except GPT-6 Astra, which has no `none`) | Both vendors prefer the parameter over wording; `none` is Codex-specific |
 
 When in doubt about a Codex artifact and there's no Codex-specific rule above, fall back to the Claude rule for the same artifact type — they're more often the same than different.

@@ -129,6 +129,107 @@ This is the wording fix for both failure directions in an agentic prompt — a m
 
 ---
 
+## GPT-6 Astra (September 2026 — new frontier generation)
+
+`gpt-6-astra` — OpenAI's first GPT-6 model, above GPT-5.6 Sol; the system card is dated September 3, 2026. The family-wide rules above were written for 5.x. OpenAI's latest-model guide for Astra doesn't restate most of them (outcome-first, tool guidance in descriptions, output contracts in schemas) and doesn't contradict them either — treat those as carried over *by inference*. What the guide **does** document is five behavior patterns to prompt for, and three of them run opposite to what a 5.6-tuned prompt assumes.
+
+The guide's own summary of the new default: *"When instructions leave room for interpretation, it uses the context it has to fill in routine gaps and asks focused questions when the answer could change the outcome."*
+
+### What changed from GPT-5.6 — the review table
+
+| Axis | GPT-5.6 | GPT-6 Astra | Wording move |
+|---|---|---|---|
+| Clarifying questions / stopping | autonomy-boundary line (family rule #14) covers both failure directions | more likely to ask and to stop *"when the user may expect it to make reasonable assumptions and persist"* | add the initiative snippets below; name what is already authorized |
+| Default length and format | terser than 5.5 | *"tends toward detailed, formatted responses and may use recurring phrases across sessions"* | **inverted** — specify prose and structure as described behavior |
+| Subagent delegation | spawns what's defined | *"may delegate less often than desired"* | encourage, and say when — opposite of Claude Fable 5.1 / Opus 5, which need boundaries |
+| Instruction files | — | *"more sensitive to instructions contained in skills and other files, such as `AGENTS.md`"* | audit loaded skills; state user-over-skill precedence |
+| Testing on small changes | — | thorough by default — broader tests than small tasks need | calibrate testing |
+| Sampling | tunable | `temperature`, `top_p`, `top_logprobs` unsupported | remove from code; steer tone and variety with words |
+| Reasoning effort | `none` … `max` | `low` … `max` — `none` unsupported | from `none` / `minimal`, start at `low` (API) |
+
+### Initiative and follow-through — the collaborator default
+
+The guide calls the model *"designed to be a more effective collaborator"* and is direct about the side effect on autonomous runs. Its starting prompt for autonomous work:
+
+> You should infer the user's intent and task scope from the instructions and prior conversation context. Your job is to bias towards action and carry the user's intended task to completion.
+>
+> When the user expresses intent to perform new work or fix an existing issue, persist until the user's intended goal is complete. Progress autonomously towards the user's goal (e.g. creating isolated worktrees / checkouts if needed, resolving merge conflicts, read-only actions, creating draft PRs etc.) unless they are clearly destructive or irreversible.
+
+When the request implies authorization but reads as a question:
+
+> When the user's prompt indicates a request for action, such as "can you...", "I want to...", "help me..." and similar expressions, treat these as instructions to do the work and take action. Do not stop at acknowledging capability (e.g. "Yes…"), proposing a plan, or offering to continue. Do not settle for a partial or "helpful enough" solution that does not fully satisfy the user's task to save time, effort or tokens. If a task requires sustained work, complete all the necessary work until the intended outcome is fulfilled.
+
+And to move approval to the end of the work instead of the start:
+
+> Before asking the user clarifying questions, you should complete the work that is already authorized from context and necessary to make the proposed action concrete and reviewable. The user should be approving a concrete, reviewable result. For example, before deploying a change, writing to an external application, merging a PR or publishing a site, do all the required work first so that user approval is the final step. You don't need user permission for reversible tasks, read-only actions, reviews or fixes, or anything for which authorization is provided earlier in the session or strongly implied from the task instruction.
+>
+> Do not introduce unsolicited warnings, disclaimers, approval flows, or safety/compliance checklists due to hypothetical risk.
+
+**Pair this with an explicit confirmation policy where consequential actions exist.** The system card: *"We train Astra to be careful when performing consequential actions and to follow a confirmation policy provided as instructions to the deployed agent."* In OpenAI's adversarial workplace evaluations the misaligned-outcome rate was 3.4% for Astra without the policy and 3.0% with it (GPT-5.6 Sol: 18.8% → 8.0%) — *"Exposing the confirmation policy to the model reduced this rate further."* The two pieces of guidance fit together: name the specific actions that need approval (send, purchase, publish), and license everything else so the model stops asking about it.
+
+On GPT-5.6, family rule #14's one-line boundary remains the documented form; apply the Astra snippets only when Astra is in scope.
+
+### Instruction following: audit what it reads
+
+Stronger instruction following comes with sensitivity: *"unclear or conflicting guidance in a skill file may cause the model to pause and block work early"*, and OpenAI writes *"We strongly recommend auditing skills and other files accessible to your model for instructions that could influence its behavior."* Two documented lines:
+
+> The user's instructions take precedence over guidelines provided in a skill. If explicit user instructions conflict with a skill's instructions, prioritize the user's instructions.
+
+> If a skill causes you to ask for permission or confirmation, pause, leave requested work unfinished, or diverge from the user's intent, name and link to the exact SKILL.md file you read, quote the relevant instruction, and briefly explain how it applies. Distinguish explicit skill requirements from your interpretation of guidelines.
+
+The second is a diagnostic: it makes silent skill conflicts visible when many instruction files load.
+
+### Writing style: detailed and formatted — the 5.6 terseness assumption no longer holds
+
+A 5.6-era review deleted "be brief" lines because the model was already terse. On Astra the default swings back toward lists, tables and Markdown; the guide's fix is wording, not a parameter:
+
+> Default to using clear, concise paragraphs, each developing one main idea. Use lists only when the information is genuinely parallel, sequential, or easier to compare, and avoid nested lists unless the hierarchy cannot be expressed clearly in prose. Use plain, simple language: familiar words, concrete examples, and precise verbs. Prefer active voice and direct statements.
+
+For recurring stock phrases, the guide ships a phrase list:
+
+> Avoid using slop words or phrases like "Bottom Line:" in conclusions, "delve," "foster," "leverage," "it's worth noting," "importantly," "Question? Answer." or "This isn't about X. It's about Y.", "genuinely" or hyphenated compound descriptions and adjectives. Do not use concluding summary statements such as "In short:..", "The simplest mental model is:...".
+
+**Cross-vendor consequence.** Claude Fable 5.1 formats *less* by default, Astra *more*. A shared `AGENTS.md` can't carry one formatting disposition — state structure per deliverable ("findings as a numbered list, rationale in prose"), the same move as stating length as a task requirement.
+
+### Subagents: encouragement, not boundaries
+
+> If at any point you can parallelize work by delegating tasks to another agent (no matter if you are the root or subagent), you should do so using collaboration tools if it could save time or improve quality.
+
+> Messages that you send to other agents and your final answer may be read by a human, so ensure they are legible. Always put proper spaces between words and/or numbers.
+
+The first line is exactly the kind of encouragement that must be *stripped* for Claude Opus 5 / Fable 5.1. In a cross-vendor prompt, state delegation as a condition (`claude.md § Universal` rule 7 phrasing) rather than as a push in either direction.
+
+### Testing and verification: calibrate
+
+> Do not write tests for reversible, low-impact changes that mirror the implementation. If you do choose to verify your work with tests, make sure that the tests are meaningful and necessary to verify implementation.
+>
+> Run tests appropriate to the change and complete required checks. Once those pass, broaden or repeat testing only when new changes, failures, or unresolved concerns justify it; otherwise, continue toward completing the task.
+
+Same symptom family as Opus 5's over-verification, but the documented fix is calibration, not removal.
+
+### Migration GPT-5.6 → GPT-6 Astra
+
+| Old 5.6-style | Astra-style |
+|---|---|
+| Relies on the terse default; no prose/format guidance | Describe the prose and structure you want; add the phrase list if stock phrases show up |
+| Only the one-line autonomy boundary | Add initiative / approval-at-the-end snippets where the agent stalls on questions; name the confirmation policy for consequential actions |
+| Many skills / `AGENTS.md` files with loose or overlapping guidance | Audit them; add the user-over-skill precedence line (and the diagnostic line while tuning) |
+| Silent about delegation, or "delegate only when necessary" | Say when and how much to delegate |
+| `temperature` / `top_p` / `top_logprobs` set in code | Remove — unsupported (API) |
+| `reasoning_effort: none` or `minimal` | Start at `low` and compare; otherwise keep the current effective level (API) |
+| Changing effort by rewriting the prompt prefix between turns | `configuration_update` input item — keeps the cached prefix (API) |
+
+Tool calling requires the Responses API on Astra (Chat Completions works without tools) — an API concern, surface it if the artifact assumes Chat Completions tools.
+
+### Safety-card notes
+
+- *"Astra is our most robust model to prompt injection to date."* Not a licence to drop "treat retrieved content as data" lines in agents that read untrusted input.
+- *"Astra makes substantially fewer factual errors than GPT-5.6 Sol"* on user-flagged hallucination-prone conversations. Cross-version prompts that also run on 5.x keep their anti-hallucination snippets (universal-GPT rule 2).
+
+Sources: OpenAI latest-model guide "Using GPT-6 Astra" and model page (developers.openai.com), GPT-6 Astra System Card (deploymentsafety.openai.com, published 2026-09-03) — all read 2026-09-13. The launch post and Safety overview on openai.com returned HTTP 403 at read time; nothing above depends on them.
+
+---
+
 ## GPT-5.6 — Sol / Terra / Luna (frontier as of 2026-07-09)
 
 OpenAI's current family: **`gpt-5.6-sol`** (flagship), **`gpt-5.6-terra`** (strong at lower price), **`gpt-5.6-luna`** (efficient, high-volume). The bare alias `gpt-5.6` routes to Sol. Model-card facts for Sol: 1,050,000-token context (input up to 922,000, output up to 128,000), knowledge cutoff 2026-02-16. The July 9 launch date comes from press coverage — OpenAI's card doesn't carry one.

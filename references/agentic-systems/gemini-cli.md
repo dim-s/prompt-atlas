@@ -224,8 +224,8 @@ Same as Codex's `codex exec` and Claude Code's `claude -p`:
 | Subagents | ✅ + remote subagents | ✅ + isolation: worktree | ✅ |
 | Skills | ✅ (Agent Skills) | ✅ | ✅ |
 | Slash commands | ✅ | ✅ | ✅ |
-| Reasoning depth knob | `thinking_level` (minimal/low/medium/high) | `effort` (low/medium/high/xhigh) | `model_reasoning_effort` (none/.../xhigh) |
-| Temperature | **Don't tune (1.0 fixed)** | Tunable | Tunable |
+| Reasoning depth knob | `thinking_level` (minimal/low/medium/high) | `effort` (low/medium/high/xhigh) | `model_reasoning_effort` (none/.../xhigh; GPT-6 Astra: low…max, no `none`) |
+| Temperature | **Don't tune (1.0 fixed)** | Tunable | Tunable on GPT-5.x; GPT-6 Astra: unsupported |
 | Persona / identity prompting | **+5% boost — keep** | Neutral / OK | Hurts on 5.5 — strip |
 | MCP support | ✅ | ✅ | ✅ |
 

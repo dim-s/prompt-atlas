@@ -1,10 +1,12 @@
 # Model-specific wording — Meta Muse family
 
-What changes about how you should PHRASE prompts for **Muse Spark 1.2** (Meta Superintelligence Labs, August 5, 2026 — updated from 1.1, July 9), **Muse Code** (August 5, coding specialist) and **Muse Glimmer** (August 10, open-weights 30B local agentic). Companion to the other model files in this directory.
+What changes about how you should PHRASE prompts for **Muse Spark 1.3** (Meta Superintelligence Labs, September 2, 2026) and **1.2** (August 5, 2026 — updated from 1.1, July 9), **Muse Code** (August 5, coding specialist) and **Muse Glimmer** (August 10, open-weights 30B local agentic). Companion to the other model files in this directory.
 
 Coverage here is deliberately short. Meta has published **no prompting guide** for the family: the facts below come from the launch posts and the Meta Model API / dev docs, and everything not stated there stays `?`. That's the honest position, and it's why this file is a page rather than a chapter.
 
 **What changed since the July 2026 entry.** The atlas previously carried Muse Spark 1.1 as "closed weights, public-preview API, most axes `?`". Version **1.2** (05.08) keeps the same public-preview surface; **Muse Code** (05.08) is a coding-specialist sibling known mostly by availability; **Muse Glimmer** (10.08) opens a new lane — an Apache-2.0 30B model sized for one consumer GPU, trained for local agentic work. The behavioral axes (persona, few-shot, literalism, emphasis) are still undocumented across the family — don't fill them in by analogy with Llama, which these models are not successors to.
+
+**What changed with 1.3 (September 2026).** Version **1.3** is the first Muse Spark release with a documented *behavioral* delta that touches wording: Meta trained it to collaborate more actively — clarifying questions on ambiguous prompts, confirmation before consequential actions. There is still no prompting guide, and the other behavioral axes stay `?` — see § Muse Spark 1.3.
 
 ---
 
@@ -40,7 +42,45 @@ A "Thinking" mode exists in the Meta AI app and on meta.ai. Whether the API expo
 
 ---
 
-## Muse Spark 1.2 (August 5, 2026 — current API flagship)
+## Muse Spark 1.3 (September 2, 2026 — current API flagship)
+
+### Headline facts
+
+- Available in **Muse Code** and the **Meta Model API** — *"Muse Spark 1.3 with max reasoning is now available on Muse Code and Meta Model API."*
+- Two model IDs on the API model page: `muse-spark-1.3` and `muse-spark-1.3-contributor`. The contributor tier's prompts are used to improve Meta's products — a data-use and configuration question for the user, not a wording one
+- 1M context and native multimodal perception (video, images, documents) per the model page — family rules #1 and #4 hold
+- **Still no prompting guide** — everything below is quoted from the launch post or derived from it
+
+### The behavioral shift: it asks, and it confirms
+
+Meta's post: *"Trained to more actively collaborate with the user, Muse Spark 1.3 asks clarifying questions when prompts are ambiguous, invokes help from the user when stuck, and confirms before taking consequential actions."* And: *"When working on long tasks, it adapts to user preferences, either providing frequent updates or working silently in the background."* The safety section adds that *"On complex agentic tasks, the model has better calibration on what constitutes irreversible actions and proceeds accordingly."*
+
+Meta documents the behavior, not how to steer it. The wording consequences below are **derived**, and they cut two ways:
+
+- **Interactive agents** — the behavior is the feature. Don't bolt on generic "ask me before anything risky" scaffolding; name only the project-specific actions that need confirmation, since the model's own notion of "consequential" isn't published.
+- **Autonomous / non-interactive runs** (batch jobs, headless execution, no one to answer) — a clarifying question or a confirmation pause stalls the run. State it plainly: that no one is available to answer mid-task, which reversible actions are pre-authorized, and what to do on ambiguity (state the assumption and continue, or stop with a report). Whether a system-prompt instruction reliably suppresses the collaboration behavior is **undocumented — test it**; no parameter for it is published.
+- **Update cadence** — because it adapts to what it reads as the user's preference, say which you want (frequent progress notes or silent background work) instead of leaving it to inference.
+- **Ambiguity now triggers a question rather than a guess.** Where a best guess is acceptable, say so.
+
+Same direction as GPT-6 Astra, released the same week: OpenAI documents the same stall on autonomous runs and ships snippets for it (`gpt.md § GPT-6 Astra`). Those snippets are OpenAI-model guidance — usable as a starting shape here, not validated on Muse.
+
+### Other documented deltas from 1.2
+
+- **Long instructions hold better** — *"Across multi-step tasks, it’s better at preserving detailed requirements without dropping constraints or drifting from the requested workflow."* Constraint restatements added to keep 1.2 on track are trim candidates — re-test before removing.
+- **Multitasking in one thread** — *"it now more accurately maps incoming prompts to the correct task within messy, single-threaded contexts"*.
+- **Limits awareness** — trained to recognize *"when it hits hurdles instead of hallucinating outcomes"*.
+- **Coding** — *"it takes fewer turns where not needed and is less verbose"*; ~20% fewer tool calls and ~25% fewer tokens in Meta engineers' comparisons. Concision lines ported from 1.2 coding prompts may now overcorrect (same class as GPT-5.6 / Gemini 3.6 Flash).
+- **Adversarial robustness** — *"stronger adversarial robustness, with improved resistance to adversarial inputs and prompt injections"*.
+
+### Reasoning depth
+
+Max reasoning is documented as available on Muse Code and the Meta Model API; the parameter name and the rest of the ladder are **not** on the post or the model page — `?`. Family rule #5 holds: never in the body; ask what the user's endpoint exposes.
+
+### What is still `?`
+
+Persona tolerance, few-shot behavior, literalism, aggressive-emphasis response, step-by-step prescription, subagent-spawn default, any control surface for the collaboration behavior, and the reasoning parameter name.
+
+## Muse Spark 1.2 (August 5, 2026 — previous API flagship)
 
 ### Headline facts
 
@@ -52,7 +92,7 @@ A "Thinking" mode exists in the Meta AI app and on meta.ai. Whether the API expo
 
 ### What changed from 1.1
 
-The 05.08 update (with Muse Code) moved the family forward, but Meta published **no prompting-relevant delta** for 1.2 itself — the family rules above, written against 1.1, apply unchanged. Treat 1.2 as the current nameplate for the same behavioral picture: context self-management, goal conditioning, delegation support, `?`-behavioral axes.
+The 05.08 update (with Muse Code) moved the family forward, but Meta published **no prompting-relevant delta** for 1.2 itself — the family rules above, written against 1.1, apply unchanged. Treat 1.2 as the August nameplate for the same behavioral picture: context self-management, goal conditioning, delegation support, `?`-behavioral axes.
 
 ## Muse Code (August 5, 2026 — coding specialist)
 
@@ -111,3 +151,5 @@ Because so many cells are `?`, adding Muse to a cross-vendor prompt costs little
 - [Introducing Muse Glimmer: An Open Agentic Model That Runs on Your Device](https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model) (2026-08-10, read 2026-08-29) — 30B, Apache 2.0, one-GPU sizing (~17GB quantized), tool-calling + failure recovery, multimodal perception encoder, controllable effort, OpenClaw compatibility, speculative decoding (DFlash drafter), llama.cpp/MLX/ExecuTorch integrations.
 - The "clean OpenAI-compatible package", structured output and parallel tool calling wording in that post comes from an **early-partner testimonial** (Replit's CEO), not from Meta's own specification text. Treated here as an availability claim, not as a behavioral guarantee.
 - **No prompting guide exists.** Every behavioral axis not listed above is `?` on purpose. If a review needs one of them, the answer is "test it", not "assume Llama" — these models are not Llama successors and there is no migration path from Llama 4.
+- [Introducing Muse Spark 1.3](https://research.meta.ai/blog/introducing-muse-spark-1-3) (2026-09-02, read 2026-09-13) — the collaboration behavior (clarifying questions, help when stuck, confirmation before consequential actions, update-cadence adaptation), long-form instruction reliability, single-thread multitasking, limits awareness, coding efficiency vs 1.2, irreversible-action calibration and prompt-injection robustness, max reasoning availability.
+- [Muse Spark — Meta Model API model page](https://developer.meta.com/ai/models/muse-spark/) (read 2026-09-13) — IDs `muse-spark-1.3` / `muse-spark-1.3-contributor` and the contributor tier's data use, 1M context, native multimodal perception. Not on the page: the reasoning parameter name, and any control over the collaboration behavior.

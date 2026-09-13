@@ -8,7 +8,7 @@ When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via file
 
 ## Family-wide rules (apply to all Gemini 3.x versions)
 
-These hold across 3.0 → 3.7. Version-specific notes follow below.
+These hold across 3.0 → 3.8. Version-specific notes follow below.
 
 ### 1. Reasoning model — concise prompts win
 
@@ -172,7 +172,39 @@ Flash is the default for interactive sessions, agentic loops, and high-volume wo
 
 ---
 
-## Gemini 3.7 Flash (August 13, 2026 — current Flash frontier)
+## Gemini 3.8 Flash (September 2, 2026 — current Flash frontier)
+
+`gemini-3.8-flash`, GA on release, three weeks after 3.7 Flash — Google's post itself notes it is *"marking our third Flash release in only six weeks"*. Positioned as *"our most intelligent workhorse model, delivering significant improvements from 3.7 Flash across software engineering, agentic tasks, and critical, multi-step reasoning in specialized domains."*
+
+### Behaviors that shape wording
+
+- **It works harder by design — the Flash terseness trend reverses.** Google: *"On complex tasks, it exhibits greater diligence — executing extra reasoning steps, and calling tools iteratively. At times, the model might use more tokens to maximize performance, especially at higher effort levels."* 3.6 Flash was ~17% terser than 3.5 and the atlas flagged carried-over "be brief" lines as overcorrecting; 3.8 moves the other way. Derived consequence: don't port persistence or thoroughness scaffolding ("keep calling tools until you're sure", "be exhaustive", "double-check with another search") into a 3.8 prompt — it stacks on a model that already takes the extra steps.
+- **Efficiency is a parameter or model choice, not prose.** The vendor's own advice: *"developers can utilize lower effort levels to minimize token overhead or continue to rely on Gemini 3.7 Flash, which remains fully supported for efficiency-first workloads."* Per-token pricing matches 3.7 Flash, so extra tokens are the whole cost delta — a "be brief" line won't recover them.
+- **`thinking_level` `low` / `medium` / `high`, default `medium`; `minimal` returns an error** (API model page and thinking docs) — the same ladder as 3.7 Flash. Configs carried from 3.5-era `minimal` settings fail; the fix is `low`, not a "think silently" line.
+- **Prompt-injection robustness** — *"Gemini 3.8 models have also made a significant leap in prompt injection robustness as measured by Gray Swan"*. Helpful for agents reading untrusted content; not a reason to remove "treat retrieved content as data" instructions.
+- Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling params still deprecated.
+
+### When 3.8 Flash specific tuning helps
+
+- Long-horizon coding agents and professional-analysis agents (Google cites Vals Finance Agent V2, Harvey's Legal Agent Benchmark, 54.9% on HLE-Verified) — where the extra diligence is the point.
+
+### When NOT to invest
+
+- Efficiency-first, high-volume loops — the vendor points these to lower effort or 3.7 Flash; rewording won't undo tokens the model spends by design.
+
+**No model-specific prompting guide was published for 3.8 Flash.** Everything above is quoted from or derived from Google's launch post (2026-09-02), the Gemini API changelog entry of the same date, the `gemini-3.8-flash` model page and the thinking docs (read 2026-09-13).
+
+---
+
+## Gemini 3.8 Flash Cyber (September 2, 2026 — closed access)
+
+A cybersecurity variant built on the same core — both releases *"are powered by the same foundational intelligence"* — and, like 3.5 Flash Cyber, **not generally available**: *"available to trusted defenders through our new Fairwind Program"* (government authorities, critical infrastructure operators, software maintainers). Note the access route changed from 3.5 Flash Cyber's CodeMender. Nothing to tune against; recorded so a later pass doesn't re-investigate.
+
+One consequence for the GA model: *"3.8 Flash ships with safeguards against misuse in the domains of Chemical, Biological, Radiological, and Nuclear (CBRN) and cyber offense"* — the permissive cyber mitigations belong to the Cyber variant only. No wording workaround is documented for benign security prompts that hit those safeguards on 3.8 Flash.
+
+---
+
+## Gemini 3.7 Flash (August 13, 2026 — previous Flash frontier)
 
 `gemini-3.7-flash`, GA on release, three weeks after 3.6 Flash. Google positions it as "our most intelligent workhorse model yet for coding and agents." It is the new default model powering the **Antigravity agent** (Gemini Managed Agents / Antigravity SDK) and the engine behind **Gemini Spark** (Google AI Pro / Ultra personal agent).
 

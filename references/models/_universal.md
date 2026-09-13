@@ -340,7 +340,7 @@ The hardest classic case: an `AGENTS.md` or system prompt meant to work on **two
 | Subagent spawning | Opus 4.7 spawns fewer | Codex spawns what's defined | Spawns what's defined; supports remote subagents | Be explicit when you want delegation |
 | Output format | Prose constraints work | Push to `json_schema` | Push to `response_json_schema` | Prefer schema for all three |
 | Aggressive emphasis | Overuse → overtriggering 4.5+ | Mostly inert noise | Inert noise | Reserve ALL-CAPS / "CRITICAL:" for safety invariants only |
-| **Sampling params in body** | **Fable 5 / Opus 4.7+/4.8 / Sonnet 5: non-default → 400; Sonnet 4.6 / Haiku still tunable** | Tunable; mentioning OK | **Deprecated API-wide 2026-07-21** (`temperature`, `top_p`, `top_k`) | Don't reference sampling anywhere, and don't build variety on it — two of three vendors have removed the lever. Use "propose N directions" |
+| **Sampling params in body** | **Fable 5 / Opus 4.7+/4.8 / Sonnet 5: non-default → 400; Sonnet 4.6 / Haiku still tunable** | Tunable on 5.x; **GPT-6 Astra: unsupported — remove** | **Deprecated API-wide 2026-07-21** (`temperature`, `top_p`, `top_k`) | Don't reference sampling anywhere, and don't build variety on it — two of three vendors have removed the lever (and OpenAI's GPT-6 Astra drops it too). Use "propose N directions" |
 | **Response length default** | **Opus 5 runs long and does not calibrate** (effort won't shorten it) — concision must be prompted | **5.6 is terser than 5.5** — a carried-over "be brief" overcorrects | 3.6 Flash ~17% terser than 3.5 Flash | ⚠️ **Live contradiction.** State length as a task requirement ("at most 5 bullets", "one paragraph per finding"); never as a global disposition |
 | Instruction repetition | Tolerated; a short concision reminder near the end is recommended on Opus 5 | **Measured cost on 5.6** (leaner prompts: +10–15% score, −41–66% tokens) | Concise input is a family rule; verbose prompts get over-analyzed | Say each thing once, in its own section; if an echo is needed for Opus 5, keep it to one short line |
 | **Negative constraint position** | Anywhere | Anywhere | **At end (drops early negatives)** | Place at end of file (strictest wins) |
@@ -407,7 +407,7 @@ OpenAI's strong recommendation; Anthropic and Google both tolerate either. Pick 
 
 **6. Don't reference sampling parameters in body — and don't design around them.**
 
-Google **deprecated** `temperature` / `top_p` / `top_k` API-wide on 2026-07-21; the newest Claude models (Fable 5 / Opus 4.7+/4.8 / Sonnet 5) reject non-default sampling with a 400. Only GPT-5.x and older Claude (Sonnet 4.6 / Haiku) still tune. Don't write "use temperature 0.3" in any cross-vendor body, and don't build a prompt whose variety depends on the knob — steer it through wording ("propose N directions, then implement the chosen one").
+Google **deprecated** `temperature` / `top_p` / `top_k` API-wide on 2026-07-21; the newest Claude models (Fable 5 / Opus 4.7+/4.8 / Sonnet 5) reject non-default sampling with a 400. Only GPT-5.x and older Claude (Sonnet 4.6 / Haiku) still tune. GPT-6 Astra does not: OpenAI's migration guide lists `temperature`, `top_p` and `top_logprobs` as unsupported for it. Don't write "use temperature 0.3" in any cross-vendor body, and don't build a prompt whose variety depends on the knob — steer it through wording ("propose N directions, then implement the chosen one").
 
 **6a. Don't set a global length disposition.**
 
@@ -489,7 +489,7 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Self-verification | **explicit "review for coverage" instruction present** | Qwen (load-bearing) |
 | Reasoning depth | **API knob only, no prose CoT** | All frontier vendors (universal) |
 | Output format | **`json_schema` / `json_object` API + JSON demanded in prose** | DeepSeek (both required) |
-| Sampling params | **no mention in body, no behavior depending on them** | Gemini (deprecated 2026-07-21) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) |
+| Sampling params | **no mention in body, no behavior depending on them** | Gemini (deprecated 2026-07-21) + newest Claude (Fable 5 / Opus 4.7+/4.8 / Sonnet 5 reject non-default → 400) + GPT-6 Astra (`temperature` / `top_p` unsupported) |
 | Response length | **stated per deliverable ("at most 5 bullets"), never as a global disposition** | GPT-5.6 / Gemini 3.6 Flash (already terse) vs Opus 5 (runs long, won't calibrate) — the two directions cancel |
 | Instruction repetition | **each rule stated once** | GPT-5.6 (measured token/score cost) |
 | Reasoning off-switch | **never write "answer without reasoning"** | Kimi K2.7-Code / K3, GLM-5.3, Grok 4.5/4.6, Qwen3.8 open weights (thinking forced on / cannot be disabled) + Opus 5 (increases tag leakage) |

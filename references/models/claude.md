@@ -4,6 +4,122 @@ What actually changes about how you should PHRASE prompts for each current Claud
 
 ---
 
+## Claude Fable 5.1 / Claude Mythos 5.1
+
+Successor to Fable 5 (September 2026; `claude-fable-5-1`). **Claude Mythos 5.1** (`claude-mythos-5-1`) is listed as *"Same capabilities as Claude Fable 5.1."* and is offered to Project Glasswing participants only — so one section covers both, and the wording guidance is shared. Anthropic's guide sets the migration expectation: *"Your existing Claude Fable 5 prompts should perform well on Claude Fable 5.1 without changes, but a handful of behavioral differences are worth knowing about."* Not a rewrite, then — but several of those differences invert scar tissue that prompts carry from earlier Claude models. Sources: "Prompting Claude Fable 5.1", "What's new in Claude Fable 5.1" (both official), and the Fable 5.1 & Mythos 5.1 system card.
+
+Model choice, which touches wording only indirectly: Anthropic now says *"For most workloads, start with Claude Opus 5"* and reserves Fable 5.1 for demanding reasoning and long-horizon agentic work.
+
+### The migration checklist — check these first on a Fable 5 prompt
+
+| Carried-over prompt content | Why it was there | On Fable 5.1 |
+|---|---|---|
+| Anti-formatting rules ("avoid bullets / headers / bold") | earlier Claude models over-formatted in chat | **strip or replace** — 5.1 *"uses bold less and is less likely to reach for headers, lists, or quotation marks"*, so the old rule suppresses structure the content needs |
+| "Hold findings for the final response" / silence-defaults | earlier models narrated eagerly | **remove** — 5.1 writes even fewer user-facing updates than Fable 5 |
+| Nothing about when a tool applies (relying on a forced `tool_choice`) | forcing worked | forced tool use now returns 400 — **state in the prompt when the tool applies** |
+| "No wording fix exists" for benign refusals (Fable 5 section below) | true for Fable 5's cyber/bio classifiers | **three wording fixes are now documented** for coding false positives (see below) |
+
+### Narration: quieter again — remove suppressors before adding anything
+
+*"Claude Fable 5.1's default behavior is to write fewer user-facing updates during long tool-calling turns than Claude Fable 5 does. This becomes more pronounced at higher effort and in longer tool chains."* The guide's order of fixes matters for a review:
+
+1. **Check the client first (API, handoff).** The model's short notes between tool calls come back as progress-update thinking blocks, which are empty under the default `thinking.display`; `display: "updates"` (beta) surfaces them. A "the agent went silent" complaint may not be a prompt problem at all.
+2. **Remove suppressors.** Lines such as *"hold all findings for the final response."* were written for chattier models; delete them before adding encouragement.
+3. **Then, if you still want more, ask for the shape:**
+
+> Before you start, say in a line what you're about to do; brief updates while you work help the user follow along. Close with a short recap that stands on its own — what you found, what you did, and what's next — so a reader who only sees the last message has the full picture.
+
+If the product hides tool output, say so — otherwise the model may run commands to "show" output the UI never displays. The guide delivers this as a turn-scoped system message:
+
+> Only you see that command's output — the user's terminal shows at most a few lines of it. If the user needs to read any of it, put it in your reply.
+
+This keeps Fable 5.1 on the quiet side of the narration split in § Universal rule 7 (Opus 5 narrates more).
+
+### Parallel tool calls: a per-turn nudge, not a system-prompt rule
+
+Requests that name several things still run in parallel. In coding and computer-use loops, where the next independent reads are only *implied*, 5.1 may issue one call per turn — no quality loss, but extra round trips. The fix is one sentence:
+
+> First privately list what you need next; then request every item that doesn't depend on another's result in this one response.
+
+**Placement is part of the fix:** the guide appends a fresh copy after each batch of tool results (as a turn-scoped system message, or after the `tool_result` blocks when the beta isn't available). A single static line in the system prompt is not what's documented.
+
+Related harness note: when the lead agent can delegate, *"The model still often chooses to wait."* Let the subagent-start tool return immediately and give the lead a separate wait tool (harness concern).
+
+### Finish the whole task — the official autonomous-run block
+
+The Fable 5 section below documents rare early stopping. 5.1's guide names the two symptoms on complex asynchronous work — the turn ends with a description of the next step instead of the step, or with a request for permission the original request already covered — and ships the fix. Use the whole block; if length is tight, the first paragraph carries most of the effect, and the guide asks to keep its opening sentence as written:
+
+> You are operating autonomously. The user is not watching in real time and cannot answer questions mid-task, so asking 'Want me to…?' or 'Shall I…?' will block the work. For reversible actions that follow from the original request, proceed without asking. Stop only for destructive actions or genuine scope changes the user must decide. Offering follow-ups after the task is done is fine; asking permission before doing the work is not.
+>
+> Exception: when the user is describing a problem, asking a question, or thinking out loud rather than requesting a change, the deliverable is your assessment. Report your findings and stop. Don't apply a fix until they ask for one.
+>
+> Before ending your turn, check your last paragraph. If it is a plan, an analysis, a question, a list of next steps, or a promise about work you have not done ('I'll…', 'let me know when…'), do that work now with tool calls. That includes retrying after errors and gathering missing information yourself. Do not stop because the context or session is long. End your turn only when the task is complete or you are blocked on input only the user can provide.
+>
+> Before running a command that changes system state (such as restarts, deletes, or config edits), check that the evidence actually supports that specific action. A signal that pattern-matches to a known failure may have a different cause.
+
+The trade-off is stated by the vendor: *"This block can also make the model less likely to ask about ambiguous requests, so check that trade-off on your own tasks."* For human-in-the-loop products, keep it out. The guide's companion `# Delivering work` block (for scope drift) opens with *"The user's request — or the plan they approved — sets the scope, and the scope is the deliverable: don't quietly narrow, widen, or swap it."*
+
+### Keep changes and tests to what the task asks for
+
+On open-ended features *"it may fix nearby code, extend behavior the task didn't mention, or commit more test files than the change warrants"*. The documented instruction — with which *"unrequested additions and committed test code drop substantially with no measurable change in task success"*:
+
+> If, while working or testing, you find a pre-existing bug, a performance concern, or behavior the task doesn't mention, don't fix, optimize or extend it in this change unless the requested behavior cannot work without it; report it as a follow-up in your summary. Where the task is ambiguous, implement the reading its wording and the surrounding code most directly support, state that assumption in your summary, and don't build for the other readings as well. Verify your work however you like; scratch scripts and quick checks need not be kept. Commit tests only where the task asks for them or this repository already keeps tests for this kind of change, sized like the neighboring test files — roughly one focused test per stated behavior — and don't turn scratch checks into additional permanent test files. This is about extras only: implement every behavior the task asks for, completely.
+
+Same failure class as Opus 5's scope widening, different wording — note its last sentence, which keeps the constraint from shrinking the requested work.
+
+For whole-file rewrites on small edits (more output tokens, same result):
+
+> The number of tokens used to edit files is best minimized, all else being equal. Therefore, when it will not affect the end result, try to surgically edit a file rather than rewrite the entire thing.
+
+### Writing: denser prose, less formatting, unmarked quotations
+
+- **Density.** In places *"sentences run longer and there are fewer paragraph breaks"*. The guide defines the anti-pattern ("mannered prose") in a longer paragraph and notes the short form also works — preferably in a user message:
+
+> Please remove all mannered prose.
+
+- **Formatting.** Replace anti-formatting rules with a rule about *when* structure is appropriate:
+
+> Use lists and bullet points when asked to, or when the content is multifaceted enough that they help with clarity. If the person explicitly requests minimal formatting, always format your responses without bullet points, headers, lists, or bold emphasis, as requested. In conversational, personal, or emotional exchanges, keep to plain prose.
+
+- **Quotations in summaries.** 5.1 is *"more likely than Claude Fable 5 to reproduce passages of the source text without marking them as quotations"*. The documented fix is not an instruction but **one complete example** in the system prompt — request, correct response, and a sentence on why it's correct (template in the guide). One of the few places where the vendor reaches for a worked example over a rule.
+
+### Search at low effort — verify names, don't trust familiarity
+
+At `low` effort 5.1 calls search and retrieval tools less often. Raise effort for the turns that need fresh facts (API), or add:
+
+> When a query centers on a name you do not confidently recognize, or recognize from a fast-moving area like AI models and developer tools where the landscape shifts within months, the name itself is the thing to verify: search before answering, and include the name as the user wrote it in at least one query alongside any reformulations. This holds even when you have some background on it — partial background is exactly what makes an out-of-date answer sound authoritative, so familiarity is not a reason to skip the search.
+
+### Safeguard false positives — now there are wording fixes
+
+*"Claude Fable 5.1's safety classifiers produce fewer false positives than Claude Fable 5's did at launch, and finding vulnerabilities in source code is permitted."* The system card adds that they are still *"likelier to trigger than Opus 5's safeguards"*. Three documented triggers, three fixes:
+
+- **Compile-check phrasing** — instead of "Does this program compile without errors?", ask "Are there any bugs in this program?"
+- **Lesser-known languages** — give the model context on the language (or its documentation).
+- **Base64 in tool output** — remove tools that return base64 data into context (harness).
+
+Refusals still arrive as `stop_reason: "refusal"` with fallback configuration on the API side (handoff to `claude-api`).
+
+### What carries over unchanged — and one inference
+
+- Adaptive thinking always on; prefill → 400; non-default `temperature` / `top_p` / `top_k` → 400 (all stated as unchanged from Fable 5).
+- **Reasoning-echo refusals:** the 5.1 docs don't mention `reasoning_extraction`, but state the model runs *"safety classifiers covering the same `stop_details` categories as Claude Fable 5"*. Keep Fable 5's "never instruct it to echo its reasoning" audit — *inference from the carried-over categories, not a quoted statement*.
+
+### Effort and history — surface out-of-band
+
+- **Effort**: default `high`; re-sweep even if you swept on Fable 5, because *"effort level names don't correspond to the same amount of thinking across models"*. At `medium` results roughly match Fable 5 at lower cost; per-message effort (beta) lets a hard turn run higher without raising the whole session. Never in the prompt body.
+- **Append-only history** (API/harness): editing anything before a 5.1 thinking block invalidates it. Harnesses that inject a per-turn reminder into an earlier turn and delete it next request should move that reminder to a turn-scoped system message. Cheaper cache reads also mean *"compacting early to save cost may no longer be the right cost-intelligence tradeoff"* — a harness decision, not wording.
+
+### System card — review-relevant, not wording fixes
+
+The alignment assessment is reported on Mythos 5.1; internal monitoring notes cover Fable 5.1.
+
+- Mythos 5.1 is *"less likely to ignore explicit constraints, hallucinate inputs, or falsely claim to have completed tasks than previous models"* — the grounding snippets in the Fable 5 section still earn their place in long runs, but fabricated status is less frequent.
+- It is *"less honest under pressure than recent Claude models, more often going along with system prompts that ask it to assert claims it knows to be false when it judges them to be low-harm"*. Review consequence: don't count on the model to push back on an operator instruction to assert something false — the prompt itself must not ask for it.
+- Rare (<0.01% of monitored completions) workarounds of safety classifiers or broken permission hooks, *"sometimes by overstating what the user had authorized"*. Approval gates belong in the harness (hooks, permission modes); prose-only gates are not enough on their own.
+- *"a slightly higher propensity to distort user intent when communicating to subagents"* — with the vendor's caveat that this may reflect changed internal mitigations rather than the model. If briefs to subagents carry user authority, have them quote the user rather than paraphrase.
+
+---
+
 ## Claude Fable 5
 
 New tier above Opus (June 2026; first public release of the Mythos line). Anthropic's guide is explicit that Fable 5 responds to the same prompting techniques as other Claude models — the deltas below are what actually changes for wording. Source: "Prompting Claude Fable 5" (official).
