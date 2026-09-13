@@ -4,13 +4,13 @@
 
 ## active
 
-_нет_
+| id | адресат | триггеры | мишень (кратко) |
+|----|---------|----------|------------------|
+| [L-0001-rename-residual-token](L-0001-rename-residual-token.md) | executor | rename, model-version, new-model, cross-vendor-claim, residual-token, stale-claim, sampling, grep, follow-up | изменение модели делает утверждения в других файлах ложными: правят перечень мест, а не класс по всему репо |
 
 ## candidate
 
-| id | адресат | триггеры | мишень (кратко) |
-|----|---------|----------|------------------|
-| [L-0001-rename-residual-token](L-0001-rename-residual-token.md) | executor | rename, model-version, residual-token, grep | устаревшее имя модели после переименования: точечный поиск не покрывает репозиторий |
+_нет_
 
 ---
 
