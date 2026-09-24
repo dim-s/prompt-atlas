@@ -413,7 +413,7 @@ After completing a task that involves tool use, provide a quick summary of the w
 
 ### Opus 5: verbosity no longer calibrates, and effort is not the lever
 
-Every other current Claude shortens simple answers and lengthens open-ended ones on its own, so the snippets above are a fallback. On Opus 5 they're mandatory: default responses run long, and lowering `effort` cuts thinking volume without reliably shortening the visible answer. Prompt for it, and repeat the reminder near the end of a long system prompt:
+Every other current Claude except Opus 5 shortens simple answers and lengthens open-ended ones on its own (Opus 5.5 is Opus 5's baseline here — its length behavior is not re-documented; the vendor's "40% less verbose" is a launch-post claim, so measure), so the snippets above are a fallback. On Opus 5 they're mandatory: default responses run long, and lowering `effort` cuts thinking volume without reliably shortening the visible answer. Prompt for it, and repeat the reminder near the end of a long system prompt:
 
 ```
 Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend most of the response on the main answer. When asked to explain something, give a high-level summary unless an in-depth explanation is specifically requested.

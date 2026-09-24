@@ -230,6 +230,34 @@ Sources: OpenAI latest-model guide "Using GPT-6 Astra" and model page (developer
 
 ---
 
+## GPT-6 Sol and GPT-6 Luna (22 September 2026 — the working and volume tiers of the GPT-6 generation)
+
+`gpt-6-sol` and `gpt-6-luna` (ids per OpenAI's latest-model guide, read 2026-09-24). **Name collision to keep straight:** GPT-5.6 also had a Sol and a Luna (§ GPT-5.6 below) — a review that says "Sol" must say which generation. Roles per the guide: Sol — *"strong reasoning on demanding tasks"*; Luna — *"efficient, repeatable work at scale"*; Astra stays the top model. The launch post (openai.com) still returns HTTP 403; the TechCrunch report and the developer docs are what this section rests on.
+
+**What the guide does not say:** its behavior section is written for Astra (*"observed with GPT-6 Astra"*) and tells you to evaluate its prompts with your chosen model. Nothing first-party says Sol / Luna share Astra's collaborator default, detailed-and-formatted style, sensitivity to `AGENTS.md`, or under-delegation. So: **do not port the § GPT-6 Astra wording deltas to Sol / Luna as facts** — treat them as hypotheses to test, and don't strip 5.6-era prompt content from a Sol / Luna target on Astra's authority.
+
+### What differs from Astra — documented, all API-side but wording-visible
+
+| Axis | GPT-6 Astra | GPT-6 Sol / Luna |
+|---|---|---|
+| Reasoning effort | `low` … `max`, **no `none`** | **`none` supported** (ladder otherwise as Astra) |
+| `temperature` / `top_p` / `top_logprobs` | unsupported | *"When reasoning effort is not `none`, remove `temperature`, `top_p`, and `top_logprobs`"* — i.e. usable only at effort `none` |
+| Tool calling | needs the Responses API | Chat Completions function calling only with `reasoning_effort: "none"`; Responses API otherwise |
+
+Consequences for a review: (1) a "no `none` effort" or "sampling is gone" claim in a prompt is right for Astra and wrong for Sol / Luna — the atlas states them per model, keep it that way; (2) a Sol / Luna prompt that sets `temperature` while also setting effort above `none` is a finding; (3) "answer without reasoning" is *still* not a prompt job — for Sol / Luna the off-switch is `reasoning_effort: "none"`, an out-of-band parameter.
+
+### Shared GPT-6 features (all three models)
+
+Async tool calling and mid-turn steering (Responses API), changing reasoning effort mid-conversation while preserving the prompt cache, computer use, structured outputs, streaming, prompt caching; the cache-retention option is now `prompt_cache_options.ttl` (e.g. `"30m"`) instead of `prompt_cache_retention`. These are harness concerns — surface them, don't write wording for them.
+
+### When NOT to invest
+
+- Sol / Luna-specific tuning beyond the table above, until OpenAI publishes model-specific guidance or you have measured one — the behavioral claims are unverified for these two.
+
+Sources: OpenAI latest-model guide (developers.openai.com/api/docs/guides/latest-model, read 2026-09-24, two passes through WebFetch that agree); TechCrunch 2026-09-22 (launch report). Not read: openai.com/index/introducing-gpt-6-sol-and-luna (403).
+
+---
+
 ## GPT-5.6 — Sol / Terra / Luna (frontier as of 2026-07-09)
 
 OpenAI's current family: **`gpt-5.6-sol`** (flagship), **`gpt-5.6-terra`** (strong at lower price), **`gpt-5.6-luna`** (efficient, high-volume). The bare alias `gpt-5.6` routes to Sol. Model-card facts for Sol: 1,050,000-token context (input up to 922,000, output up to 128,000), knowledge cutoff 2026-02-16. The July 9 launch date comes from press coverage — OpenAI's card doesn't carry one.

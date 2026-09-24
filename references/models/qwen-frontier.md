@@ -1,6 +1,6 @@
 # Model-specific wording differences — Alibaba Qwen frontier family
 
-What changes about how you should PHRASE prompts for **frontier-class Qwen models**: Qwen3.8-Max / **Qwen3.8-Flash** (August 2026), Qwen3.7-Max (May 2026), Qwen3.7 Plus, Qwen3.6 Plus / Max-Preview, and the Qwen3-Max-Thinking lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `deepseek.md`.
+What changes about how you should PHRASE prompts for **frontier-class Qwen models**: Qwen3.8-Max / **Qwen3.8-Flash** (August 2026) / **Qwen3.8-Omni-Flash** (September 2026), Qwen3.7-Max (May 2026), Qwen3.7 Plus, Qwen3.6 Plus / Max-Preview, and the Qwen3-Max-Thinking lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `deepseek.md`.
 
 **This file covers frontier Qwen only.** Small-local Qwen variants (Qwen3 2B / 4B / e2b / e4b that run on LM Studio, Ollama, llama.cpp, vLLM at consumer hardware tiers) are covered in `small-local.md § Qwen` — different prompting regime, different failure modes, different reference matrix (`matrix-small.md`). When a user names just "Qwen" without size or tier, ask which one before applying advice from either file.
 
@@ -158,6 +158,27 @@ Released as an open-weight, multimodal MoE with an **early preview of the Qwen4 
 
 ---
 
+## Qwen3.8-Omni-Flash (Alibaba, September 18, 2026 — omni-input, API-only)
+
+`qwen3.8-omni-flash`: natively omni **input** (text, images, audio, video) with **text-only output**; API-only at launch — no open weights, so the Flash surface split above does not apply here. Source is second-hand: MarkTechPost (2026-09-18), quoting the QwenCloud pages; the qwen.ai blog would not render and was not read — treat every fact below as secondary until the vendor page is read.
+
+### Headline facts
+
+- **Context:** 1M window; QwenCloud lists 991K max input and 131K max output; reasoning up to 262K tokens
+- **Thinking is on by default, with `reasoning_effort` set to `xhigh`; setting it to `none` disables thinking** (as quoted by MarkTechPost). For Qwen3.8-Flash the knobs stay `?` — do not carry this back to it
+- Available through QwenCloud, Alibaba Cloud Model Studio and Qwen Studio
+
+### Wording behaviors
+
+- **Family rules #1–#6 apply**; no prompting guide was found and no wording delta versus Qwen3.8-Flash is documented. The difference for a reviewer is the input surface: audio/video prompts should name which clip or segment a question is about (same rule as naming images on DeepSeek Vision — `?` whether Qwen documents it).
+- **Default `xhigh` is a cost/latency fact, not a wording one:** a latency-sensitive prompt is fixed with the parameter (`reasoning_effort`), not with a "don't overthink" line — same rule as every vendor with a knob.
+
+### When NOT to invest
+
+- Text-only workloads — use Qwen3.8-Flash or Max; nothing here changes the text regime.
+
+---
+
 ## Qwen3.7-Max (Alibaba, May 20-21, 2026 — previous frontier)
 
 ### Headline facts
@@ -292,6 +313,7 @@ Cross-vendor wording note: Qwen's wording defaults overlap heavily with Claude's
 
 ## Source notes
 
+- Qwen3.8-Omni-Flash: MarkTechPost ([marktechpost.com/2026/09/18/alibaba-qwen-releases-qwen3-8-omni-flash](https://www.marktechpost.com/2026/09/18/alibaba-qwen-releases-qwen3-8-omni-flash/), read 2026-09-24) — modalities, 991K/131K limits, `reasoning_effort` default `xhigh`, `none` disables; the primary `qwen.ai/blog?id=qwen3.8-omni-flash` did not render (secondary source)
 - Qwen3.8-Flash: Alizila (27.08, [alizila.com](https://www.alizila.com/alibaba-releases-qwen3-8-flash-with-innovative-model-architecture-delivering-optimal-price-performance/)) — 125B+51B/6B-active specs, price tiers (¥1/¥3), QwenWork, benchmark positioning; Hugging Face card `Qwen/Qwen3.8-Flash-Next` (read 2026-08-29) — architecture details (GDN/QSA/GR, N-gram embedding, Muon), context numbers (262K/1M), license `qwen-community-1.0`, SWE-bench comparisons; QwenCloud model page for hosted `qwen3.8-flash` (1M default, built-in tools). Thinking knobs: **not documented as of 29.08 — marked `?` deliberately**
 
 Qwen3.7-Max was released too recently (May 20-21, 2026) for many independent prompting analyses to exist. Qwen3.8-Max facts come from the vendor's own pages:

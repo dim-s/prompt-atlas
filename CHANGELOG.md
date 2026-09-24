@@ -2,6 +2,37 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [1.9.0] — 2026-09-24
+
+Coverage for the items found by the September 24, 2026 nightly reconciliation (`FINDINGS.md § Заход 2026-09-24`, BRIEFING.md «Что дальше» items 1–5), applied on the owner's approval of 24.09 (proposal `2f8679f465fbe1ab`). The vendor pages were re-read on 2026-09-24 (WebFetch summaries, not raw pages; numeric claims were cross-checked against a second page only where one existed — not for Qwen Omni-Flash or Sol / Luna) — the nightly report's own numbers were not copied.
+
+### Added
+
+- **Claude Opus 5.5** (2026-09-22, `claude-opus-5-5`) — new `models/claude.md § Claude Opus 5.5`, written as a delta on § Claude Opus 5 (Anthropic: existing Opus 5 prompts "should perform well without changes"). Thinking cannot be disabled (`thinking: disabled` / manual budgets and forced `tool_choice` → 400); effort default `medium`, and the same level thinks more than on Opus 5; the official end-of-system-prompt block for unattended runs that end a turn on a text report; progress-update levers; snippets for multi-app exploration, time budgets and pasted-content tags; chat "treat answered as done"; frontend named-pattern advice; safeguard notes (`reasoning_extraction`). The launch post's "40% less verbose" / "checks its own work" claims are recorded as vendor claims, **not** as prompt changes — the prompting guide changes no length or verification instruction. Matrix rows A, B, C, D; SKILL.md routing (options, updates, knobs row, gap-analysis row, the off-switch lists).
+- **OpenAI GPT-6 Sol and GPT-6 Luna** (2026-09-22, `gpt-6-sol` / `gpt-6-luna`) — new `models/gpt.md § GPT-6 Sol and GPT-6 Luna`. **New addition, not a repair:** the reconciliation's claim that the atlas says "no `none`" without the Astra qualifier in six files did not hold up — all six places (`models/gpt.md`, `matrix.md`, `SKILL.md`, `agentic-systems/codex.md`, `agentic-systems/gemini-cli.md`, `artifacts.md`) were already narrowed to Astra, so nothing was corrected there. Documented differences from Astra: `none` supported; sampling parameters only at effort `none`; Chat Completions function calling only at `none`. The Astra behavior deltas are deliberately **not** ported: the guide documents them for Astra only. Sampling statements in `_universal.md` (two places), `SKILL.md` Step 4 and `agentic-systems/gemini-cli.md` gained "Sol / Luna: only at effort `none`". Matrix rows A, B, C, D.
+- **DeepSeek V4.1 Flash** (2026-09-10, `deepseek-flash`; missed by the 1.8.0 window) — new `models/deepseek.md § DeepSeek V4.1 Flash`: new architecture, native vision, MIT; the ids `deepseek-v4-flash` / `deepseek-v4-flash-vision-exp` are temporarily routed to it; V4-Pro continues past 2026-09-14. The 08-19 / 08-21 field notes are marked as measured on V4-Flash, not re-run. Matrix rows A, B, D; SKILL.md routing.
+- **Qwen3.8-Omni-Flash** (2026-09-18, `qwen3.8-omni-flash`, API-only) — new short `models/qwen-frontier.md § Qwen3.8-Omni-Flash`; omni input / text output, thinking on by default at `reasoning_effort` `xhigh`, `none` disables. **Secondary source only** (MarkTechPost quoting QwenCloud; the qwen.ai page did not render) — labelled as such in the file, the knobs row and the matrix.
+- **xAI Grok 4.7** (2026-09-21, `grok-4.7`) — new `models/grok.md § Grok 4.7`: recommended model per xAI's models page, 500K, `reasoning_effort` low/medium/high/xhigh (default `high`), encrypted reasoning always returned on the Responses API. No prompting guide exists; no wording delta is invented. Matrix rows A, B (merged into the Grok family row), C.
+
+### Changed
+
+- **Status labels:** Claude Opus 5 → "previous Opus tier"; Grok 4.6 → "previous recommended" (`models/claude.md`, `models/grok.md`, `matrix.md`, SKILL.md options / updates / gap-analysis, README). Behavior statements about Opus 5 (verbosity, scope, subagents, thinking-off artifacts) are unchanged — they describe that model and remain the 5.5 baseline.
+- **Class updates (L-0001):** the "no thinking off-switch" lists now include Grok 4.7 and Claude Opus 5.5 (SKILL.md, `_universal.md`, `antipatterns.md` #38, `matrix.md`); the Grok 500K-window statements cover 4.7; the "universal-Claude" row list in the matrix names Opus 5.5.
+- README coverage lines and the `models/` tree.
+
+### Decision recorded — DeepSeek `reasoning_effort`
+
+The V4.1 Flash model card (Hugging Face) describes an integer 1–100 effort scale; DeepSeek's API thinking-mode guide documents strings only (`low` / `high` / `max`, plus `none` on the Anthropic surface, with a mapping of `minimal` / `medium` / `xhigh`). **The atlas rule stays** (`models/deepseek.md` rule #5); the integer is recorded as a property of the open weights, and whether the hosted API also accepts it is undocumented (`?`) — a prompt that sets an integer against the hosted API is a finding, not advice.
+
+### Not verified / deliberately left out
+
+- **Xiaomi MiMo-V2.6 (Pro / Flash / Distill-Qwen-9B)** — **not added.** A new vendor family needs an explicit owner decision (the atlas has no Xiaomi file); it is put to the owner as a proposal in `FINDINGS.md`. Facts read on 2026-09-24: release 2026-09-22, ids `mimo-v2.6-pro` / `-flash` / `-pro-ultraspeed`, 1M context; the release page did not state parameter counts, license or reasoning controls (the nightly report's 1.02T/42B, 309B/15B and MIT figures come from a secondary source and were not confirmed).
+- **Sonnet 5.5 / Haiku 5.5 have not been released** as of 2026-09-24 (announced "in the coming weeks"); nothing was written for them.
+- **openai.com launch post for Sol / Luna still returns 403**; coverage rests on the developer guide (read twice, consistent). The claim "Sol has half the errors of 5.6 Sol" from the press report was not carried in.
+- **Grok 4.7:** the release post states neither the window nor the effort levels — those come from the models and reasoning docs pages.
+- **Qwen3.8-Omni-Flash, DeepSeek V4.1 Flash image rules:** see above (`?`).
+- **Not done:** matrix Table E rows for the new models (no documented persistent-context behavior); the open owner forks (Class 2 boundary, reconciliation rhythm, Glimmer placement, prices in sample sections) are untouched.
+
 ## [1.8.0] — 2026-09-13
 
 Coverage for the four models found by the September 7, 2026 nightly reconciliation (BRIEFING.md «Что дальше» items 1–4), applied on the owner's approval of 13.09. Wording deltas are taken from the vendors' own documents, read on 2026-09-13; where a named page was unreachable, the substitute is another first-party document from the same vendor (see "Not verified").

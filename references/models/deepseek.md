@@ -1,6 +1,6 @@
 # Model-specific wording differences — DeepSeek family
 
-What changes about how you should PHRASE prompts for DeepSeek V4-Pro / V4-Flash / V4-Flash-Vision-Exp, V3.2 / V3.2-Speciale, and the R1 lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`.
+What changes about how you should PHRASE prompts for DeepSeek V4-Pro / V4.1 Flash (`deepseek-flash`) / V4-Flash / V4-Flash-Vision-Exp, V3.2 / V3.2-Speciale, and the R1 lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`.
 
 DeepSeek is the most opinionated of the current frontier vendors in **where to put instructions** — and its opinion is opposite to most other vendors. This file leads with that rule because the cost of getting it wrong is high.
 
@@ -133,6 +133,8 @@ Since the **V4-Pro GA update (2026-08-13)** DeepSeek exposes reasoning depth as 
 | Anthropic | `reasoning.effort` (`none`/`low`/`high`/`max` — `none` disables thinking) | same field |
 | Responses API | — | `output_config.effort` (`low`/`high`/`max`) |
 
+> **Decision (2026-09-24) — the rule stands; the model card's integer is not an API surface.** The Hugging Face card of DeepSeek-V4.1-Flash says the model *"supports a continuously controllable reasoning effort setting (integer 1–100)"* and its eval tables use `reasoning_effort=100`. DeepSeek's API thinking-mode guide, re-read the same day, documents **strings only** — `"low"` / `"high"` / `"max"` (OpenAI format) and `none/low/high/max` (Anthropic format), with the mapping below — and its code example uses `model="deepseek-flash"`, `reasoning_effort="high"`. So for a prompt that calls the hosted API, `low`/`high`/`max` is right and an integer is a review finding; the 1–100 scale is a property of the open weights (self-hosted / research harness). Whether the hosted API also accepts an integer is undocumented — `?`, don't advise it.
+
 **Thinking is enabled by default, default effort `high`.** Actual mapped effort: requested `low` → `low`; `medium` → `high`; `high` → `high`; `xhigh` → `high`; `max` → `max` (identical for V4-Pro and V4-Flash).
 
 Wording-side: same rule as other vendors — don't write "think step by step" in the body, and don't ask the model to *lower* its own reasoning via prose. Set the parameter. A "don't think / answer immediately" line is now a **reduced-reasoning** request (set effort `low`), not an off-switch equivalent — and on the Anthropic surface `none` is the only true disable.
@@ -214,7 +216,24 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 
 ---
 
-## DeepSeek V4-Flash (April 24, 2026 — official release 2026-07-31)
+## DeepSeek V4.1 Flash (September 10, 2026 — current Flash; `deepseek-flash`)
+
+Released 2026-09-10 (official changelog, read 2026-09-24; it postdates the 09-07 reconciliation window and was missed by v1.8.0). It is accessed as **`deepseek-flash`**; the older ids `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` are *"temporarily routed to V4.1 Flash"* — so a prompt or harness pinning either old id is now running V4.1 Flash, and the two sections below describe a model that is no longer what those ids serve. V4-Pro continues after 2026-09-14 with unchanged billing (the earlier retirement plan was reversed); V4.1 Pro is confirmed but undated — do not write about it.
+
+### Headline facts
+
+- **Architecture (model card):** 552B backbone, ~8B activated per token on prefill and 16B on decode; 1M context; **native multimodal** (a vision encoder plus MLP projector) — the experimental Vision-Exp sibling is folded into the main Flash id; MIT license, open weights
+- **Effort:** API strings `low` / `high` / `max`, thinking on by default at `high` — rule #5 applies as written; the card's integer 1–100 is not an API parameter (decision note under rule #5). In thinking mode `temperature`, `presence_penalty` and `frequency_penalty` are not supported and `top_p` below 0.95 is treated as 0.95
+- Image-input rules from § V4-Flash-Vision-Exp (user messages only, per-image token cap, `detail` lever) were documented for the `-vision-exp` id; whether they are unchanged on `deepseek-flash` was not re-verified — `?`
+
+### Wording behaviors
+
+- Family rules #1–#10 carry over; the new architecture is a different model from V4-Flash, so **the field notes above (2026-08-19, 2026-08-21: "measure first" on system-prompt porting) were measured on `deepseek-v4-flash:0731` and were not re-run on V4.1 Flash**. Keep "measure first"; don't carry the measured non-reproduction over as a V4.1 result.
+- No first-party prompting guide; no documented wording delta versus V4-Flash. Don't invent one.
+
+---
+
+## DeepSeek V4-Flash (April 24, 2026 — official release 2026-07-31; id now routed to V4.1 Flash)
 
 ### Headline facts
 
@@ -237,7 +256,7 @@ V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific
 
 ---
 
-## DeepSeek V4-Flash-Vision-Exp (August 21, 2026 — experimental vision sibling)
+## DeepSeek V4-Flash-Vision-Exp (August 21, 2026 — experimental vision sibling; id now routed to V4.1 Flash)
 
 The family's first multimodal model — the answer to "V4 is text-only". Released 2026-08-21 per the official changelog; accessed with `model='deepseek-v4-flash-vision-exp'`. It is the V4-Flash text model with image / screenshot understanding added; **on pure-text benchmarks it is on par with V4-Flash, and on agent benchmarks requiring visual understanding it lands close to Claude Opus 4.8** (official claim; third-party coverage: beats Opus 4.8 on 3 of 11 agent benchmarks).
 
@@ -359,6 +378,7 @@ If the artifact is `AGENTS.md`, ship an `AGENTS.deepseek.md` override that repla
 
 DeepSeek V4 documentation and practitioner guides are still maturing. The behaviors documented here come from:
 
+- DeepSeek's API changelog re-read 2026-09-24 ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/)) — the 2026-09-10 V4.1 Flash entry (`deepseek-flash`, old ids routed, V4-Pro continues); the thinking-mode guide re-read the same day (string effort values, `deepseek-flash` example) and the [V4.1 Flash model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash) (552B / 8B–16B active, multimodal, MIT, integer 1–100 effort). Pages were read through WebFetch (a small model's summary), quotes checked against two pages that agree
 - DeepSeek's official API changelog ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/), read 2026-08-29) — the 2026-08-13 V4-Pro GA entry (effort levels `low`/`high`/`max`, Responses API + Codex adaptation, peak/off-peak pricing from 16.08), the 2026-07-31 V4-Flash official release, and the **2026-08-21 V4-Flash-Vision-Exp entry** (benchmark table under DeepSeek Harness minimal mode; "multimodal agent capabilities close to Opus-4.8")
 - DeepSeek's official vision guide ([api-docs.deepseek.com/guides/vision](https://api-docs.deepseek.com/guides/vision), read 2026-08-29) — image input methods (base64 / URL / Files API), `detail` levels, token billing (≤384 tokens/image), limits (600 images/request, 48 MiB body, 32/64 MiB per image), and the user-message-only restriction (400 on system/assistant)
 - DeepSeek's official thinking-mode guide ([api-docs.deepseek.com/guides/thinking_mode](https://api-docs.deepseek.com/guides/thinking_mode)) — the OpenAI / Anthropic / Responses API parameter formats and the effort mapping table; **"thinking mode is enabled by default, with the default effort being `high`"**
