@@ -249,6 +249,8 @@ If you want action, use action verbs. If you want options, use suggestion verbs.
 
 ---
 
+**Field note — reference lines in an agent's output format** (measured 2026-09-28). When a report mixes orders with reference lines (a ready command "in case you need it"), an imperative label files the reference among the orders, and a literal consumer runs it at once. Put the condition into the label: `IF YOU NEED THE FULL LESSON: …`, not `FETCH: …`. A/B on the consumer: Opus 5.5 with an imperative label fetched all four lessons up front in 3/3 runs, with the conditional label in 0/3; Sonnet 5 fetched in 0/3 under both. Template placeholders reuse the template's own names (`<id>`, not `<number>` — both models read "number" as a numeral).
+
 ## 10. Emphasis (caps, IMPORTANT:, YOU MUST)
 
 **Rule**: use sparingly. Emphasis that's everywhere is emphasis nowhere.
