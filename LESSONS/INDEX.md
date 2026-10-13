@@ -7,12 +7,11 @@
 | id | адресат | триггеры | мишень (кратко) |
 |----|---------|----------|------------------|
 | [L-0001-rename-residual-token](L-0001-rename-residual-token.md) | executor | rename, model-version, new-model, cross-vendor-claim, residual-token, stale-claim, sampling, grep, follow-up, every-other-current, first-documented, only-model, quantifier-claim | утверждение о множестве моделей (ставшее ложным или своё «first/only/every») не сверено grep-ом с репо |
+| [L-0002-status-claim-wider-than-done](L-0002-status-claim-wider-than-done.md) | executor | changelog, briefing, findings, status-doc, verified-claim, second-source, done-claim, nothing-new, negative-claim, source-tag, first-source | статус-утверждение (в т.ч. «нового нет», тег [1ст]) общей фразой шире сделанного |
 
 ## candidate
 
-| id | адресат | триггеры | мишень (кратко) |
-|----|---------|----------|------------------|
-| [L-0002-status-claim-wider-than-done](L-0002-status-claim-wider-than-done.md) | executor | changelog, briefing, status-doc, verified-claim, cross-checked, second-source, pushed, done-claim | статус-док пишет сделанное/проверенное общей фразой шире, чем сделано |
+(нет)
 
 ---
 
