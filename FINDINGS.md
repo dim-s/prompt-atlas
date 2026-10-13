@@ -814,3 +814,176 @@ gap-строка), CHANGELOG.
 1. Внести П1 + П2 одним заходом (v1.10.0), с grep-ом по классу утверждений до коммита (L-0001); числа перечитать со страниц вендоров глазами.
 2. П3 — одной строкой; П4 — после решения по Class 2.
 3. Первоисточник Gemini 4 Argon перепроверить на следующей сверке.
+
+## Заход 2026-10-14 — ночная сверка по мандату «новые модели» (окно 05.10 → 14.10)
+
+Разведка по интернету; скилл и справочники **не менялись**, пуша не было. Статусы как в прошлом заходе: **[1ст]** — страница
+вендора прочитана (WebFetch, пересказ малой моделью: ids и числа перед внесением перечитать глазами), **[2ст]** — только
+пресса/агрегаторы, **[сниппет]** — только выдача поиска. Нумерация продолжает заход 05.10 (там П1–П4).
+
+**Состояние до захода:** П1 (Sonnet 5.5) и П2 (GPT-6.1 Sol) с 05.10 **не внесены** (git: после `7bee9c0` коммитов нет).
+За окно отставание по фронтиру выросло: к двум невнесённым моделям прибавились Haiku 5.5, Gemini 4 Argon (GA) и
+Mistral Large 4. Рекомендация — один заход v1.10.0 на П1+П2+П5+П6 (весь Claude 5.5-слой и GPT-6.1 Sol), второй — П7+П8.
+
+### 🔴 П5 — Claude Haiku 5.5 (07.10, `claude-haiku-5-5`) — ВЫШЕЛ; атлас числит «announced, not released»
+
+- **Источники [1ст]:** platform.claude.com — `/docs/en/models/haiku-5-5/overview` («Released October 7, 2026»), release notes
+  07.10, `/build-with-claude/effort`, `/thinking`, migration guide, **«Prompting Claude Haiku 5.5»**
+  (`/build-with-claude/prompt-engineering/prompting-claude-haiku-5-5`). Анонс anthropic.com/news/claude-haiku-5-5 — 404, не читан.
+  Бедрок-id `anthropic.claude-haiku-5-5`.
+- **Факты:** 1M контекст, 128K вывод; $0.10/$0.50 (до 100K промпта), $0.50/$2.50 свыше; **новый токенизатор** («~30% more
+  tokens than on Claude Haiku 4.5»). Вендор: «Existing Claude Haiku 4.5 prompts should perform well without changes».
+- **Что вписать (глава `models/claude.md § Claude Haiku 5.5`, дельтой к Haiku 4.5; строки matrix A–E; SKILL.md опции/Recent/строка Step 4):**
+  1. **Первый Haiku с effort:** `low/medium/high/xhigh/max`, **дефолт `medium`** (у Sonnet 5.5 — `high`). «telling the model
+     in the prompt to answer directly didn't stop it from thinking» — глубина только уровнем.
+  2. **Thinking — другая матрица, чем у Opus/Sonnet 5.5:** по умолчанию adaptive; `enabled`+`budget_tokens` → 400;
+     `between_tools` → 400 (это только Sonnet 5.5); **`disabled` разрешён при effort ≤ `high`** (при `xhigh`/`max` → 400).
+     То есть Haiku 5.5 — единственный в слое 5.5 с выключателем thinking. Не обобщать «5.5 нельзя выключить thinking».
+  3. **Принудительный `tool_choice` разрешён** (ответ начинается с вызова, без thinking-блока) — в отличие от Opus 5.5 /
+     Sonnet 5.5. Для «подумай перед вызовом» — `auto` + сказать в промпте, когда звать инструмент.
+  4. **Сэмплинг:** `temperature` только `1`, `top_p` только `0.99`, любой `top_k` → 400 — не передавать.
+  5. **Ломающее для харнессов:** prefill последнего assistant-сообщения → 400 (даже с выключенным thinking);
+     append-only история (правка `system`/`tools`/прошлых сообщений ломает возврат thinking-блоков → правки системного
+     промпта только в новые диалоги); `stop_reason: "refusal"` с категориями.
+  6. **Готовые вендорные сниппеты:** «keep working until everything the user asked for is done…» (ранние остановки
+     на длинных агентных промптах); абзац обязательной проверки кода на `low`/`medium` («run a real check that exercises
+     the change before reporting it done…»); search-добавка про устаревшие знания для `low` (и предостережение вендора
+     против общей «search for any present-day factual question» — переищет); строка для JSON-формата при thinking off
+     («The JSON output format applies to your final answer only. When you need a tool, call it first…»); правило
+     чат-бота «The rules in this system prompt hold for the whole conversation…»; сообщения пользователя посреди хода —
+     не внутрь `tool_result` (читается как инъекция).
+  7. **Ловушка `xhigh` в мульти-ходовом чате:** весь ответ уходит в thinking, видимого текста нет — харнессу нужна
+     проверка на пустой ответ (поправка к утверждениям о выводе, не формулировка).
+- **Что в атласе стало ложным (класс L-0001; grep-ы `Haiku`, кванторы `only|still|older|every other` рядом с Claude/Haiku):**
+  - «Sonnet 5.5 / Haiku 5.5 announced, not released»: `README.md:15`, `SKILL.md:237, 260, 523`, `references/matrix.md:235`,
+    `references/models/claude.md:211`.
+  - **Неквалифицированное «Haiku» в утверждениях про сэмплинг** («only Sonnet 4.6 / Haiku still accept it»):
+    `references/models/_universal.md:48, 343, 410` — для Haiku 5.5 ложно (только `temperature=1`/`top_p=0.99`). Править на «Haiku 4.5».
+  - **Неполный перечень «кто отвергает сэмплинг»** (Haiku там уже «4.5», но список отвергающих без Haiku 5.5 / Sonnet 5.5 / Opus 5.5):
+    `SKILL.md:377`, `references/matrix.md:166`, `references/models/claude.md:493, 713` — дописать.
+  - «Haiku handles vague prompts worse / write for the weakest model (usually Haiku)» — измерено на 4.5, вендор про 5.5 этого
+    не пишет. Большинство мест уже квалифицировано «Haiku 4.5» (`_universal.md:41, 98`, `SKILL.md:616`, `techniques.md:704`);
+    без версии — `_universal.md:45` («Don't assume Haiku will do deep multi-step reasoning») и `claude.md:676` («usually Haiku»):
+    квалифицировать, для 5.5 — `?` до замера.
+  - Перечни «все текущие Claude» без Haiku 5.5: `matrix.md:310`, `_universal.md:13, 33`, `SKILL.md:301`,
+    `antipatterns.md:465`, `techniques.md:418, 485`, `README.md:162`.
+- **Рядом [1ст]:** `claude-haiku-4-5-20251001` — retirement «not sooner than October 15, 2026» (завтра). Объявления об
+  отключении нет; в атласе Haiku 4.5 оставить, перепроверить при внесении.
+
+### 🔴 П6 — Gemini 4 Argon — **GA 13.10** (`gemini-4-argon`); атлас и П3 захода 05.10 устарели
+
+- **Источники [1ст]:** blog.google «Introducing Gemini 4 Argon» (Oct 13, 2026: «now globally available today for developers
+  and enterprises via the API in AI Studio»); ai.google.dev `/gemini-api/docs/models/gemini-4-argon` (Stable, updated
+  13.10); changelog 13.10 «Gemini 4 Argon (`gemini-4-argon`) GA»; `/gemini-api/docs/thinking`. Анонс 30.09 (Fairwind) — тоже [1ст].
+- **Факты:** 1,048,576 токенов единым лимитом вход+выход, вывод по умолчанию 65,536 (long decode до 1M);
+  **`thinking_level` low/medium/high, дефолт `medium`**, `minimal` не заявлен, `thinking_budget` не упомянут; computer use —
+  preview; Live API — нет; цена $2/$10 до 30.11, затем $4/$20. Отдельной рекомендации по температуре нет (сэмплинг у
+  Gemini и так deprecated API-wide с 21.07). «What's new / migration» страницы не найдено.
+  `gemini-4-argon-cyber-permissive` (allowlist) — [сниппет], страница 404.
+- **Что вписать:** новая глава `models/gemini.md § Gemini 4 Argon` — **первая модель вне 3.x**, поэтому сначала решить
+  рамку: раздел «Family-wide rules (apply to all Gemini 3.x versions)» (`gemini.md:9`) и семейство «Google Gemini 3.x» в
+  `README.md:17` / SKILL.md signals и Step 1 (`SKILL.md:241, 301`) — распространяются ли на Argon. Вендорного гайда по промптам нет →
+  оси матрицы `?` кроме thinking-ступеней (как делали для Muse Spark).
+- **Что стало ложным:** «Gemini 3.1 Pro (Pro-tier frontier)» — `SKILL.md:241`; П3 захода 05.10 («не вызываемый, одной
+  строкой») — заменяется этим П6.
+- **Попутно [1ст]: 08.10 Gemini 3.7 Flash и 3.5 Flash объявлены deprecated**, запросы автоматически уходят на
+  `gemini-3.8-flash` / `gemini-3.6-flash`. В атласе 3.7 Flash — «previous Flash» без пометки: `SKILL.md:278, 532`,
+  `references/matrix.md:66, 75, 141, 151, 208, 260`, `gemini.md:207, 269`. Добавить «deprecated 2026-10-08, auto-routed to 3.8 / 3.6 Flash» —
+  промпт под 3.7 Flash фактически исполняется на 3.8 Flash (который «works harder» — правило `SKILL.md:531` становится
+  обязательным, а не опциональным). [2ст]: Gemini 3.5 Pro выпускать не планируют.
+
+### 🟡 П7 — Mistral Large 4 (06.10, public preview, `mistral-large-4` / `mistral-large-4-0`)
+
+- **Источники [1ст]:** mistral.ai/news/mistral-large-4, docs.mistral.ai changelog и `/models/mistral-large-4-0`,
+  `/capabilities/reasoning`.
+- **Факты:** «Open-weight hybrid instruct-and-reasoning MoE with multimodal input»; 1.05T всего / **52B активных** (49B из
+  прессы вендором не подтверждено), 1.6B vision-энкодер, 1M контекст, 160+ языков; **`reasoning_effort`: показаны `"high"`
+  и `"none"`** (при `none` thinking-блок опущен; при `high` `message.content` — список чанков, не строка); веса «by the end
+  of the month», лицензия не названа; $0.68/$2.09 (скидка 50% на две недели, полная $1.36/$4.18). Рекомендаций по
+  температуре и системному промпту нет [1ст — проверено отсутствие]; для Medium 3.5 карточка даёт 0.7 при `high` —
+  переносить только как аналогию [сниппет].
+- **Что вписать:** `mistral-frontier.md § Mistral Large 4 (preview)`; Large 3 становится «previous». Главная
+  формулировочная дельта — **reasoning теперь ручка одной модели**, а не выбор отдельного reasoning-варианта
+  (`matrix.md:68, 144, 262` пишут «reasoning variants split out»).
+- **Что стало ложным:** «Large 3 — current frontier / flagship»: `mistral-frontier.md:3, 54`, `SKILL.md:227, 253, 336`,
+  `README.md:23, 170`, строки Large 3 в `matrix.md`. Квантор «If a prompt works on Claude + Kimi, it runs on Large 3»
+  (`mistral-frontier.md:122`) — для Large 4 не проверено.
+- **Статус preview** — вносить с пометкой «preview», как GLM/Tencent preview-главы.
+
+### 🟡 П8 — Meta Muse Wonder 1.0 (12.10, `muse-wonder-1.0`, preview)
+
+- **Источники [1ст]:** about.fb.com/news/2026/10/introducing-muse-wonder-models/, research.meta.ai blog + model card
+  («Date of Release October 12, 2026»), dev.meta.ai.
+- **Факты:** две модели — **Muse Wonder** (Meta Model API + Muse Code) и **Muse Wonder Full** (только подписчики Muse Code,
+  API-id не найден); на базах «larger, stronger … than Muse Spark 1.3», агентный фокус («Active Memory», «Active Focus»);
+  вход текст/изображение/видео/аудио, выход текст, 1M контекст; **`reasoning: {effort: …}`** — в примере `high`,
+  ступени не перечислены (бенчмарки сняты на `max`, Wonder Full — на `xhigh`); **те же запросы, что у Spark — смена id**;
+  веса закрытые; цена $4/$20 — [2ст]. Гайда по промптам нет.
+- **Что вписать:** `meta.md § Muse Wonder 1.0` (оси `?` by design, как у Spark); `SKILL.md:82` — у Muse теперь известно
+  **имя** параметра (`reasoning.effort`), ступени `?` — это закрывает часть прежнего `?` в строке Muse Spark 1.3
+  (проверить, тот же ли параметр у Spark: dev.meta.ai говорит «одинаковые запросы»).
+- **Что стало ложным:** «Muse Spark 1.3 — current API flagship»: `meta.md:45`, `matrix.md:83`, `README.md:24, 171`; «parameter
+  name undocumented» — `matrix.md:156`, `SKILL.md:82`.
+
+### 🟡 П9 — вышедшие ДО окна и не внесённые (подтверждены [1ст] только сейчас)
+
+| Модель | Дата | Факты для промпт-атласа | Куда / развилка |
+|---|---|---|---|
+| **GLM-5.3-FlashX** (`glm-5.3-flashx`, docs.z.ai) | 21.09 | 1M / 128K; вход видео/изобр./текст/файл; thinking только `enabled`, `clear_thinking: false` рекомендован; `reasoning_effort: max` рекомендован; temperature 1 / top_p 0.95 | `glm.md` строкой-сиблингом к 5.3-Flash; в атласе FlashX нет вовсе |
+| **GLM-5.3 — формулировка миграции** [1ст] | — | «disabled no longer supported»: миграция = `enabled` + `reasoning_effort: low`, иначе запрос падает | сверить с `glm.md` (атлас уже пишет «no off-switch») — добавить рецепт миграции |
+| **MiniMax M3.1-Flash-Preview** (platform.minimax.io) | 27.09 | только M Plan / MiniMax Code; 1M; **thinking нельзя выключить** (`disabled`/`effort: none` → 400); effort `low…max`, **дефолт `max`**; имя поля зависит от протокола (`output_config.effort` / `reasoning_effort` / `reasoning.effort`) | 12-е семейство — развилка владельцу (в атласе MiniMax нет) |
+| **Xiaomi MiMo-V2.6 Pro / Flash (RL, MOPD)** (HF-карточки) | 21–27.09 | Pro 1.02T-A42B, Flash ~309B-A15B, 1M, MIT, омни-вход; temperature 1.0 / top_p 0.95; тумблера thinking нет | висит с 24.09 (П6 того захода) |
+| **StepFun Step 5 Preview** (`step-5-preview`) | ~20.09 (даты агрегаторов расходятся) | 1M, агентный флагман [1ст]; 600B-A27B, веса «к 15.10» [2ст]; ручек reasoning не нашли | только строкой «замечено», до весов/доки |
+| **Qwen3.8-Flash-Next** — уточнение [1ст] | 24.08 | карточка даёт ручки, которых атлас не знает: `enable_thinking` (вкл. по умолчанию), `preserve_thinking`, `reasoning_effort` xhigh/medium/low; сэмплинг thinking 1.0/0.95/top_k 20, non-thinking 0.7/0.8/presence 1.5 | закрывает `?` в `SKILL.md:247` («thinking knobs unpublished») для открытых весов; hosted `qwen3.8-flash` — сверить отдельно |
+
+### 🟡 П10 — малые / открытые (Class 2): кандидаты и decision-модели
+
+| Модель | Дата | Факты (prompt-relevant) | Статус / предложение |
+|---|---|---|---|
+| **MiniCPM5-2B** (`openbmb/MiniCPM5-2B`) — перепроверка П4 | HF 06.09 | **[1ст] карточка + `chat_template.jinja`:** 2.52B, Apache-2.0, 131K, ChatML; system поддержан (tools дописываются к system; маркер `<tool_def_sep>`); тумблер **`enable_thinking`** в `apply_chat_template` (True → `<think>\n`, False → пустой think-блок, без kwarg — модель решает сама); сэмплинг 1.0 / 0.95 / **`min_p=0`** (дефолтный `min_p=0.05` в llama.cpp → зацикливание), `repetition_penalty 1.05` при повторах; tool-calls в **XML**, не JSON; нужен `--jinja` | **Прямой Class 2-кандидат, первоисточник прочитан** → `small-local.md` + `matrix-small.md` (строки «как другие 2B», оси поведения — `?` до замера). Ловушка `min_p` и XML-tool-calls — формулировочные, вносить сразу |
+| **LiquidAI LFM2.5-24B-A2B** | 09–12.10 | [1ст] 24B / **2.45B активных**, LFM1.0, 131K, 16 языков вкл. ru; **thinking-only** (шаблон всегда открывает `<think>`); temperature 0.1 / top_k 50 / rep 1.05; tool-calls питоновские, JSON — только если попросить в system; карточка не советует для задач на знания без RAG | Упирается в развилку границы Class 2 (MoE: «≤~9B активных»). Если граница по активным — кандидат, и первый Liquid в атласе |
+| **JetBrains Mellum2.1-12B-A2.5B-Thinking** | 07.10 | [1ст] 12B / 2.5B активных, Apache-2.0, 131K, только en; thinking-only (`--reasoning-parser qwen3`), 0.6 / 0.95 / top_k 20; код, репозитории, tool use (`hermes`) | Та же MoE-развилка; узкий (код, en) — скорее строкой «замечено» |
+| **MiniCPM-V-4.7-1B** (+35B-A3B) | 06–07.10 | [1ст по сниппету карточки] мультимодальная, `enable_thinking` True/False | Ниже 2B и VLM — строкой «замечено» |
+| **Index-Translate 2B / 9B / 35B-A3B-preview** (Bilibili) | 28.09–02.10 | [1ст карточка 9B] переводная, Apache-2.0, 150 языков; **китайский промпт-шаблон** (`【源文】`, `【约束要求】` с `【硬性要求】`/`【注意】`, «只输出译文…»); greedy `temperature=0`; thinking выключен `enable_thinking: False` | Узкоспециальная; ценна как образец вендорского шаблона «жёсткие vs мягкие ограничения» для `multilingual.md`, но не как Class 2-модель общего назначения |
+| **Decision-модели:** Cloudflare Clef / Clef-flash 9B / clef-omni, Amazon Strands Decider 2B (+E4B/12B/26B-A4B), LiquidAI d1-3B, inclusionAI LemonDecider ~4B, Perplexity pplx-decider-v1.1-27B | 01–09.10 | [1ст карточки] **не чат и не генерация**: вход `state` + типизированные вопросы (`choice` / `noul` / `score`), выход — калиброванные вероятности за один проход; системного промпта и сэмплинга нет; формулировать можно только `instructions` и текст `criteria`; LemonDecider: отход от встроенного `decision_messages()` ухудшает качество; общий API `POST /v1/systemone` | **Новый класс** — за неделю пять вендоров. Развилка 2 захода 05.10 стала острее. Если покрывать — отдельная короткая глава («как писать `instructions` и `criteria`»), а не строки в Class 2 |
+| Reflection AI **Beam** | 05.10 | [1ст] 501B-A23B, Apache 2.0 «later in October», waitlist; reasoning effort есть | Вне диапазона и не вызываем — строкой «замечено» |
+| Aleph Alpha Kolibri-1 | 02–03.10 | [1ст, начало карточки] 78B-A3.5B, 1M, de/en | Не «малая» по памяти (~156 GB) — вне Class 2 |
+
+### Проверено — нового нет / не вышло (14.10)
+
+- **Anthropic:** кроме Haiku 5.5 новых моделей нет (release notes [1ст]: 07.10 удешевление cache read у Sonnet 5.5, 05–06.10 поля Models API, 09.10 Managed Agents dynamic workflows — не промпт-уровень). Хвост release notes (после ~100K символов) не дочитан.
+- **OpenAI [1ст — developers.openai.com/api/docs/changelog, прочитан целиком в HTML; + /api/docs/deprecations.md, /api/docs/models/gpt-6-sol, /guides/latest-model.md]:** новых моделей нет. 08.10 — **Ultrafast** для `gpt-6.1-sol` (`service_tier: "ultrafast"`, 6× цена) — режим, не модель; 06.10 Decisions API (бета) на `gpt-6-luna`; 07.10 обновлён `chat-latest`; 14.10 deprecation GPT-4o / 4.1 (отключение 14.01.2027). `gpt-6-sol` в API **жив** (страница: «See GPT-6.1 Sol for the newer Sol model»), `none` поддерживает — это закрывает вопрос П2 о статусе старого Sol. «GPT-6 по умолчанию в ChatGPT 07.10» — [2ст], openai.com и help.openai.com блокируют и headless Chrome. GPT-6.1 Luna / mini — не существуют в доках.
+- **xAI [1ст docs.x.ai]:** после Grok 4.7 ничего; Grok 5 не вышел.
+- **DeepSeek [1ст]:** последняя запись — V4.1 Flash (10.09). V4.1 Pro нет. Старые id `deepseek-v4-flash*` обслуживаются V4.1 Flash.
+- **Qwen [1ст Model Studio]:** в окне только `qwen-image-2.1-turbo` (изображения). Qwen4 не вышел.
+- **Z.ai [1ст]:** release notes — последняя запись 26.08; GLM-5.5 нет. `glm-5.3-fast` (07.10) — сторонний хостинг SCX.ai, не релиз Z.ai.
+- **Moonshot:** нового нет — [1ст] platform.kimi.ai/docs/updates (`kimi-k3` / `k2.7-code` / `k2.6`, без дат) + HF `moonshotai/Kimi-K3` (последняя правка 02.09).
+- **Tencent (LLM):** нового нет — [1ст] HF org `tencent` (в окне только Youtu-Parsing-Omni и EVIE-4.5B/8B — не Hy); Hy Image 3.5 — [2ст].
+- **MiniMax:** в окне нового нет — [1ст] HF `MiniMaxAI` (M3 — 23.07, H3 — 13.08) и platform.minimax.io release notes (последняя запись 31.07, M3.1-Flash-Preview там не значится — страница отстаёт или неполна).
+- **ByteDance Seed, Baidu ERNIE:** нового нет — HF-орги без новых LLM [1ст по метаданным HF]; «последний флагман» (Doubao-Seed-2.1, ERNIE 5.0) — [2ст], вендорские сайты не открывались.
+- **Малые:** Gemma, small Qwen, Phi, Llama, Ministral, Granite, SmolLM, NVIDIA, русские тюны (T-Bank, Sber, Yandex, Vikhr) — в окне нового нет (по метаданным HF + поиску; HF-выборка по `createdAt` дошла только до 04.10 и отфильтрована по лайкам — анонимные мелкие могли не попасть).
+- Вне скоупа: Nano Banana 2.1 (изображения, 06.10), Qwen-Image-2.1-Turbo/Pro, Hy Image 3.5, EmbeddingGemma 2, `grok-voice-transcribe-2.0`, Voxtral-Mini-4B-Realtime-Arabic, LightOnOCR-3.
+
+### Развилки владельцу (не решались)
+
+1. **Объём v1.10.0.** Предлагаю один заход на весь Claude 5.5-слой (П1 Sonnet + П5 Haiku: у них противоположные
+   thinking-матрицы, вписывать их по отдельности — это два прохода grep-ом по одному классу утверждений) + GPT-6.1 Sol (П2) + Gemini 4 Argon (П6).
+   П7–П8 (оба preview) — вторым заходом или туда же.
+2. **Рамка Gemini 4:** остаются ли «Family-wide rules (Gemini 3.x)» правилами семейства, или Argon получает свою
+   рамку до появления гайда по промптам.
+3. **Decision-модели (Clef, Strands Decider, d1, LemonDecider, pplx-decider)** — покрывать ли отдельной главой.
+   За неделю — пять вендоров и общий API; это уже класс, а не курьёз.
+4. **Граница Class 2** (висит с v1.5.0): теперь в неё упираются LFM2.5-24B-A2B, Mellum2.1-12B-A2.5B, Index-Translate 35B-A3B.
+5. **12-е семейство:** MiniMax M3.1-Flash-Preview (факты есть [1ст]), Xiaomi MiMo-V2.6, StepFun Step 5 — заводить ли
+   «прочие китайские фронтиры» одной главой.
+6. (Остаются) ритм сверки; цены в секциях-образцах; место Muse Glimmer.
+
+### Что дальше (для штаба, в порядке веса)
+
+1. Наряд v1.10.0: П1 + П2 + П5 + П6 одним заходом, grep по классу утверждений до коммита (L-0001, списки мест выше —
+   стартовая точка, а не перечень); ids и числа перечитать со страниц вендоров глазами; в CHANGELOG — поштучные
+   указатели на источник (L-0002). Пуш — с явным списком файлов (грабли `git add -A` из BRIEFING).
+2. П7 + П8 + П9 (FlashX, GLM-миграция, Qwen3.8-Flash-Next ручки) — после решения по развилке 1.
+3. П10: MiniCPM5-2B — сразу после подтверждения Class 2; остальное — по развилкам 3–4.
+4. Следующая сверка: DeepSeek V4.1 Pro / Qwen4 / GLM-5.5 (форум прочит конец октября — [сниппет]); веса Mistral Large 4
+   (обещаны к концу октября); веса StepFun Step 5 («к 15.10»); Muse Wonder Full id; гайд Gemini 4 Argon.
