@@ -987,3 +987,115 @@ Mistral Large 4. Рекомендация — один заход v1.10.0 на �
 3. П10: MiniCPM5-2B — сразу после подтверждения Class 2; остальное — по развилкам 3–4.
 4. Следующая сверка: DeepSeek V4.1 Pro / Qwen4 / GLM-5.5 (форум прочит конец октября — [сниппет]); веса Mistral Large 4
    (обещаны к концу октября); веса StepFun Step 5 («к 15.10»); Muse Wonder Full id; гайд Gemini 4 Argon.
+
+## Заход 2026-10-17 — ночная сверка по мандату «новые модели» (окно 14.10 → 17.10)
+
+Разведка по интернету; скилл и справочники **не менялись**, пуша не было. Теги источника как раньше: **[1ст]** — страница
+вендора/карточка прочитана (WebFetch, пересказ малой моделью: ids и числа перед внесением перечитать глазами),
+**[2ст]** — пресса/агрегаторы, **[сниппет]** — только выдача поиска. Нумерация продолжает заход 14.10 (там П5–П10).
+
+**Состояние до захода:** с 14.10 в git коммитов в скилл нет (последние — FINDINGS/LESSONS); П1 (Sonnet 5.5), П2 (GPT-6.1 Sol),
+П5 (Haiku 5.5), П6 (Gemini 4 Argon GA) по-прежнему **не внесены**. Окно короткое (3 дня); новых моделей фронтира у
+Anthropic/OpenAI/Google/xAI/DeepSeek/Mistral/Z.ai/Moonshot в окне нет (см. «Проверено»), но вышел **первый открытый вес Muse Spark**.
+
+### 🔴 П11 — Meta Muse Spark Open (15.10, `meta-models/Muse-Spark-Open-816B-A42B`) — открытые веса флагманской линии
+
+- **Источники:** [1ст] HF-карточка `huggingface.co/meta-models/Muse-Spark-Open-816B-A42B`; [1ст по метаданным HF API]
+  десятки производных (unsloth NVFP4, nvidia `…-DFlash2`, GGUF/MLX/EXL3) с 15–17.10; [2ст] Benzinga 10/2026 («Muse Spark Open», 15.10,
+  7 облаков — страница вернула 403, берём из выдачи поиска). **Анонс Meta (research.meta.ai / about.fb.com) не найден и не читан.**
+- **Факты карточки:** 816B всего / **42B активных** (MoE, 62 слоя, 256 экспертов, 8 на токен); контекст 1M; вход
+  текст/изображение/видео/аудио, выход текст; лицензия **Muse Model License** + Usage Policy (производные обязаны
+  показывать «Built with Muse Spark Open»); релиз 15.10.2026.
+- **Формулировочно важное:** `reasoning_effort` ∈ low/medium/high/**xhigh**, **дефолт `xhigh`**, ставится параметром
+  запроса `reasoning_effort` **или** `chat_template_kwargs={"reasoning_effort": …}`, иное значение — ошибка. Сэмплинг
+  «temperature = 1.0, top_p = 1.0, top_k = disabled». Карточка советует не показывать сырую цепочку рассуждений. Формат
+  tool-calls и содержимое шаблона карточкой не описаны; связь с Spark 1.3 / Wonder не названа.
+- **Чем важно:** (1) первая **открытая** модель линии Spark — раньше открытым был только Glimmer 30B; нужен ответ «чем Open
+  отличается от hosted Spark 1.3» (карточка молчит — оси `?`); (2) закрывает часть `?` по ступеням effort у семейства
+  Muse (в атласе `SKILL.md:82`, `matrix.md:156`: «parameter name undocumented»; у Wonder (П8) имя `reasoning.effort`, здесь
+  `reasoning_effort` — **два разных написания в одном семействе**, не сливать); (3) дефолт `xhigh` — как у Opus-линейки,
+  значит промпт «думай меньше» без смены ступени не сработает (гипотеза по аналогии, **не** из карточки).
+- **Предложение:** `models/meta.md § Muse Spark Open` (оси `?` by design, как у Spark/Glimmer), строка в matrix A–E,
+  `SKILL.md:229, 255` и `README.md:24, 171` — перечни Meta; в заходе v1.10.0 вместе с П8 (Wonder). Развилка: считать ли
+  Open отдельной моделью или вариантом Spark 1.2/1.3 (до ответа вендора — отдельной, с пометкой «связь не названа»).
+  Класс L-0001: grep по «Glimmer — first/only open-weight» и «Meta … closed weights» (`meta.md:7, 101`, `README.md:24`,
+  `SKILL.md:229, 255`) — квантор «closed weights» у Spark 1.2 уже спорен.
+
+### 🟡 П12 — NVIDIA Nemotron-Labs Dory 1.0 4B (16.10, `nvidia/NVIDIA-Nemotron-Labs-Dory1.0-4B-*`) — малая модель, нестандартная архитектура
+
+- **Источник [1ст]:** HF-карточка `…Dory1.0-4B-BF16` (+ BF16/MXFP8/NVFP4/GGUF, созданы 16.10 по метаданным HF API).
+- **Факты:** 4B, looped (рекуррентная по глубине) GPT, 256K, английский, лицензия OpenMDW 1.1, релиз 16.10; пре-тренировка
+  6T токенов + SFT и GRPO-RL; назначение «general-purpose reasoning». **Reasoning всегда включён в vLLM** (в llama.cpp
+  `--reasoning on`); ручка вычисления — `n_recurrent_loops` / `dory.num_loops` 1–4 (карточка: 2 по умолчанию, 4 для
+  агентных задач с упором на точность); сэмплинг temperature 1.0 / top_p 0.95 (llama.cpp: top_k 0, min_p 0, repeat 1);
+  tool-calls парсером `qwen3_coder`, reasoning-парсер `nemotron_v3`; для кодовых агентов
+  `chat_template_kwargs={"force_nonempty_content": true}`. Общих советов по system-промпту карточка не даёт.
+- **Чем важно:** прямой кандидат Class 2 (4B; границу уточнять не надо). Новое для атласа: **глубина = число проходов
+  (`num_loops`), а не токены размышления**; reasoning не выключается — формулировка «ответь сразу» не заменит смену
+  `loops`; `force_nonempty_content` — ловушка пустого `content` у агентов.
+- **Предложение:** `small-local.md` + `matrix-small.md` строкой (оси поведения `?` до замера), ловушки сэмплинга и
+  `force_nonempty_content` — формулировочные, вносить сразу. Рядом: `nvidia/Nemotron-3.5-Rerank-8B` (15.10) — реранкер, вне скоупа.
+
+### 🟡 П13 — OpenAI GPT-Live (`gpt-live-1`) — голосовая full-duplex модель; дата выхода не установлена
+
+- **Источники [1ст]:** developers.openai.com/api/docs/changelog (записи 15.10: native Decisions в GPT-Live; 16.10: prompt-to-voice
+  для всех клиентов, девять новых голосов, `v1/audio/voices`, `v1/live/sessions`) и `/api/docs/models/gpt-live-1`.
+- **Факты:** «full-duplex voice model», слушает и говорит одновременно, рассуждения и инструменты **делегирует
+  бэкенд-агенту** (Decisions / `gpt-6-luna`); вход/выход аудио+текст; только Live endpoint; $0.05/мин сессии + бэкенд
+  отдельно; function calling есть. Страница модели **не называет дату выхода**, контекст, ручки reasoning/сэмплинга и
+  отсылает к отдельному гайду по промптам (**не читан**). Новая ли это модель в окне — не установлено.
+- **Предложение:** в скилл не вносить до чтения гайда по промптам GPT-Live; завести в следующую сверку пунктом
+  «прочитать prompting guide GPT-Live». Если гайд есть — глава про голосовой промпт (темп, перебивание, делегирование) —
+  решение владельца (развилка 1).
+
+### 🟢 П14 — замечено, в скилл не вносить
+
+| Что | Дата | Источник | Почему не вносить |
+|---|---|---|---|
+| Anthropic: Fast mode для **Claude Opus 5.5** вышел из research preview (beta-заголовок `fast-mode-2026-02-01` не нужен; для Opus 5 и Opus 4.8 — по-прежнему preview) | 15.10 | [1ст] platform.claude.com release notes | параметр режима, не промпт-уровень; важно лишь для строки Opus 5.5 в справочнике (режим «fast» без смены модели) |
+| Elorian **Glimpse** — визуальное рассуждение, research preview с API, чат по waitlist | 16.10 | [2ст] kucoin.com flash (id, контекст, ручки не названы) | специализированная визуальная модель, данных для формулировок нет |
+| xAI **Grok Voice 3.0** (`grok-voice-3.0`, speech-to-speech; 2.0 deprecated; `grok-voice-latest` указывает на 3.0) | 10/2026, день не указан | [1ст] docs.x.ai release notes | голос, вне скоупа |
+| Mistral **Timestral** (прогноз временных рядов) | ~14–15.10 | [сниппет] | не языковая модель |
+| BFL FLUX 3 Image Klein (изображения, открытые веса) | 15.10 | [сниппет] | вне скоупа |
+
+### Проверено — нового нет (17.10), со ссылками на прочитанное
+
+Формулировка «нет» относится **только** к перечисленному прочитанному; «нет» по вендору без прочитанного URL ниже не утверждается.
+
+- **Anthropic [1ст platform.claude.com/docs/en/release-notes/overview, прочитан целиком, 15.10 — самая свежая запись]:** новых
+  моделей нет; записи 14–15.10 — OpenTelemetry export (beta), Managed Agents scheduled deployments на AWS, Compliance API,
+  Fast mode Opus 5.5 (П14). Haiku 5.5 (07.10) — по-прежнему П5.
+- **OpenAI [1ст developers.openai.com/api/docs/changelog, записи 14–16.10]:** новых моделей вне GPT-Live нет; GPT-6.1 Sol (П2) не внесён.
+- **Google [1ст ai.google.dev/gemini-api/docs/changelog, самая свежая запись — 13.10]:** после Argon GA (П6) записей нет. Страницу
+  «What's new in Gemini 4 Argon» (API-изменения, миграция) **не открывал** — следующей сверке.
+- **xAI [1ст docs.x.ai/docs/release-notes, помесячно без дней]:** в 10/2026 только голосовые модели; Grok 5 нет.
+- **DeepSeek [1ст api-docs.deepseek.com/updates]:** последняя запись 10.09 (V4.1 Flash); V4.1 Pro нет.
+- **Mistral [1ст docs.mistral.ai/getting-started/changelog]:** последняя запись 06.10 (Large 4 preview), веса «coming soon» —
+  не вышли на момент чтения.
+- **Z.ai [1ст docs.z.ai/release-notes/new-released]:** последняя запись 26.08 (GLM-5.3-Flash); GLM-5.5 нет.
+- **Qwen [1ст HF API `author=Qwen`]:** новейший — `Qwen-Image-2.1-Turbo` (09.10). Страница Model Studio недоступна (404 по
+  угаданному URL) — hosted-релизы Qwen за окно **не проверены** (без `[1ст]`).
+- **Moonshot [1ст HF API `author=moonshotai`]:** новейший — `Kimi-K3` (13.06 по метаданным); платформенные updates
+  не открывались — hosted-релизы не проверены.
+- **Google open (Gemma) [1ст HF API `author=google`]:** новейший — `embeddinggemma-2` (14.09).
+- **Meta [1ст HF API `author=facebook`]:** новейший — `meta-encoder` (30.09); Spark Open лежит в org `meta-models` (П11).
+- **Не проверялось вовсе:** MiniMax, StepFun, Xiaomi, ByteDance Seed, Baidu, Tencent (LLM), Microsoft/IBM/Liquid/Hugging Face org-страницы,
+  русские тюны; HF-выборка по `createdAt` без фильтра по лайкам показала только шум (файнтьюны, квантизации). Эти вендоры
+  последний раз проверены 14.10 — окно 14→17.10 по ним закрыто **не** этим заходом.
+- Поиск общего характера («new AI model release Oct 16 2026», «Qwen/Kimi/GLM/DeepSeek this week») дал [сниппет]-уровень и
+  согласуется с таблицами выше, но не заменяет страниц вендоров.
+
+### Развилки владельцу (не решались; дополняют список захода 14.10)
+
+7. **Muse Spark Open — отдельная модель или вариант Spark** (П11): карточка связь не называет; вносить отдельной главой
+   до уточнения? Рекомендую — отдельной, оси `?`.
+8. **Голосовые модели** (GPT-Live, Grok Voice 3.0): входят ли в скоуп атласа? Сейчас вне; GPT-Live делегирует
+   рассуждения Decisions — граница с агентными промптами размыта.
+9. Остаются развилки 1–6 захода 14.10; п. 1 (объём v1.10.0) подрос: к П1/П2/П5/П6 добавились П11 и П12.
+
+### Что дальше (для штаба, в порядке веса)
+
+1. Наряд v1.10.0 (П1 + П2 + П5 + П6) всё ещё не взят; добавить П8 + П11 одним проходом по `meta.md`.
+2. П12 (Dory) вместе с MiniCPM5-2B (П10 захода 14.10) — один заход по Class 2.
+3. Следующая сверка: анонс Meta по Spark Open и отличие от hosted; prompting guide GPT-Live; «What's new in Gemini 4 Argon»;
+   hosted Qwen/Kimi (Model Studio, platform.kimi.ai) и вендоры из «не проверялось»; веса Mistral Large 4.
