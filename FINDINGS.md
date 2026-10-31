@@ -1099,3 +1099,15 @@ Anthropic/OpenAI/Google/xAI/DeepSeek/Mistral/Z.ai/Moonshot в окне нет (�
 2. П12 (Dory) вместе с MiniCPM5-2B (П10 захода 14.10) — один заход по Class 2.
 3. Следующая сверка: анонс Meta по Spark Open и отличие от hosted; prompting guide GPT-Live; «What's new in Gemini 4 Argon»;
    hosted Qwen/Kimi (Model Studio, platform.kimi.ai) и вендоры из «не проверялось»; веса Mistral Large 4.
+
+## Внесено в v2.0.0 — 31.10, коммит `2d8d960` (полная ревизия по слову владельца 31.10)
+
+Статус пунктов трёх последних заходов. Источники фактов — CHANGELOG.md § [2.0.0] и Source notes файлов моделей (страницы перечитаны сырыми 31.10, не пересказом WebFetch).
+
+**Заход 05.10:** П1 Sonnet 5.5 → `claude.md § Claude Sonnet 5.5` · П2 GPT-6.1 Sol → `gpt.md § GPT-6.1 Sol and GPT-6.1 Terra` · П3 Gemini 4 Argon → закрыт П6 захода 14.10 · П4: MiniCPM5-2B → `small-local.md § OpenBMB MiniCPM5`; Cloudflare Clef, Strands Decider — decision-модели, вне охвата (SKILL.md § Out of scope); Index-Translate-35B-A3B — не вносился.
+
+**Заход 14.10:** П5 Haiku 5.5 → `claude.md § Claude Haiku 5.5` · П6 Gemini 4 Argon → `gemini.md § Gemini 4 Argon` · П7 Mistral Large 4 → `mistral-frontier.md` (веса 29.10) · П8 Muse Wonder 1.0 → `meta.md § Muse Wonder 1.0` · П9: GLM-5.3-FlashX и формулировка миграции → `glm.md`; MiniMax M3.1-Flash, MiMo-V2.6, Step 5 Preview → новый `models/other-frontier.md`; Qwen3.8-Flash-Next ручки → `qwen-frontier.md`. **Две ошибки П9 исправлены по первоисточникам:** у MiMo-V2.6 тумблер thinking есть (`thinking.type` enabled/disabled), у Step 5 ручка есть (`reasoning_effort` low/medium/high) — `other-frontier.md` · П10: LFM2.5-24B-A2B → `small-local.md`; Mellum2.1 — строкой «noted» в `lineup.md`; MiniCPM-V-4.7-1B, Index-Translate, Beam, Kolibri — не вносились; decision-модели — вне охвата.
+
+**Заход 17.10:** П11 Muse Spark Open → `meta.md § Muse Spark Open` · П12 Nemotron-Labs Dory 4B → `small-local.md` · П13 GPT-Live 1 → `gpt.md § GPT-Live 1` (GA 10.09) · П14 — не вносилось, как и предлагалось.
+
+**Развилки, закрытые в этом заходе (решение исполнителя под прямой запрос владельца «новые модели добавить, оптимизировать»):** граница Class 2 = dense 2–9B или MoE ≤ ~9B активных / ≤ ~35B всего (Ministral 3 8B → Class 2); новые семейства без гайдов — одним файлом `other-frontier.md`; Muse Spark Open — отдельная секция; decision-модели и голосовые модели, кроме GPT-Live 1, — вне охвата. Не закрыто: ритм сверки.
