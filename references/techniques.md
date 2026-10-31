@@ -363,13 +363,13 @@ When to spawn subagents (for a main agent):
 Use subagents when tasks can run in parallel, require isolated context, or involve independent workstreams that don't share state. For simple tasks, sequential operations, single-file edits, or tasks needing shared context across steps, work directly rather than delegating.
 ```
 
-When to encourage subagent usage specifically on Opus 4.7 / 4.8 (which spawn fewer by default):
+When to encourage subagent usage on a model that spawns few by default (measured on the archived Opus 4.7 / 4.8; on current Claude delegation runs the other way):
 
 ```
 Do not spawn a subagent for work you can complete directly in a single response (e.g. refactoring a function you can already see). Spawn multiple subagents in the same turn when fanning out across items or reading multiple files.
 ```
 
-When to **damp** subagent usage — Fable 5 and Opus 5 spawn readily, and delegation multiplies cost on small tasks. This is the snippet to reach for when porting a prompt from 4.7/4.8, where the encouragement above was correct:
+When to **damp** subagent usage — the Fable 5 line and the Opus 5 line (incl. Opus 5.5) spawn readily, and delegation multiplies cost on small tasks. This is the snippet to reach for when porting a prompt from 4.7/4.8, where the encouragement above was correct:
 
 ```
 Delegate to a subagent only for large tasks that are genuinely independent and parallelizable, such as a wide multi-file investigation. Do not delegate work you can finish yourself in a handful of tool calls, and do not use subagents to verify or double-check your own work. If one subagent can complete the task, use one rather than several, and keep spawn counts low.
@@ -415,7 +415,7 @@ After completing a task that involves tool use, provide a quick summary of the w
 
 ### Opus 5: verbosity no longer calibrates, and effort is not the lever
 
-Every other current Claude except Opus 5 shortens simple answers and lengthens open-ended ones on its own (Opus 5.5 is Opus 5's baseline here — its length behavior is not re-documented; the vendor's "40% less verbose" is a launch-post claim, so measure), so the snippets above are a fallback. On Opus 5 they're mandatory: default responses run long, and lowering `effort` cuts thinking volume without reliably shortening the visible answer. Prompt for it, and repeat the reminder near the end of a long system prompt:
+Fable 5.x and Sonnet 5 shorten simple answers and lengthen open-ended ones on their own (Sonnet 5.5 / Haiku 5.5: not re-documented; Opus 5.5 is Opus 5's baseline here — the vendor's "40% less verbose" is a launch-post claim, so measure), so the snippets above are a fallback. On Opus 5 they're mandatory: default responses run long, and lowering `effort` cuts thinking volume without reliably shortening the visible answer. Prompt for it, and repeat the reminder near the end of a long system prompt:
 
 ```
 Keep responses focused, brief, and concise. Keep disclaimers and caveats short, and spend most of the response on the main answer. When asked to explain something, give a high-level summary unless an in-depth explanation is specifically requested.
@@ -482,7 +482,7 @@ Reliably catches errors especially in coding and math work. More effective than 
 
 The distinction that matters: strip instructions telling the model to **re-check itself** ("double-check your answer", "include a final verification step", "re-verify before responding"). Keep verification that belongs to the **task** — running the test suite, checking a claim against a tool result, validating output against a schema. Those are work, not ritual.
 
-For everything else in the family — Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, Haiku 4.5 — the snippet above stands.
+Opus 5.5 keeps the Opus 5 baseline — strip there too. **Sonnet 5.5 and Haiku 5.5 point the other way at low effort:** both guides ship an official paragraph that makes the model run a real check of a code change before reporting it done (`models/claude.md § Claude Sonnet 5.5`) — that is a *task* check, use it in place of the generic self-review snippet above. Fable 5.x: the snippet is neutral. Legacy Claude (archive): the snippet stands.
 
 ### Opus 5: scope boundary instead
 
@@ -815,9 +815,9 @@ Five "demonstration" examples consume both attention and tokens, and on GPT-5.5 
 
 **Rule**: control reasoning depth with the API knob, not prompt wording.
 
-Both vendors expose a reasoning-depth parameter:
-- **OpenAI GPT-5.x**: `reasoning_effort` with values `none` / `low` / `medium` / `high` / `xhigh`.
-- **Anthropic Claude 4.x**: `effort` with values `low` / `medium` / `high` / `xhigh`.
+Every current frontier vendor exposes a reasoning-depth parameter — Claude `effort`, OpenAI / xAI / most others `reasoning_effort` / `reasoning.effort`, Gemini `thinking_level`. Ladders, defaults and whether thinking can be switched off differ per model (GPT-6 Astra / 6.1 Sol have no `none`; Opus 5.5 can't disable thinking): read the knob column in `lineup.md`.
+
+**The one documented exception:** Muse Spark Open takes a `Reasoning strength: N.` line in the system prompt that overrides `reasoning_effort` (`models/meta.md § Muse Spark Open`) — a vendor control string for that model only, not a precedent.
 
 Wording-based reasoning prompts ("think step by step", "think harder") are weak substitutes. They sometimes work on older models but on the current generations they're inert at best, counterproductive at worst.
 

@@ -346,7 +346,12 @@ Practical adaptation:
 
 ## Triggering thinking-off across providers
 
-Every small-model provider has its own knob for "disable native thinking". Reasoning-token leak in `content` is a major regression source on 2-3B (truncated output, format breakage).
+Most small-model providers have their own knob for "disable native thinking". Reasoning-token leak in `content` is a major regression source on 2-3B (truncated output, format breakage).
+
+Not every Class 2 model has a working one (`models/small-local.md`):
+- **No off-switch:** LFM2.5-24B-A2B (template always opens `<think>`); Mellum2.1 Thinking (none documented); Dory, where "Reasoning is always on in vLLM". Its template does read an undocumented `enable_thinking`, untested. For these models the block below does nothing useful. Budget `max_tokens` for the trace and keep the post-strip.
+- **Unreliable off-switch:** LFM3-1.7B, where `enable_thinking=False` "can be inconsistent, especially for reasoning-heavy tasks". Pass it *and* keep the post-strip.
+- **Three-state switch:** MiniCPM5-2B, where an absent `enable_thinking` means the model decides. The block below passes `False`, which is correct. Don't drop the kwarg to "keep the call clean".
 
 Pass **all** these params in the API call — each provider takes its own and ignores the rest:
 
@@ -354,7 +359,7 @@ Pass **all** these params in the API call — each provider takes its own and ig
 extra_body = {
     "reasoning_effort": "none",                            # LM Studio
     "chat_template_kwargs": {
-        "enable_thinking": False,                          # Qwen 3 family
+        "enable_thinking": False,                          # Qwen 3 family, MiniCPM5, LFM3
         "thinking": False,                                 # Gemma alt
     },
     "reasoning": {"enabled": False},                       # OpenRouter

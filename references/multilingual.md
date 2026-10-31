@@ -40,24 +40,25 @@ The folk model says: "the prompt was unclear, so the model mixed languages". The
 
 **No public benchmark measures "anglicism rate in Russian output" by model.** This is a research gap. The picture below stitches vendor docs, community reports, and adjacent academic data.
 
-### Claude Opus 4.7 / Sonnet 4.6 / Haiku 4.5
+### Claude (data from the Opus 4.7 / Sonnet 4.6 / Haiku 4.5 era — not re-measured on the 5.x line)
 
 - Anthropic [migration guide](https://platform.claude.com/docs/en/docs/about-claude/models/migrating-to-claude-4) warns: *"Claude Opus 4.7 is more direct and opinionated, with less validation-forward phrasing... If your product relies on a specific voice, re-evaluate style prompts against the new baseline."* This affects multilingual voice too — softer 4.6 style instructions for non-English voice often go ignored on 4.7. Migrating prompts: re-test register adherence.
 - Tokenizer rebuilt on 4.x — Anthropic claims efficiency gains for non-Latin scripts. Doesn't fix lexical drift.
 - No vendor documentation specifically on code-switching or anglicism control. Slot in for migration: explicit style anchor + final-position language instruction.
 - Sonnet 4.6 / Haiku 4.5 — no specific public data on language adherence. Extrapolating from CoCo-CoLa: smaller / distilled models drift to English defaults more than the flagship.
 
-### GPT-5.5 / 5.4 / 5.3 (Codex CLI and API)
+### GPT (data from the 5.5 era — the GPT-6 guide, read in full 2026-10-31, has no multilingual section either)
 
 - **OpenAI's [GPT-5.5 prompting guide](https://cdn.openai.com/API/docs/gpt-5-5_prompting_guide.pdf) and [Codex prompting guide](https://developers.openai.com/cookbook/examples/gpt-5/codex_prompting_guide) do not mention multilingual behavior at all.** Notable silence — treat any cross-language requirement on GPT-5.x as user-implemented from scratch.
 - Tokenizer rebuilt; non-Latin scripts more efficient than GPT-4.x. Doesn't fix lexical drift.
-- 5.5 is more aggressive about pruning "redundant" instructions — language instructions that are repeated may be dropped by the model's own attention budgeting. Counter: put the language constraint where it matters (final position) and don't dilute it with stylistic adjectives in three places.
+- GPT-Live 1's guide is the one OpenAI text that gives language guidance: *"Write the prompt and examples in the language you want the assistant to speak, and specify any pronunciations that matter."*
+- 5.5 was more aggressive about pruning "redundant" instructions — language instructions that are repeated may be dropped by the model's own attention budgeting. Counter: put the language constraint where it matters (final position) and don't dilute it with stylistic adjectives in three places.
 
-### Gemini 3.1 Pro / Flash / Flash-Lite
+### Gemini (Argon / 3.1 Pro / Flash / Flash-Lite)
 
 - **Most concrete public evidence of language mixing.** [Google gemini-cli issue #13715](https://github.com/google-gemini/gemini-cli/issues/13715) is a master issue consolidating reports of *"Multiple languages and alphabet appear in the CLI output"*. The merged duplicates explicitly include **"Cyrlic/russian"** and Arabic-English mixing. **Status: closed as not planned.** Google does not have a fix in 2026.
 - Google's [Gemini 3 prompting best practices](https://www.philschmid.de/gemini-3-prompt-practices) does not address language mixing.
-- `thinking_level: high` (default for 3.1 Pro) — adaptive thinking can leak Latin-script reasoning into output. For non-English output where reasoning isn't required: drop to `low` or `minimal` and rely on adherence improving.
+- `thinking_level: high` (default for 3.1 Pro) — adaptive thinking can leak Latin-script reasoning into output. For non-English output where reasoning isn't required: drop to `low` (Argon / 3.1 Pro / 3.8 Flash — no `minimal`, 3.8 Flash errors on it) or `minimal` (3.6 Flash, 3.5 Flash-Lite) and rely on adherence improving.
 
 ### Cross-vendor universal
 
@@ -200,7 +201,7 @@ Conflicting context: the model has read 800 English tokens and is being asked, i
 
 ### A4. High `effort` / `thinking_level` on pure stylistic tasks
 
-Reasoning-trace research ([arxiv:2505.14815](https://arxiv.org/pdf/2505.14815)) shows reasoning models lean to Latin-script thinking; longer traces leak more. For rewriting / editing tasks where there's no real reasoning to do, drop `effort` to `medium` or `low` — fewer thinking tokens, less leakage. (This is a non-prompt lever; surface it to the user, see core SKILL.md § Effort.)
+Reasoning-trace research ([arxiv:2505.14815](https://arxiv.org/pdf/2505.14815)) shows reasoning models lean to Latin-script thinking; longer traces leak more. For rewriting / editing tasks where there's no real reasoning to do, drop `effort` to `medium` or `low` — fewer thinking tokens, less leakage. (This is a non-prompt lever; surface it to the user, see core SKILL.md § Reasoning-depth knobs.)
 
 ### A5. Promising elimination
 

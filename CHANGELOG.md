@@ -2,6 +2,60 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [2.0.0] — 2026-10-31
+
+Full revision on the owner's request of 31.10 («провести ревизию нашего скилла полностью … новые модели … оптимизировать … очень старые модели — в архив»). Major version: SKILL.md was restructured (109 KB → 42 KB), version facts moved out of it into two new reference files, and legacy models moved to a new `references/archive/`. Vendor pages were re-read raw on 2026-10-31 (curl of the `.md` docs / HF raw READMEs); each vendor file's Source notes list the URL and read date for every fact below. Abbreviations: `PCC` = `https://platform.claude.com/docs/en/`, `OAI` = `https://developers.openai.com/api/docs/`.
+
+### Structure
+
+- **`references/lineup.md`** (new) — one table per vendor: id, status + date, reasoning knob (param, ladder, default, whether thinking can be disabled), section to read. Replaces SKILL.md's knob table, version lists and per-version "Recent updates" bullets (that history stays in this file and in the model files).
+- **`references/model-audits.md`** (new) — per-model migration / targeting checklists (was SKILL.md's Step 5 gap rows), rebuilt from the vendors' current delta lists.
+- **`references/patterns.md`** (new) — hint + anchor, creative-domain kernel, small-model task prompt, moved out of SKILL.md; SKILL.md keeps a three-row index.
+- **`references/archive/`** (new) — `models/{claude,gpt,gemini,kimi,glm,qwen-frontier,deepseek,grok}.md` and `matrix-legacy.md` (legacy matrix rows), with the policy in `archive/README.md`: archived when the vendor retired/deprecated the model, or when it is two generations behind and no current section is a delta against it; still-callable models scheduled to retire stay live with a "retiring" note. Archived: Claude Opus 4.7 / 4.8, Sonnet 4.6, Haiku 4.5; GPT-5.5 / 5.4 / 5.3 / 5.2 / 5.1; Gemini 3 Flash, 3.7 Flash, 3.5 Flash (+ Cyber), 3.1 Flash-Lite, 2.5; Kimi K2.5, K2; GLM-5.1 / 5 / 4.6; Qwen3.7 Plus, 3.6 Plus, 3.6-Max-Preview, 3-Max-Thinking; DeepSeek V4-Flash, V4-Flash-Vision-Exp, V3.2, R1; Grok 4.5, 4.3. Status per vendor: Anthropic lists the Claude 4.x models as legacy, still available (`PCC about-claude/model-deprecations`); GPT-5.5 / 5.4 / 5.3-codex retired in Codex (`https://learn.chatgpt.com/docs/models.md`); Gemini 3.7 / 3.5 Flash deprecated 08.10 and auto-routed (`https://ai.google.dev/gemini-api/docs/deprecations`); Kimi K2.5 discontinued 31.08 (`kimi.md` Source notes); DeepSeek V4-Flash / Vision-Exp retired 10.09 with ids served by V4.1 Flash (`https://api-docs.deepseek.com/updates`); the rest are two generations behind (editorial).
+- `models/_universal.md`: the Universal Claude / GPT / Gemini sections are now pointers to the one maintained copy in `claude.md` / `gpt.md` / `gemini.md`; Kimi / GLM / Qwen / DeepSeek universals rewritten for the current lineup (33 → 29 KB).
+- `models/claude.md`: § Shared Claude snippets (code-review coverage, frontend directions + `<frontend_aesthetics>`) kept when Opus 4.7 was archived.
+- **Class 2 boundary** fixed as dense 2–9B, or MoE with ≤ ~9B active and ≤ ~35B total (SKILL.md Coverage, README, `patterns.md`); Ministral 3 8B is Class 2.
+
+### Added
+
+- **Claude Sonnet 5.5** (28.09) and **Claude Haiku 5.5** (07.10) — new sections in `claude.md`, with the official snippets verbatim. Sonnet 5.5: API default effort `high`, `thinking: disabled` → 400 (lowest `between_tools` at ≤ `high`), forced `tool_choice` → 400. Haiku 5.5: first Haiku with effort (default `medium`), `disabled` allowed at ≤ `high`, forced `tool_choice` accepted, prefill → 400. Source: `PCC build-with-claude/prompt-engineering/prompting-claude-sonnet-5-5`, `…/prompting-claude-haiku-5-5`, `PCC about-claude/models/whats-new-sonnet-5-5`, `…/whats-new-haiku-5-5`.
+- **OpenAI GPT-6.1 Sol** (29.09; no `none` / `minimal`) and **GPT-6.1 Terra** (26.10; `none`…`max`, default `medium`), **GPT-Live 1** (GA 10.09, voice section) — `gpt.md`. Source: `OAI models/gpt-6.1-sol.md`, `OAI models/gpt-6.1-terra.md`, `OAI models/gpt-live-1.md`, `OAI guides/live-prompting.md`. GPT-6.1 Astra / 6.1 Luna checked and **do not exist** (404 on `OAI models/gpt-6.1-astra.md`, `…/gpt-6.1-luna.md`).
+- **Gemini 4 Argon** (GA 13.10; `thinking_level` low/medium/high, default `medium`; no prompting guide) — `gemini.md`. Source: `https://ai.google.dev/gemini-api/docs/models/gemini-4-argon`, `…/docs/changelog`.
+- **Kimi K3.1 Pro** (API 23–24.10; `reasoning_effort` low/high/max, default max, cannot be disabled) — `kimi.md`. Source: `https://platform.kimi.ai/docs/guide/kimi-k3-1-pro-quickstart.md`, `https://www.kimi.com/blog/kimi-k3-1-pro`.
+- **GLM-5.3-FlashX** — `glm.md` (release date not on any vendor page read — left unverified). Source: `https://docs.z.ai/guides/vlm/glm-5.3-flash.md`.
+- **Qwen3.8-Flash knobs** (`reasoning_effort` low/medium/xhigh + `enable_thinking`; `preserve_thinking` off on hosted Flash) — `qwen-frontier.md`. Source: `https://huggingface.co/Qwen/Qwen3.8-Flash-Next/raw/main/README.md` and the Qwen Cloud thinking guide (`qwen-frontier.md` Source notes).
+- **DeepSeek V4.1-Flash-1017** (17.10; shorter outputs; old Flash ids served by it) and a **2026 version lineage table** in `deepseek.md` (V4 04-24 → V4-DSpark 06-27 (speculative-decoding module, not a model) → V4-Flash-0731 → V4-Pro-0813 → Vision-Exp 08-21 → V4.1 Flash 09-10 → 1017). Source: `https://api-docs.deepseek.com/updates`, `https://api-docs.deepseek.com/news/news261017`, `https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/raw/main/README.md`.
+- **Mistral Large 4** (weights 29.10; `reasoning_effort` low/medium/high, `none` removed) — `mistral-frontier.md`. Source: `https://docs.mistral.ai/models/mistral-large-4-0.md`, `https://mistral.ai/news/mistral-large-4-oss/`.
+- **Meta Muse Wonder 1.0** (12.10; minimal…max, `none` → 400) and **Muse Spark Open** (15.10, open weights 816B-A42B, official prompting guide, `Reasoning strength: N.` system line) — `meta.md`. Source: `https://research.meta.ai/blog/muse-wonder`, `https://dev.meta.ai/docs/muse-spark-open/prompting.md`, `https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B`.
+- **`models/other-frontier.md`** (new) — MiniMax M3.1-Flash (thinking cannot be disabled), Xiaomi MiMo-V2.6 Pro / Flash (on/off toggle), StepFun Step 5 Preview (effort low/medium/high); no vendor prompting guides, behavioral axes `?`. Source: `https://huggingface.co/MiniMaxAI/MiniMax-M3.1-Flash/raw/main/README.md`, `https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-MOPD/raw/main/README.md`, `https://huggingface.co/stepfun-ai/Step-5-Preview/raw/main/README.md`.
+- **Small local:** MiniCPM5-2B, Nemotron-Labs Dory 4B, LFM3 (+ Omni / VL), LFM2.5-24B-A2B, Granite Switch 4.1 8B — `small-local.md`, `matrix-small.md`. Sources in `small-local.md` (HF raw cards, e.g. `https://huggingface.co/LiquidAI/LFM3-1.7B`, `https://huggingface.co/ibm-granite/granite-switch-4.1-8b`).
+
+### Changed
+
+- **Sampling:** every Claude rejects `temperature` / `top_p` / `top_k` at any value since API version `2026-10-21` (`PCC api/migration-2026-10-21`); Gemini 4 / 3.6+ ignore them with a 400 announced (`https://ai.google.dev/gemini-api/docs/prompting-strategies`); GPT-6 Astra / 6.1 Sol never take them, 6.1 Terra / 6 Sol / 6 Luna only at effort `none` (`OAI guides/latest-model.md`). Updated in `matrix.md`, `_universal.md`, `claude.md`, SKILL.md Step 4, `gemini-cli.md`, `_common.md`.
+- **Thinking-off lists (L-0001 class sweep):** added Kimi K3.1 Pro, GLM-5.3-Flash / FlashX, Mistral Large 4, hosted Muse Wonder / Spark, Muse Spark Open, MiniMax M3.1-Flash, StepFun Step 5; Grok qualified to 4.5+ (4.3 accepts `none`, `https://docs.x.ai/developers/models/grok-4.3.md`); "Qwen3.8 open weights" narrowed to `Qwen3.8-2.4T-A95B`. Files: `matrix.md`, `_universal.md`, `antipatterns.md`, SKILL.md.
+- **Reasoning-knob exceptions** in SKILL.md now four: subagent `effort:` + `CLAUDE_CODE_SUBAGENT_EFFORT` (Claude Code 2.1.316), GLM re-injection fallback, Muse Spark Open's `Reasoning strength: N.`, Claude Code `ultrathink` = `xhigh` (2.1.311). Source: `https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md` (2.1.311 / 2.1.316 entries, read raw 31.10), `meta.md § Muse Spark Open`.
+- **Codex:** skills live in `.agents/skills/`; custom prompts deprecated — review them as skills to convert (`https://learn.chatgpt.com/docs/build-skills.md`, `https://learn.chatgpt.com/docs/changelog`). SKILL.md, README, `artifacts.md`, `codex.md`.
+- **Claude Code skills:** `description` + `when_to_use` truncated at 1,536 characters, angle brackets escaped (`https://code.claude.com/docs/en/skills.md`) — SKILL.md Step 5 table.
+- **DeepSeek:** effort-field placement corrected (Anthropic surface `thinking.type` + `output_config.effort`; Responses `reasoning.effort` with `none`) — it was swapped in the atlas; open-weight 1–100 scale mapped (low 50 / high 75 / max 100); `reasoning_content` round-trip mandatory with tools only; V3.2's date corrected to 2025-12-01; the user-prompt-priority rule relabelled as a practitioner rule. Source: `https://api-docs.deepseek.com/updates`, `https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/raw/main/encoding/README.md`.
+- **Kimi:** hosted sampling is fixed (temperature 1.0 / top_p 0.95); the whole K2 series closed to new users 31.10, retiring end of December (`kimi.md` Source notes).
+- **Mistral:** Large 3 and Medium 3.5 deprecated 31.10, retire 2027-04-30; Medium 3.5 does have `high` / `none` (`mistral-frontier.md` Source notes).
+- **Meta:** Muse Code is an agent, not a model; Spark Open and Glimmer have prompting guides (`https://dev.meta.ai/docs/muse-spark-open/prompting.md`).
+- **xAI:** `guidelines` request parameter; Grok 5 still unshipped as of 31.10 (`https://x.ai/news`, read 31.10) — `grok.md`.
+- **Tencent Hy4:** knob documented for open weights (`high` / `no_think`), vendor-named over-verification issue (`https://huggingface.co/tencent/Hy4-preview/raw/main/README.md`).
+- **T-lite** attributed to T-Bank, not Yandex (HF org `t-tech`) — README.
+- README coverage (14 families), structure tree, install paths; CONTRIBUTING: lineup / model-audits / archive steps in the checklist.
+
+### Not verified / deliberately left out
+
+- **Anthropic:** no new model 15–31.10 per `PCC release-notes/overview` and `PCC about-claude/models/overview` (read raw 31.10) — the claim covers those two pages, not other channels.
+- Gemini 4 Argon model card, `whats-new-gemini-3.8` / `-3.6` pages and Vertex pages were not read; whether Gemini CLI offers Argon was not checked.
+- Kimi Structured Output page not read (schema-strict stays `?`); K2.7-Code vision `?`.
+- DeepSeek vision guide not re-read for V4.1 (image placement `?`); whether `deepseek-chat` / `deepseek-reasoner` still answer was not probed.
+- Mistral Large 4 at `low`: string vs chunk response `?`. Ministral 3 card quotes not re-checked (paraphrased).
+- Muse Spark Open "ported `Reasoning effort:` line overrides the parameter" is derived from the public chat template, not stated by Meta — labelled as derived in `meta.md`.
+- Out of scope by decision: decision models; speech-to-speech voice models other than GPT-Live 1; GPT-6 Rosalind (trusted access).
+
 ## [1.9.0] — 2026-09-24
 
 Coverage for the items found by the September 24, 2026 nightly reconciliation (`FINDINGS.md § Заход 2026-09-24`, BRIEFING.md «Что дальше» items 1–5), applied on the owner's approval of 24.09 (proposal `2f8679f465fbe1ab`). The vendor pages were re-read on 2026-09-24 (WebFetch summaries, not raw pages; numeric claims were cross-checked against a second page only where one existed — not for Qwen Omni-Flash or Sol / Luna) — the nightly report's own numbers were not copied.

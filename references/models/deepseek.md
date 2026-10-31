@@ -1,33 +1,52 @@
 # Model-specific wording differences — DeepSeek family
 
-What changes about how you should PHRASE prompts for DeepSeek V4-Pro / V4.1 Flash (`deepseek-flash`) / V4-Flash / V4-Flash-Vision-Exp, V3.2 / V3.2-Speciale, and the R1 lineage. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`.
+What changes about how you should PHRASE prompts for **DeepSeek V4.1 Flash** (`deepseek-flash`, build 1017) and **V4-Pro** (`deepseek-v4-pro`, build 0813). Retired and legacy DeepSeek models (V4-Flash, V4-Flash-Vision-Exp, V3.2, R1) are in `archive/models/deepseek.md`. Companion to `claude.md`, `gpt.md`, `gemini.md`, `kimi.md`, `glm.md`, `qwen-frontier.md`. This reference stays focused on wording — not API parameters, context sizes, or pricing, except where one changes prompt design.
 
-DeepSeek is the most opinionated of the current frontier vendors in **where to put instructions** — and its opinion is opposite to most other vendors. This file leads with that rule because the cost of getting it wrong is high.
+DeepSeek is the most opinionated of the current frontier vendors in **where to put instructions** — and that opinion is opposite to most other vendors. This file leads with that rule because the cost of getting it wrong is high, and because two measurements have since narrowed it.
 
 ---
 
-## Family-wide rules (apply to all current DeepSeek versions)
+## Version lineage (2026) — which model an id serves today
 
-These hold across V3.2 → V4-Flash → V4-Pro.
+DeepSeek ships silent upgrades behind stable ids, so a pinned id is not a pinned model. Read this table before trusting any "measured on" note.
+
+| Date | API id / weights repo | What it is | Served by today |
+|---|---|---|---|
+| 2026-04-24 | `deepseek-v4-pro`, `deepseek-v4-flash`; HF `DeepSeek-V4-Pro` / `-V4-Flash` (+ `-Base`, 04-22) | V4 preview (Pro and Flash) | Pro id → V4-Pro-0813; Flash id → V4.1-Flash-1017 |
+| 2026-06-27 | HF `DeepSeek-V4-Pro-DSpark` / `-V4-Flash-DSpark` | *"is **not** a new model. It is the same checkpoint with an additional speculative decoding module attached"* | not a prompt target |
+| 2026-07-31 | `deepseek-v4-flash`; HF `DeepSeek-V4-Flash-0731` | official Flash: *"keeps the same model architecture and size as DeepSeek-V4-Flash-Preview, and was only re-post-trained"* | retired → id served by V4.1-Flash-1017 (archive) |
+| 2026-08-13 | `deepseek-v4-pro`; HF `DeepSeek-V4-Pro-0813` | V4-Pro GA; effort ladder `low`/`high`/`max` introduced for Pro and Flash | **current** — § V4-Pro |
+| 2026-08-21 | `deepseek-v4-flash-vision-exp`; HF repo 2026-08-31 | experimental vision sibling of V4-Flash | retired → id served by V4.1-Flash-1017 (archive) |
+| 2026-09-10 | `deepseek-flash`; HF `DeepSeek-V4.1-Flash` | V4.1 Flash — new architecture, native multimodal | superseded by 1017 behind the same id |
+| 2026-10-17 | `deepseek-flash` (+ both legacy Flash ids); HF `DeepSeek-V4.1-Flash-1017` | *"a minor update to DeepSeek-V4.1-Flash"*, shorter outputs | **current** — § V4.1 Flash |
+| 2025 | V3.1 (08-21), V3.1-Terminus (09-22), V3.2-Exp (09-29), **V3.2 (2025-12-01)** + V3.2-Speciale; R1-0528 (2025-05-28) | pre-V4 line | `deepseek-chat` / `deepseek-reasoner` were pointed at V4-Flash on 2026-04-24 and announced for discontinuation 2026-07-24; the current pricing page lists neither (archive) |
+
+---
+
+## Family-wide rules (current DeepSeek: V4-Pro, V4.1 Flash)
+
+Most of these come from **V4-era practitioner guides** and were not restated by DeepSeek for V4.1. Where a rule was measured or documented on a specific model, it says which.
 
 ### 1. Core instructions live in the USER prompt, not the system prompt — DeepSeek-specific
 
-DeepSeek's own guidance (V4 practitioner guides explicitly cite the R1+V4 documented behavior) is to **place core instructions in the user prompt**, keep the system prompt brief, and treat the user prompt as the binding contract.
+Practitioner guidance for V4 (citing the documented R1 behavior) is to **place core instructions in the user prompt**, keep the system prompt brief, and treat the user prompt as the binding contract. No current DeepSeek page states this: the changelog, the thinking-mode guide and both V4.1 Flash cards (read 2026-10-31) say nothing about system-prompt adherence either way.
 
-**This is opposite to most other vendors.** Claude, GPT-5.x, Gemini 3, Kimi K2.6, and frontier Qwen all expect the bulk of instruction in the system prompt. DeepSeek inverts this.
+**This is opposite to most other vendors.** Claude, GPT, Gemini, Kimi and frontier Qwen all expect the bulk of instruction in the system prompt.
 
-| Other vendors | DeepSeek V4 |
+| Other vendors | DeepSeek (practitioner pattern) |
 |---|---|
 | **System prompt:** "You are a senior backend engineer. Follow these rules: [50 lines of constraints, examples, formatting, edge cases]. Use these tools when..." | **System prompt:** "You are a senior backend engineer." |
 |  | **User prompt:** "[Task description.] Constraints: [...]. Examples: [...]. Format: [...]. Use these tools when..." |
 
-Wording mitigation when porting Claude / GPT prompts to DeepSeek V4:
+Wording mitigation when porting Claude / GPT prompts to DeepSeek:
 
 - **Move the bulk of the system content into the user message.** Keep a single-line functional role in the system slot.
-- **For role-play and thinking-mode work specifically:** put instructions at the **end of the first user message** — that's the position where DeepSeek's instruction-following is most stable (per V4 practitioner guides, this matches the model's training-data layout).
-- **Don't fight this with workarounds** like "in the system prompt, the rules are: X" referenced from the user prompt — V4 will ignore complex system-prompt content.
+- **For role-play and thinking-mode work specifically:** put instructions at the **end of the first user message** — per V4 practitioner guides, the position where instruction-following is most stable.
+- **Don't fight this with workarounds** like "in the system prompt, the rules are: X" referenced from the user prompt.
 
-Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85% of common DeepSeek V4 errors.** The figure comes from practitioner guides written against earlier V4 builds — and it has now **failed to reproduce twice on the current ones**, on two unrelated task classes (field notes below). Apply the rule where you can cheaply comply; do not treat it as a reason to re-architect a working system-prompt agent before measuring it on the model you actually target.
+Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85% of common DeepSeek V4 errors.** It has **failed to reproduce twice**, on two unrelated task classes — both on **V4-Flash-0731**, which is now retired and two Flash builds behind the model `deepseek-flash` serves (field notes below). Apply the rule where you can cheaply comply; do not re-architect a working system-prompt agent before measuring it on the model you actually target.
+
+> **Measured on `deepseek-v4-flash:0731` (archived model) — not re-run on V4.1 Flash or V4-Pro.** Both notes below are kept as measurements; they do not transfer to V4.1 as results, only as the reason to measure first.
 
 > **Field note (2026-08-21) — second non-reproduction, and the practical one: Claude-authored agent bodies port to V4-Flash unchanged.** A 12.7 KB
 > subagent body (Russian copy-editing methodology: ~23 numbered transformation rules in three blocks,
@@ -75,11 +94,9 @@ Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85%
 > the vendor. Rule #1 stands; treat this as a datapoint that it may be narrower than stated. Detail in
 > `FINDINGS.md § Заход 2026-08-19`.
 
-**Agentic failure mode.** A tool-using DeepSeek agent that carries its rules and search methodology in the system prompt tends to **fabricate confident false negatives** on absence questions ("X doesn't exist anywhere" for something that does) and mis-scope its searches — the under-weighted system methodology yields a shallow search that then asserts. Moving the bulk to the user turn (system kept to a one-line role) fixes it on the same model and tools — an instruction-authority effect, not a capability gain. Symptom → diagnosis: a confident "doesn't exist anywhere" from a DeepSeek agent → suspect system-prompt overuse and verify before trusting the negative.
+**Agentic failure mode (practitioner reports, V4).** A tool-using DeepSeek agent that carries its rules and search methodology in the system prompt tends to **fabricate confident false negatives** on absence questions ("X doesn't exist anywhere" for something that does) and mis-scope its searches. Moving the bulk to the user turn (system kept to a one-line role) is reported to fix it on the same model and tools. Symptom → diagnosis: a confident "doesn't exist anywhere" from a DeepSeek agent → suspect system-prompt overuse and verify before trusting the negative. (The 08-19 note above is the one atlas measurement of this exact failure class, and it did not reproduce.)
 
 ### 2. Brief system prompt + structured user prompt = the canonical V4 pattern
-
-The canonical pattern V4 guides recommend:
 
 ```
 SYSTEM: You are a senior architect specializing in distributed systems.
@@ -97,295 +114,184 @@ Find the race condition. Output as JSON: {issue: string, root_cause: string, fix
 </instruction>
 ```
 
-Note the components:
-
 - **System:** one-line functional role
-- **User `<context>`:** structured data with explicit `relevance` tags (V4 uses this for attention prioritization)
-- **User `<instruction>`:** the actual task, with output shape demanded in prose **even when** `response_format` is set at the API level
+- **User `<context>`:** structured data with explicit `relevance` tags
+- **User `<instruction>`:** the task, with output shape demanded in prose **even when** `response_format` is set
 
-This XML-tagged context structure has measured ~92% task success vs ~45% for unstructured dumps (per practitioner-guide benchmarks). The 47-point gap is meaningfully larger than the XML-vs-markdown gap on other vendors.
+Practitioner-guide benchmarks report ~92% task success for this XML-tagged structure vs ~45% for unstructured dumps (V4-era; not vendor-published).
 
-### 3. `reasoning_content` must be round-tripped on multi-turn — V4 API breaking change
+### 3. Reasoning history: round-trip it with tools; without tools it is dropped
 
-V4 returns a `reasoning_content` field alongside the response content. On subsequent turns, this field **must be included** in the message history or the API returns 400.
+Thinking-mode guide (read 2026-10-31): *"for requests carrying the `tools` parameter, the `reasoning_content` must be fully passed back to the API in all subsequent requests — even for turns where the model did not perform a tool call. If your code does not correctly pass back `reasoning_content`, the API will return a 400 error."* Without `tools`, *"`reasoning_content` does not need to be passed back; even if passed to the API, it will be ignored and will not be concatenated into the context."* The open-weight V4.1 encoding does the same (`drop_thinking`: without tools, *"reasoning before the latest user request is stripped"*; with tools it is kept).
 
-R1 and V3.2 **rejected** `reasoning_content` on input (the reverse) — so multi-turn flows that worked on V3.2 break on V4 in a non-obvious way.
+R1 and V3.2 **rejected** `reasoning_content` on input — the migration trap is in `archive/models/deepseek.md`.
 
-This is an API/SDK concern, not a prompt-wording concern. But it's worth flagging in reviews when:
-- The artifact is a multi-turn agent prompt being migrated V3 → V4
-- The user reports "DeepSeek throws 400 errors on the second turn"
+Wording-side: the round-trip is a client concern, don't reference `reasoning_content` in prose. One derived consequence: in a tool-less multi-turn chat, a prompt that asks the model to "build on your earlier reasoning" points at text that is no longer in context — restate the conclusion in the visible turn instead.
 
-Wording-side: don't reference `reasoning_content` in prose. The behavior is a serialization concern, not something the model needs prompted about.
+### 4. Tool calls in thinking mode
 
-### 4. Tool calls in thinking mode — unlike R1
+V4 and V4.1 support tool calls while reasoning (R1 forced a choice — `archive/models/deepseek.md`). Prompts that instruct "first reason about the task, then in a separate response call the tool" can be simplified.
 
-V4 supports tool calls while reasoning. R1 forced a choice: reason **or** call tools. V4 unifies them.
+The open-weight V4.1 encoding injects its own tool block into the system prompt, including *"If thinking_mode is enabled (triggered by <think>), you MUST output your complete reasoning inside <think>...</think> BEFORE any tool calls or final response."* and *"You MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls."* Don't restate either in your own prompt; and the vendor's ALL-CAPS here is template text, not emphasis advice.
 
-Wording implication: agentic loops can mix reasoning and tool calls in the same response without prompt-side workarounds. Prompts that previously instructed "first reason about the task, then in a separate response call the tool" can be simplified.
+### 5. Effort-model thinking lever: `thinking` toggle + effort strings
 
-### 5. Effort-model thinking lever: `thinking` toggle + `reasoning_effort` (`low` / `high` / `max`)
-
-Since the **V4-Pro GA update (2026-08-13)** DeepSeek exposes reasoning depth as an **effort model**, like the other frontier vendors — the old three-level `thinking: "off" | "high" | "max"` parameter set is **obsolete**:
+Since the V4-Pro GA update (2026-08-13) reasoning depth is an **effort model** for Pro and Flash; the old `thinking: "off" | "high" | "max"` set is obsolete. Surfaces (thinking-mode guide, read 2026-10-31 — the table spans columns, so read it carefully):
 
 | Format | Thinking toggle | Effort control |
 |---|---|---|
-| OpenAI (Chat Completions) | `extra_body={"thinking": {"type": "enabled/disabled"}}` | `reasoning_effort` (`low`/`high`/`max`) |
-| Anthropic | `reasoning.effort` (`none`/`low`/`high`/`max` — `none` disables thinking) | same field |
-| Responses API | — | `output_config.effort` (`low`/`high`/`max`) |
+| OpenAI Chat Completions | `{"thinking": {"type": "enabled/disabled"}}` (via `extra_body` in the OpenAI SDK) | `reasoning_effort`: `low`/`high`/`max` |
+| Anthropic | `{"thinking": {"type": "enabled/disabled"}}` | `output_config.effort`: `low`/`high`/`max` |
+| Responses API | `{"reasoning": {"effort": "none/low/high/max"}}` — *"none disables thinking mode"* | same field |
 
-> **Decision (2026-09-24) — the rule stands; the model card's integer is not an API surface.** The Hugging Face card of DeepSeek-V4.1-Flash says the model *"supports a continuously controllable reasoning effort setting (integer 1–100)"* and its eval tables use `reasoning_effort=100`. DeepSeek's API thinking-mode guide, re-read the same day, documents **strings only** — `"low"` / `"high"` / `"max"` (OpenAI format) and `none/low/high/max` (Anthropic format), with the mapping below — and its code example uses `model="deepseek-flash"`, `reasoning_effort="high"`. So for a prompt that calls the hosted API, `low`/`high`/`max` is right and an integer is a review finding; the 1–100 scale is a property of the open weights (self-hosted / research harness). Whether the hosted API also accepts an integer is undocumented — `?`, don't advise it.
+**Thinking is on by default at effort `high`.** Accepted aliases map as: `minimal` → `low`; `low` → `low`; `medium` → `high`; `high` → `high`; `xhigh` → `high`; `max` → `max`; `ultra` → `max`. So there are three real levels; `medium` and `xhigh` silently become `high`.
 
-**Thinking is enabled by default, default effort `high`.** Actual mapped effort: requested `low` → `low`; `medium` → `high`; `high` → `high`; `xhigh` → `high`; `max` → `max` (identical for V4-Pro and V4-Flash).
+**Open weights: the integer and the strings are one scale.** The V4.1 encoding README: *"Reasoning effort is a numeric budget (1–100)… String aliases map as follows: `"low"` → 50, `"high"` → 75, `"max"` → 100. The default is `"high"` (75)."* The prefix is rendered only in thinking mode and only once, at the start of the conversation; intermediate integers *"may be used to elicit interpolated reasoning behavior"*. For the hosted API the documented values remain the strings above; an integer there is undocumented (`?`) — don't advise it.
 
-Wording-side: same rule as other vendors — don't write "think step by step" in the body, and don't ask the model to *lower* its own reasoning via prose. Set the parameter. A "don't think / answer immediately" line is now a **reduced-reasoning** request (set effort `low`), not an off-switch equivalent — and on the Anthropic surface `none` is the only true disable.
+Wording-side: don't write "think step by step", and don't ask the model to lower its own reasoning in prose — set the parameter. A "don't think / answer immediately" line is at most a reduced-reasoning request; the real off-switches are `thinking.type: "disabled"` (Chat Completions / Anthropic) and `reasoning.effort: "none"` (Responses).
 
 ### 6. Demand JSON in the user prompt even with `response_format` set
 
-V4-specific: even when the API call includes `response_format={"type": "json_object"}`, the user prompt must still explicitly demand JSON output. The combination of "API parameter" + "prose demand" is the load-bearing pattern; either alone is unreliable.
+Practitioner guidance (V4): even with `response_format={"type": "json_object"}`, the user prompt must still explicitly demand JSON. The combination of API parameter + prose demand is the load-bearing pattern; V4 guides estimate missing-JSON-instruction as ~60% of structured-output errors.
 
-V4 guides estimate missing-JSON-instruction as ~60% of structured-output errors.
-
-The cleanest pattern in the user prompt:
 ```
 ... Output strictly as JSON matching this shape: {field1: ..., field2: ...}. No prose outside the JSON.
 ```
 
-This costs little on other vendors (mostly redundant) and is load-bearing on V4. Cross-vendor wording should default to this even when the target is non-DeepSeek.
+Costs little on other vendors and is load-bearing here — a safe cross-vendor default.
 
 ### 7. Slightly more literal than Claude
 
-V4 follows instructions more literally than Claude. Prompts that depend on Claude's "infer my intent" tolerance need to be made explicit when porting to V4. This is directionally similar to GPT-5.5 and Opus 4.7 — but a step more literal than Opus 4.7.
-
-When porting a Claude-tuned prompt:
+Practitioner guidance (V4; not restated for V4.1): DeepSeek follows instructions more literally than Claude and does not infer intent. When porting a Claude-tuned prompt:
 - Spell out scope: "modify only the function `validateInput`" instead of "modify the validation logic"
-- Spell out boundaries: "do not refactor anything outside this function" — V4 honors this without overtriggering
+- Spell out boundaries: "do not refactor anything outside this function" — honored without overtriggering
 - Spell out success criteria: "the existing tests pass plus a new regression test you add"
 
-### 8. Maximum context > minimum tokens — DSA economic inversion
+### 8. Cache-hit economics reward stable front matter
 
-V4's DeepSeek Sparse Attention achieves ~27% of per-token FLOPs and ~10% of the KV cache footprint of V3.2. **Cached input tokens cost $0.028 per million** — roughly 100× cheaper than other vendors' cached input.
+On the current pricing page a cache-hit input token costs **~1/50 of a cache miss on `deepseek-flash` and ~1/30 on `deepseek-v4-pro`** (read 2026-10-31; peak and off-peak keep the ratio). That ratio, not the absolute price, is what changes prompt design: front-loading static documentation and few-shot examples is cheap *if* that block stays byte-stable across calls. Don't ask "is this too long?" — ask "is this stable enough to be cached?"
 
-The economic implication inverts the historical "compress your prompt" pattern: with V4, **front-loading static documentation and few-shot examples for cache hits is cheap and rewarded**. Prompts that have been aggressively compressed for token economy can be expanded without cost concern.
+### 9. 1M context nominal; reasoning reported to degrade past ~500K
 
-Wording implication: don't ask "is this too long?" — ask "is this stable enough to be cached?" Stable front matter is better than terse front matter.
+Practitioner reports on V4: reasoning quality degrades past ~500K tokens, retrieval stays viable to ~750K. Not re-measured on V4.1 (whose card claims a much smaller KV-cache footprint — an infrastructure claim, not a quality one). Wording: keep reasoning tasks under ~500K; for both at scale, retrieve first, then reason on the retrieved chunk.
 
-### 9. 1 M context nominal, reasoning degrades past ~500 K
+### 10. No standard Hugging Face chat template — use DeepSeek's encoding
 
-V4 advertises a 1 M token context window. Practitioner reports note **reasoning quality degrades past ~500 K tokens**, though retrieval remains viable up to ~750 K at cache-hit rates >70%.
-
-Wording implication:
-- For reasoning tasks (the model needs to derive conclusions from the context): keep under 500 K
-- For retrieval tasks (pull the right passage and quote it): up to 750 K acceptable
-- For both at scale: chunk into stages — retrieve first, then reason on the chunked retrieval
-
-### 10. No standard HuggingFace chat templates — use model-specific encoding
-
-V4 lacks generic Jinja chat templates. Self-hosted setups need DeepSeek-specific encoding scripts. This is a deployment-side concern, but worth flagging in reviews when the artifact is a prompt being applied across multiple inference engines — confirm with the user that they're using DeepSeek-aware tooling.
+V4 and V4.1 ship no Jinja template; V4.1 provides `encoding/encoding.py` plus the `deepseek-recipe` Rust library. V4.1 also changed the tool-call markup (`<｜DSML｜ calls>` with a leading space; V4 used `<｜DSML｜tool_calls>`). When a prompt is served through generic tooling, confirm it uses DeepSeek-aware encoding for the right generation.
 
 ---
 
-## DeepSeek V4-Pro (April 24, 2026 — current frontier; GA update 2026-08-13)
+## DeepSeek V4.1 Flash (2026-09-10; build 1017 since 2026-10-17 — current Flash, `deepseek-flash`)
+
+Released 2026-09-10 as a new architecture; upgraded in place to **DeepSeek-V4.1-Flash-1017** on 2026-10-17 (*"The API calling method and pricing remain unchanged — simply use `deepseek-flash` to access the latest model."*). The legacy ids are routed here: *"The legacy names `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` are still accepted, but the corresponding models have been retired, their requests are served by the DeepSeek-V4.1-Flash-1017 model"*. A harness pinning either old id is running this model. No V4.1 Pro has been released.
 
 ### Headline facts
 
-- **Architecture:** 1.6 T total parameters, 49 B activated per token, MoE (reported figure — not restated in the 08-13 launch post)
-- **Context:** 1 M tokens (with reasoning degradation past ~500 K)
-- **Training:** 32 T tokens
-- **GA update (2026-08-13, `deepseek-v4-pro` name unchanged):** released out of preview on APP / Web / API; notable agentic gains — HLE 42.7 (w/o tools) / 60.0 (w/ tools), Terminal-Bench 2.1 **87.9**, DeepSWE **62.7** (up from 12.8 on the preview), CyberGym 83.3, Toolathlon-Verified 74.1, AutomationBench (public) 31.8; Artificial Analysis moves V4-Pro from 45 → 53 on its Intelligence Index (secondary reporting)
-- **Native OpenAI Responses API support**, with a one-click Codex configuration — the Responses-API surface and its `output_config.effort` join the existing Chat Completions / Anthropic surfaces
-- **Thinking is effort-model since this update** — see family rule #5; default enabled with effort `high`
-- **Pricing switched to peak/off-peak from 16.08 16:00 UTC** — off-peak is half of peak; several tariffs rose sharply (input+output up to ~2–3.7×; cache-hit input from +52% up to **+1100%**), so the cached-prompt economics that the atlas's DSA rule (#8) relies on are now time-of-day dependent and measurably more expensive
-- **Available via:** DeepSeek's hosted API, self-hosted (open weights)
-
-### Wording behaviors specific to V4-Pro
-
-- **All family rules** (user-prompt priority, XML-tagged context, JSON-in-prose) apply most strongly here
-- **Tool-use gap vs the closed flagships has narrowed but not closed** with the 08-13 GA — V4-Pro 0813 (AA Index 53) still trails the top closed models on long-horizon agentic coding (Opus 5 / GPT-5.6 Sol / Grok 4.6). For agentic loops where tool reliability dominates, the closed frontier may still be the right target; for pure reasoning + tool use, V4-Pro is competitive at a fraction of the cost.
-
-### When V4-Pro specific tuning helps
-
-- Complex reasoning workloads where DSA cost-efficiency is the actual win
-- Coding tasks scoped tightly (specific function, specific bug fix) — V4-Pro's literalism is a strength here
-- Long-context retrieval (under 500 K reasoning, under 750 K retrieval)
-
-### When NOT to invest in V4-Pro specific tuning
-
-- Long-horizon autonomous agents — Opus 5 / GLM-5.3 / Qwen3.8-Max / GPT-5.6 Sol all lead on this axis
-- Broad factual recall — V4-Pro abstention isn't as high as Qwen but factual accuracy lags closed flagships
-- Visual / multimodal — **V4-Pro itself is text-only**; multimodal input lives in the V4-Flash-Vision-Exp sibling (§ below)
-
----
-
-## DeepSeek V4.1 Flash (September 10, 2026 — current Flash; `deepseek-flash`)
-
-Released 2026-09-10 (official changelog, read 2026-09-24; it postdates the 09-07 reconciliation window and was missed by v1.8.0). It is accessed as **`deepseek-flash`**; the older ids `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` are *"temporarily routed to V4.1 Flash"* — so a prompt or harness pinning either old id is now running V4.1 Flash, and the two sections below describe a model that is no longer what those ids serve. V4-Pro continues after 2026-09-14 with unchanged billing (the earlier retirement plan was reversed); V4.1 Pro is confirmed but undated — do not write about it.
-
-### Headline facts
-
-- **Architecture (model card):** 552B backbone, ~8B activated per token on prefill and 16B on decode; 1M context; **native multimodal** (a vision encoder plus MLP projector) — the experimental Vision-Exp sibling is folded into the main Flash id; MIT license, open weights
-- **Effort:** API strings `low` / `high` / `max`, thinking on by default at `high` — rule #5 applies as written; the card's integer 1–100 is not an API parameter (decision note under rule #5). In thinking mode `temperature`, `presence_penalty` and `frequency_penalty` are not supported and `top_p` below 0.95 is treated as 0.95
-- Image-input rules from § V4-Flash-Vision-Exp (user messages only, per-image token cap, `detail` lever) were documented for the `-vision-exp` id; whether they are unchanged on `deepseek-flash` was not re-verified — `?`
+- **Architecture (card):** 552B backbone, 8B activated per token on prefill / 16B on decode; 1M context; **native multimodal** (*"The model natively processes images and text"*); MIT, open weights. Vision ✓ on `deepseek-flash`, not supported on `deepseek-v4-pro` (pricing page).
+- **Effort:** rule #5 — hosted strings with the alias table; open-weight 1–100 with `low`/`high`/`max` = 50/75/100, default 75.
+- **Sampling:** hosted thinking mode ignores `temperature` / `presence_penalty` / `frequency_penalty` without error; on `deepseek-flash` `top_p` works only in thinking mode, range 0.95–1.0 (below 0.95 is treated as 0.95), fixed at 1.0 in non-thinking mode. The 1017 card recommends `temperature` 1.0, **`top_p` 1.0** (the 09-10 card said *"0.95 or 1.0"*) and `max_tokens` ≥ 256K.
+- **New prompt-format surfaces in the open-weight encoding:** *"Mid-conversation system messages are supported via the `<｜System｜>` token"*, and a `latest_reminder` role (*"Latest reminder (date, locale, etc.)"*). Tool results are merged into the preceding user message as `<tool_result>` blocks. Whether the hosted API exposes either role is undocumented — `?`.
+- **Images:** the encoding's examples carry images inside user content blocks (`<｜deepseek_image｜>` placeholders in prompt order). The Vision-Exp rule *"images in system or assistant messages return 400"* (archive) was documented for the `-vision-exp` id and was not re-read for `deepseek-flash` — placement restrictions on V4.1 are `?`. Keeping task images in user turns is safe either way.
 
 ### Wording behaviors
 
-- Family rules #1–#10 carry over; the new architecture is a different model from V4-Flash, so **the field notes above (2026-08-19, 2026-08-21: "measure first" on system-prompt porting) were measured on `deepseek-v4-flash:0731` and were not re-run on V4.1 Flash**. Keep "measure first"; don't carry the measured non-reproduction over as a V4.1 result.
-- No first-party prompting guide; no documented wording delta versus V4-Flash. Don't invent one.
+- **1017 is terser by design — carried-over brevity instructions may now overcorrect (hypothesis, re-measure).** The vendor: *"we also reduced the model's task runtime and output length"*; the release post: *"Stronger benchmark performance, faster task completion, and shorter outputs than the previous version"*. Same pattern the atlas records for GPT-5.6 and Gemini 3.6 Flash: a global "be brief / no preamble" written against a longer predecessor stacks on an already-shorter model. Express length as a task requirement ("at most 5 bullets"), not a disposition, and re-check outputs that must stay complete (reports, diffs, migrations). DeepSeek published no measurement of how much shorter, so this is a review flag, not a rule.
+- **Turn-scoped instructions have a native slot on open weights.** Self-hosted, a mid-conversation system message or a `latest_reminder` (date, locale) can carry per-turn context instead of editing the first system message. On the hosted API, put such context in the newest user turn until the roles are documented there.
+- **Family rules #1–#10 are inherited, not re-measured.** The field notes under rule #1 were measured on V4-Flash-0731 (archived); keep "measure first", don't carry the non-reproduction over as a V4.1 result.
+- No first-party prompting guide; no other documented wording delta versus V4-Flash. Don't invent one.
 
 ---
 
-## DeepSeek V4-Flash (April 24, 2026 — official release 2026-07-31; id now routed to V4.1 Flash)
+## DeepSeek V4-Pro (2026-04-24 preview; GA build 0813 since 2026-08-13 — current Pro, `deepseek-v4-pro`)
+
+DeepSeek continues V4-Pro after 2026-09-14 (*"continue providing API services for DeepSeek V4 Pro"*); the id serves `DeepSeek-V4-Pro-0813`.
 
 ### Headline facts
 
-- **Architecture:** 284 B total parameters, 13 B activated per token
-- Same 1 M context, same DSA, same family character as V4-Pro — at a much lower cost / latency profile
-- **Official release 2026-07-31** (`deepseek-v4-flash` name unchanged; the `-0731` build is the same architecture as the Preview, re-post-trained) — Terminal-Bench 2.1 82.7, DeepSWE 54.4, CyberGym 76.7, Toolathlon 70.3 (DeepSeek's own harness figures)
-- **Self-host viable** at a much smaller hardware footprint than V4-Pro
+- **Architecture:** 1.6T total / 49B activated, MoE (reported figure); 1M context; **text-only** (vision lives in `deepseek-flash`)
+- **GA update (2026-08-13):** agentic gains (Terminal Bench 2.1 87.9, DeepSWE 62.7 from 12.8 on the preview — vendor figures); native OpenAI Responses API surface with Codex configuration; the effort ladder of rule #5
+- **Sampling differs from Flash:** in thinking mode `top_p` is ignored (*"fixed at 0.95 when tool calling is enabled, otherwise 1.0"*); in non-thinking mode it takes effect
 
-### Wording adjustments from V4-Pro → V4-Flash
+### Wording behaviors specific to V4-Pro
 
-- **More granular spec needed** — Flash is less forgiving of vague constraints
-- **Stronger user-prompt priority** — the smaller model leans harder on the user instruction
-- **Tighter context budgets** — even though nominal context is 1 M, Flash reasoning degrades earlier than Pro
+- **All family rules** (user-prompt priority, XML-tagged context, JSON-in-prose) are the V4-era baseline here; none was re-measured by the atlas on 0813.
+- **Tool-use gap vs the closed flagships narrowed but did not close** with GA (Artificial Analysis Index 53 at GA — secondary). For long-horizon agentic loops where tool reliability dominates, the closed frontier may still be the better target; for scoped reasoning + tool use V4-Pro is competitive at much lower cost.
 
-### When V4-Flash specific tuning helps
+### When V4-Pro specific tuning helps
 
-- Cost-sensitive production agents
-- High-volume batch tasks
-- Latency-critical interactive UIs where V4-Pro's reasoning depth isn't needed
-
----
-
-## DeepSeek V4-Flash-Vision-Exp (August 21, 2026 — experimental vision sibling; id now routed to V4.1 Flash)
-
-The family's first multimodal model — the answer to "V4 is text-only". Released 2026-08-21 per the official changelog; accessed with `model='deepseek-v4-flash-vision-exp'`. It is the V4-Flash text model with image / screenshot understanding added; **on pure-text benchmarks it is on par with V4-Flash, and on agent benchmarks requiring visual understanding it lands close to Claude Opus 4.8** (official claim; third-party coverage: beats Opus 4.8 on 3 of 11 agent benchmarks).
-
-### Headline facts
-
-- **API id:** `deepseek-v4-flash-vision-exp` (experimental build — versioned like `-exp` models, no stability promise)
-- **Text capability:** on par with official V4-Flash (agent, reasoning, world knowledge)
-- **Vision-agent benchmarks** (DeepSeek Harness minimal mode, max effort, topp 0.95, temperature 1.0): Terminal Bench 2.1 83.9, NL2Repo 57.7, DeepSWE 59.3, DSBench-Hard 63.6, ApexBench (Pass@1) 36.5, Agents' Last Exam 27.3, Chartography 64.3, ZeroBench (Pass@5) 35.0
-- **Formats:** JPEG, PNG, GIF, WebP (detected from file content, not name/MIME); max 600 images per request; auto-resize → up to **384 tokens per image** (2000×2000 and 5000×5000 bill the same); max 8192 px per side (drops to 4096 px with 15+ images)
-- **Transport:** standard OpenAI-compatible Chat Completions (base64 / URL / Files API `file_id`), Anthropic-compatible `/messages` surface, and OpenAI Responses API (`input_image` parts)
-- **`detail` field** on image inputs: `low` (downscaled 512×512), `high`/`original` (kept), `auto` (currently = original) — a tuning lever for cost vs fidelity
-
-### Wording behaviors that matter
-
-1. **Images live in user messages only — structurally reinforced rule #1.** Images in `system` or `assistant` messages return a 400 error; only `deepseek-v4-flash-vision-exp` accepts images at all (other models 400 with "This model does not support image"). This is the family's user-prompt-priority made *structural* for multimodal content: the visual context *cannot* ride in the system turn. A prompt review on this model should never place task-critical visual data in system position — move it to user blocks even where the system body otherwise stays.
-2. **Same thinking regime as V4-Flash** — effort model (`thinking` toggle + `reasoning_effort` low/high/max, rule #5 applies); benchmarks above were run at `max`. Reasoning is not a prose lever here either.
-3. **Prompt the text around images explicitly** — the model does not invent which image deserves attention; name the image or the order ("in the first screenshot…", "comparing chart 2 and 3…") when the task is selective.
-4. **Family rules #2 (XML context structure) and #6 (JSON-in-prose) carry over unchanged** for mixed text+image tasks.
-
-### When V4-Flash-Vision-Exp specific tuning helps
-
-- Screenshot-driven agent loop (UI automation, visual QA, chart extraction) where DeepSeek economics beat the closed vision flagships
-- Cost-sensitive multimodal pipelines — text parity with V4-Flash means the vision surcharge buys only the encoder
+- Complex reasoning workloads where cached-prompt economics are the actual win (rule #8)
+- Tightly scoped coding (specific function, specific bug) — literalism is a strength
+- Long-context retrieval (under ~500K for reasoning, ~750K for retrieval — rule #9)
 
 ### When NOT to invest
 
-- Long-horizon closed-frontier agentic work (same gap as V4-Flash, see V4-Pro section)
-- Tasks where the vision benchmark gap to Opus-class multimodal models matters (official wording: "close to" Opus 4.8, not ahead)
-
----
-
-## DeepSeek V3.2 / V3.2-Speciale (February 15, 2026 — legacy)
-
-### Headline facts
-
-- **Released:** February 15, 2026 — "fundamentally shifted the competitive landscape" at the time
-- **V3.2-Speciale:** high-compute variant
-- **Architecture predates DSA** — historical token-cache economics apply (no $0.028/M caching)
-- **Multi-turn API:** `reasoning_content` was **rejected** on input — the reverse of V4
-
-### When V3.2 specific tuning matters
-
-- Production stacks still on V3.2 that haven't migrated to V4
-- Cost-sensitive deployments where V3.2 pricing wins (V4 may be cheaper now, but historic deployment lock-in matters)
-
-### Migration V3.2 → V4
-
-Primary breaking changes:
-- **API:** `reasoning_content` round-trip behavior inverts. Multi-turn flows that worked on V3 silently break on V4 (or vice versa).
-- **Prefix cache hashing:** differs between V3.2 and V4 — caches don't transfer.
-- **Tokenizer specifics:** if you hard-coded V3.2 tokenizer assumptions, audit before the port.
-
-Wording-side, the rules don't change much (user-prompt priority, XML context structure, JSON-in-prose all worked on V3.2 and continue to work on V4). The migration cost is API-level, not prompt-level.
-
----
-
-## DeepSeek R1 (lineage note)
-
-R1 was the reasoning-first variant in the V3 era. Key historical facts that affect prompt-atlas reviews when the user mentions R1:
-
-- **Tool calls and reasoning were mutually exclusive** — V4 unified them
-- **`reasoning_content` was rejected** on multi-turn input (same as V3.2)
-- **R1-era prompts** that worked around the tool/reason exclusion can be simplified on V4
-
-If you encounter a prompt that explicitly says "first reason, then in a follow-up call use the tool" and the target is V4, flag it as obsolete and simplify.
+- Long-horizon autonomous agents — the closed frontier leads on this axis
+- Visual / multimodal input — not supported on this id; target `deepseek-flash`
 
 ---
 
 ## Cross-model wording principles (DeepSeek side)
 
-Mirror of the family-wide section, distilled for cross-model reviews:
-
-- **User-prompt priority** (opposite to every other vendor) — DeepSeek's signature divergence
-- **Brief system prompt** — system overuse is the #1 failure mode
-- **XML-tagged context with `relevance` attrs** — 92% vs 45% accuracy gap
+- **User-prompt priority** (opposite to every other vendor) — practitioner rule, twice not reproduced on V4-Flash-0731; measure on the current model
+- **Brief system prompt** — system overuse is the #1 reported failure mode
+- **XML-tagged context with `relevance` attrs** — practitioner 92% vs 45%
 - **Demand JSON in prose AND set `response_format`** — both, not either
-- **Effort-model thinking lever** — `thinking` toggle + `reasoning_effort` `low`/`high`/`max` (default enabled, effort `high`; Anthropic surface adds `none` as the disable); the old `off`/`high`/`max` triplet is obsolete since 2026-08-13
-- **Tool calls work in thinking mode** — V4 unified the lineage
-- **`reasoning_content` round-trip on V4 multi-turn** (API breaking change from V3)
+- **Effort-model thinking lever** — `thinking` toggle + effort strings, three real levels (`low`/`high`/`max`; `minimal`/`medium`/`xhigh`/`ultra` are aliases); off via `thinking.type: disabled` or Responses `effort: none`; open weights 1–100 with 50/75/100
+- **Tool calls work in thinking mode**
+- **`reasoning_content` round-trip with tools** (400 if missing); without tools it is dropped
 - **Slightly more literal than Claude** — spell scope, boundaries, success criteria
-- **Cache-hit economics** invert compression — front-load stable content
-- **1 M nominal, ~500 K reasoning ceiling** — split retrieval and reasoning stages for very long context
-- **No standard HF Jinja templates** — DeepSeek-specific encoding required
+- **Cache-hit economics** reward byte-stable front matter
+- **1M nominal, ~500K reasoning ceiling** (V4 reports) — split retrieval and reasoning stages
+- **No standard HF Jinja templates** — DeepSeek-specific encoding, generation-specific tool markup
+- **V4.1 Flash 1017 writes shorter** — re-check carried-over brevity lines
 
 ---
 
 ## Cross-vendor rules (when DeepSeek is one of several targets)
 
-DeepSeek's user-prompt-priority rule is the **load-bearing cross-vendor question**. If a single prompt must run on DeepSeek V4 **and** Claude / GPT / Gemini / Kimi / GLM / frontier Qwen:
+DeepSeek's user-prompt-priority rule is the **load-bearing cross-vendor question**. If a single prompt must run on DeepSeek **and** Claude / GPT / Gemini / Kimi / GLM / frontier Qwen:
 
 ### Option A — write for DeepSeek, accept slight overhead on others
 
-Move the bulk of instruction into the user message. Other vendors will read it from there with no penalty (they tolerate instruction in either system or user; just slightly prefer system). Cost: a leaner system prompt may look "incomplete" in tools that surface system content to humans, but the actual model behavior is unaffected.
+Move the bulk of instruction into the user message. Other vendors read it from there with little penalty. Cost: a lean system prompt may look "incomplete" in tools that surface system content to humans.
 
-### Option B — write for the others, accept worse DeepSeek behavior
+### Option B — write for the others, accept possibly worse DeepSeek behavior
 
-Bulk in system. Acceptable if DeepSeek is a tertiary target and you're tuning primarily for Claude / GPT / Gemini. Expect ~85% of DeepSeek failures attributable to this.
+Bulk in system. Acceptable if DeepSeek is a tertiary target. The ~85% failure attribution is a practitioner figure that did not reproduce in two atlas measurements — measure before paying for Option A.
 
 ### Option C — maintain a DeepSeek-specific override
 
 If the artifact is `AGENTS.md`, ship an `AGENTS.deepseek.md` override that replaces the system bulk with a brief role and moves the rest into a template injected into the user message.
 
-**Recommended default:** Option A unless the user has explicit reason to favor others. The cost of Option A on non-DeepSeek vendors is small; the cost of Option B on DeepSeek is large.
+**Recommended default:** Option A unless the user has a reason to favor the others; for an existing, working system-prompt agent, measure first.
 
 ### Cross-vendor wording table addendum (DeepSeek-specific)
 
-| Axis | Direction on DeepSeek V4 | Cross-vendor compromise |
+| Axis | Direction on DeepSeek | Cross-vendor compromise |
 |---|---|---|
-| Instruction placement | **user prompt** (system stays brief) | move bulk to user; system is one-line role |
-| XML context structure | helps strongly (92% vs 45%) | use XML; works on Claude / GPT / Gemini / Kimi too |
-| JSON-in-prose demand | required (with `response_format` redundant safety) | demand JSON in prose universally — costs nothing on other vendors |
-| Cache-hit front-loading | helps strongly ($0.028/M) | works on all vendors, just less dramatically |
-| Tool-use in thinking | works | safe on V4; other vendors don't have this conflict |
-| `reasoning_content` round-trip | mandatory | client-library concern, not wording |
+| Instruction placement | **user prompt** (system stays brief) — practitioner rule, measure | move bulk to user; system is one-line role |
+| XML context structure | helps strongly (practitioner 92% vs 45%) | use XML; works on Claude / GPT / Gemini / Kimi too |
+| JSON-in-prose demand | required (with `response_format`) | demand JSON in prose universally |
+| Cache-hit front-loading | helps strongly (cache hit ~1/30–1/50 of a miss) | works on all vendors, less dramatically |
+| Tool-use in thinking | works | safe |
+| `reasoning_content` round-trip | mandatory with tools | client-library concern, not wording |
+| Length instructions | V4.1 Flash 1017 is terser than its predecessor | state length as a task requirement |
 
 ---
 
 ## Source notes
 
-DeepSeek V4 documentation and practitioner guides are still maturing. The behaviors documented here come from:
+- DeepSeek API changelog, [api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates) — read 2026-10-31 (raw): the 2026-10-17 V4.1-Flash-1017 entry (*"reduced the model's task runtime and output length"*, id unchanged), 2026-09-10 V4.1 Flash (native multimodal; V4 Flash and Vision-Exp retired, ids routed), 2026-08-21 Vision-Exp, 2026-08-13 V4-Pro GA (effort `low`/`high`/`max`, Responses API), 2026-07-31 V4-Flash-0731 (*"only re-post-trained"*), 2026-04-24 V4 (`deepseek-chat`/`deepseek-reasoner` discontinuation 2026-07-24), 2025-12-01 V3.2, 2025-09-29 V3.2-Exp, 2025-09-22 V3.1-Terminus, 2025-08-21 V3.1, 2025-05-28 R1-0528. Earlier reads 2026-08-19 / 08-29 / 09-24 (the 09-24 read was a WebFetch summary)
+- DeepSeek news post [news261017](https://api-docs.deepseek.com/news/news261017) — read 2026-10-31 (raw): *"Stronger benchmark performance, faster task completion, and shorter outputs than the previous version"*
+- [Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing) — read 2026-10-31 (raw): MODEL VERSION `DeepSeek-V4.1-Flash-1017` / `DeepSeek-V4-Pro-0813`, Vision ✓ only on `deepseek-flash`, legacy-id routing note, cache-hit vs cache-miss rates (ratio used in rule #8); neither `deepseek-chat` nor `deepseek-reasoner` listed
+- [Thinking-mode guide](https://api-docs.deepseek.com/guides/thinking_mode) — read 2026-10-31 (raw HTML; the toggle row spans the OpenAI and Anthropic columns, and the Responses cell `reasoning.effort` none/low/high/max spans both rows — earlier atlas text had the Anthropic and Responses fields swapped): default `high`, alias table incl. `minimal` → low and `ultra` → max, `top_p` behavior per model, `reasoning_content` pass-back rules (400 with tools)
+- HF [DeepSeek-V4.1-Flash-1017 card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/raw/main/README.md) and [encoding README](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash-1017/raw/main/encoding/README.md) — read 2026-10-31 (raw): minor update, sampling `temperature` 1.0 / `top_p` 1.0 / `max_tokens` ≥ 256K, effort aliases 50/75/100 default 75, mid-conversation `<｜System｜>`, `latest_reminder` role, `drop_thinking`, DSML leading-space change, the injected tool block's MUST lines, images in user content blocks
+- HF [DeepSeek-V4.1-Flash card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/raw/main/README.md) — read 2026-10-31 (raw): 552B / 8B prefill / 16B decode, native multimodal, integer 1–100 effort, `top_p` *"0.95 or 1.0"*
+- HF [DeepSeek-V4-Flash-DSpark card](https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-DSpark/raw/main/README.md) — read 2026-10-31 (raw): *"is **not** a new model"*; HF API list for `deepseek-ai` (raw, 2026-10-31) — repo creation dates in the lineage table
+- DeepSeek's vision guide ([api-docs.deepseek.com/guides/vision](https://api-docs.deepseek.com/guides/vision)) — last read 2026-08-29 for the Vision-Exp id; **not re-read for V4.1** (hence the `?` on image placement)
+- Datanorth's V4-Pro-0813 coverage (datanorth.ai, 2026-08-14) — AA Index 53 (secondary)
+- DeepSeek V4 practitioner guides (deepseekai.guide, skywork.ai), the CodersEra V4 vs V3.2 comparison, the BentoML "Complete Guide to DeepSeek Models" — the source of rules #1, #2, #6, #7, #9 and their percentages
 
-- DeepSeek's API changelog re-read 2026-09-24 ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/)) — the 2026-09-10 V4.1 Flash entry (`deepseek-flash`, old ids routed, V4-Pro continues); the thinking-mode guide re-read the same day (string effort values, `deepseek-flash` example) and the [V4.1 Flash model card](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash) (552B / 8B–16B active, multimodal, MIT, integer 1–100 effort). Pages were read through WebFetch (a small model's summary), quotes checked against two pages that agree
-- DeepSeek's official API changelog ([api-docs.deepseek.com/updates](https://api-docs.deepseek.com/updates/), read 2026-08-29) — the 2026-08-13 V4-Pro GA entry (effort levels `low`/`high`/`max`, Responses API + Codex adaptation, peak/off-peak pricing from 16.08), the 2026-07-31 V4-Flash official release, and the **2026-08-21 V4-Flash-Vision-Exp entry** (benchmark table under DeepSeek Harness minimal mode; "multimodal agent capabilities close to Opus-4.8")
-- DeepSeek's official vision guide ([api-docs.deepseek.com/guides/vision](https://api-docs.deepseek.com/guides/vision), read 2026-08-29) — image input methods (base64 / URL / Files API), `detail` levels, token billing (≤384 tokens/image), limits (600 images/request, 48 MiB body, 32/64 MiB per image), and the user-message-only restriction (400 on system/assistant)
-- DeepSeek's official thinking-mode guide ([api-docs.deepseek.com/guides/thinking_mode](https://api-docs.deepseek.com/guides/thinking_mode)) — the OpenAI / Anthropic / Responses API parameter formats and the effort mapping table; **"thinking mode is enabled by default, with the default effort being `high`"**
-- Independent pricing reporting (computerworld.com, 2026-08) — cache-hit tariffs up +52% to +1100%; off-peak = half of peak
-- Datanorth's V4-Pro-0813 coverage (datanorth.ai, 2026-08-14) — GA date, benchmark context (AA Index 53), Harness v0.1 open-sourced under MIT
-- DeepSeek V4 practitioner guides (deepseekai.guide, skywork.ai), the CodersEra V4 vs V3.2 comparison, the BentoML "Complete Guide to DeepSeek Models"
+The strongest documented claims are the **`reasoning_content` round-trip** and the **effort surface** (both vendor pages). **User-prompt priority** is practitioner-sourced and twice not reproduced on an archived build — treat it as a measure-first default. Cache economics are vendor-priced; the ~500K reasoning ceiling is a V4-era practitioner report.
 
-The strongest claims — **user-prompt-priority** and the **`reasoning_content` round-trip** — are documented across multiple practitioner sources and are repeatable. Treat them as load-bearing. Other axes (cache economics, 1 M context with 500 K reasoning ceiling) are more speculative and worth measuring before committing to a high-stakes prompt design.
-
-DeepSeek does not (as of May 2026) publish an official "prompt best practices" document in the way Anthropic and OpenAI do — guidance comes from the model card, release notes, and community practitioner guides. Treat this file as the synthesis it is.
+DeepSeek publishes no official prompting guide for V4 or V4.1 (checked against the changelog, news and both V4.1 cards on 2026-10-31) — guidance comes from model cards, the encoding README, release notes and practitioner guides. Treat this file as the synthesis it is.

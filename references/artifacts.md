@@ -128,7 +128,7 @@ The body is the system prompt the skill runs with. Key rules:
 
 Aim for under ~500 lines. A bloated SKILL.md pays the full cost on every trigger. Move detail to reference files and script helpers.
 
-### When the SKILL.md is for Codex (`.codex/skills/`)
+### When the SKILL.md is for Codex (`.agents/skills/`; older `.codex/skills/`)
 
 Same wording rules as Claude SKILL.md. Two Codex-specific notes:
 
@@ -188,14 +188,14 @@ A subagent body over ~150 lines is almost always too long. Subagents should be f
 Same wording rules above for description and body. Codex-specific frontmatter additions:
 
 - **`model_reasoning_effort`** (`none` / `low` / `medium` / `high` / `xhigh`; GPT-6 Astra: no `none`, ladder `low` … `max`) — biggest non-wording lever for reasoning depth. Surface it before rewriting the body. If effort is `high`, strip step prescriptions from the body — they're redundant.
-- **`model`** — pin the GPT-5.x version when the body assumes specific behavior (e.g., 5.5-only outcome-first phrasing).
+- **`model`** — pin the model when the body assumes specific behavior (e.g., `gpt-6.1-sol`, which has no `none` effort).
 - **Outcome-first body**: Codex subagents inherit GPT-5.x's outcome-first preference; bodies that prescribe steps verbatim are GPT-5-suboptimal. Replace step lists with outcome + "typical sub-tasks, choose order yourself".
 
 Full Codex-specific rules in `agentic-systems/codex.md` § "Codex subagents".
 
 ---
 
-## Slash-command prompts (.claude/commands/*.md, .codex/commands/*.md)
+## Slash-command prompts (.claude/commands/*.md; Codex custom prompts — deprecated)
 
 A slash command's file body is the prompt that runs when the user types `/command-name`. Since the user triggers the command explicitly, the description is less critical, but the body still needs to be well-written.
 
@@ -220,15 +220,13 @@ Use a skill when:
 
 For skills with side effects, add `disable-model-invocation: true` so they only fire on explicit `/name`.
 
-### When the slash command is for Codex (`.codex/commands/`)
+### When the "slash command" is a Codex custom prompt
 
-Same body rules above. Codex-specific notes:
+Codex deprecated custom prompts (changelog 2026-01-22: *"Use skills for reusable instructions and workflows instead."*). Review such a file as a skill to convert: the description now matters (a skill can trigger implicitly — or set `allow_implicit_invocation: false`), and the skills page documents no `$ARGUMENTS` placeholder, so don't carry it over.
 
-- **`argument-hint` frontmatter** improves typeahead UX in Codex CLI — declare it for commands that take a structured argument (PR number, file path, etc.).
-- **`$ARGUMENTS` placeholder** works the same way as on Claude Code.
 - **Approval mode interaction**: Codex's default approval mode (`auto` / `on-request` / `manual`) decides whether destructive actions pause for confirmation. Don't assume the agent will pause — write explicit "summarize and pause for approval" wording into the body if reversibility matters.
 
-Full Codex-specific rules in `agentic-systems/codex.md` § "Codex slash commands".
+Full Codex-specific rules in `agentic-systems/codex.md` § "Codex custom prompts" (deprecated — convert to a skill).
 
 ---
 

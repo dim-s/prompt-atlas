@@ -2,7 +2,7 @@
 
 Companion to [matrix-small.md](matrix-small.md) and [techniques-small.md](techniques-small.md).
 
-These are concrete techniques that work on frontier models (Claude, GPT-5.x, Gemini 3) but **regress small local models (2-9B)** when applied. Every anti-pattern listed has been reproduced on our `nl_dsl_game` / `nl_rules_farm` suites or has documented vendor / research backing.
+These are concrete techniques that work on frontier models (current Claude, GPT, Gemini) but **regress small local models (Class 2: dense 2–9B, or MoE ≤ ~9B active / ≤ ~35B total, see `matrix-small.md`)** when applied. Every anti-pattern listed has been reproduced on our `nl_dsl_game` / `nl_rules_farm` suites or has documented vendor / research backing.
 
 When reviewing a small-model prompt, scan for these. Each is a `[CRITICAL]` or `[IMPROVE]` finding when found.
 
@@ -67,6 +67,10 @@ extra_body = {
 **What to do instead:**
 Default to `thinking=off` across all small-model invocations. Pass the multi-provider off params (`techniques-small.md § Triggering thinking-off across providers`). Reserve `thinking=on` for tasks that genuinely need multi-step planning AND when the model is ≥7B AND when you can validate output is not truncated.
 
+**When the model has no working off-switch** (LFM2.5-24B-A2B, whose template always opens `<think>`; Mellum2.1 Thinking, "a thinking model" with no documented off-switch; Dory's reasoning "always on in vLLM"; LFM3, where `enable_thinking=False` "can be inconsistent"), the default above cannot be applied. Budget `max_tokens` for the trace, strip it before parsing, and don't write "don't think" in the prompt, because prose is no stand-in for a missing switch. If thinking-off is a hard requirement of the task, flag the model choice instead of the prompt. Behavioral cost on these models is `?` (unmeasured). See `models/small-local.md`.
+
+**When the switch has three states** (MiniCPM5: `enable_thinking` absent means the model decides), omitting the kwarg is not "off". Pass `False` explicitly.
+
 **When the user has a model card that says "supports thinking" or "reasoning model"**: that's a capability, not a recommendation. For compile-time tasks (extract / classify / NL→DSL / route), thinking-off is correct on 2-3B even if the card showcases thinking-on examples.
 
 ---
@@ -128,6 +132,7 @@ client.chat.completions.create(
 **What to do instead:**
 - **If you don't need tools**: stay in JSON mode with `response_format: {"type": "json_object"}` or `json_schema` (per provider, see `matrix-small.md`).
 - **If downstream framework requires tools**: stay in tools mode but add **3–5 few-shot tool-call examples in system** demonstrating each verb and the error path. The model needs in-context demonstrations to replace the missing training-data fluency.
+- **Write those examples in the model's native call format**, not OpenAI JSON, when the template defines another one: XML for MiniCPM5, Dory and LFM3; Pythonic for LFM2.5-24B-A2B (which switches to JSON calls when the system prompt asks for them, per the vendor). Some templates inject their own tool-format instructions into the system prompt (MiniCPM5 guidelines, Dory's `<IMPORTANT>` reminder), so don't add a second, conflicting copy.
 
 **Backing:** Phi-4-mini model card (Microsoft, official); our reproduction on Gemma 4 e2b.
 
@@ -201,10 +206,10 @@ client.chat.completions.create(
 You're working alongside the player as a thoughtful collaborator. They expect you to anticipate adjacent concerns, push back when they suggest something risky, and steelman their idea before agreeing. Default to warm prose, not bullets. Treat their request as a minimum — raise the next obvious move they didn't think of.
 ```
 
-This is the **creative-domain kernel from `principles.md` § Pattern: creative-domain kernel for Opus 4.7**. It's load-bearing for Opus 4.7 in advisory roles, and it's a documented win on frontier models.
+This is the **creative-domain kernel** (`patterns.md` § Pattern: creative-domain kernel; snippets in `techniques.md §25`). It was written for Claude Opus in advisory roles and is a documented win on frontier models.
 
 **Why it regresses small models:**
-- "Anticipate adjacent concerns" / "steelman" / "push back" — these are hint-and-vibes phrases. 2-3B models are highly literal — they can't extrapolate from vibes the way Opus 4.7 can
+- "Anticipate adjacent concerns" / "steelman" / "push back" — these are hint-and-vibes phrases. 2-3B models are highly literal — they can't extrapolate from vibes the way a frontier model can
 - "Default to warm prose, not bullets" interpreted literally — model emits a long disclaimer paragraph instead of structured output
 - "Treat request as minimum" — model starts inventing fields and actions not in the input (substitution bias triggered)
 - Tone/role framing competes for attention with task-critical structural rules
@@ -306,6 +311,7 @@ client.chat.completions.create(
 **What to do instead:**
 - **`temperature=0.1`** is a safer default for structured-output tasks — still nearly deterministic, breaks repetition loops, matches our project default
 - For tasks where you genuinely need full determinism: `temp=0` + low `repeat_penalty` setting (1.1-1.2 on llama.cpp), AND test on a sample before committing
+- **Where the vendor card gives sampling values, they beat this project default**, and the opposite failure exists. MiniCPM5-2B's card recommends `temperature=1.0, top_p=0.95, min_p=0.0` and warns that llama.cpp's default `min_p=0.05` "can lead to repetitive output". Dory's card recommends 1.0 / 0.95. LFM3 and LFM2.5 recommend 0.1 for general tasks, and Ministral 3 "below 0.1". A loop on llama.cpp can be the sampler (`min_p`, `top_k`), not the prompt, so check the harness before you rewrite.
 - Variance reminder: `temp=0.1` on 32-case suite gives ±10pp run-to-run. Any effect <10pp is within noise. See `FINDINGS.md`.
 
 ---

@@ -1,6 +1,8 @@
 # Codex CLI specifics — wording rules per artifact
 
-This file covers wording rules specific to OpenAI Codex CLI artifacts. For the underlying GPT-5.x model behavior, read `../models/gpt.md` first — Codex layers its own runtime conventions on top of those.
+This file covers wording rules specific to OpenAI Codex CLI artifacts. For the underlying GPT model behavior (GPT-6.x, GPT-5.6), read `../models/gpt.md` first — Codex layers its own runtime conventions on top of those.
+
+Docs location: Codex documentation moved from developers.openai.com/codex to learn.chatgpt.com/docs.
 
 Read this file when:
 - The vendor identified in Step 2a of `SKILL.md` is OpenAI / Codex, OR
@@ -48,6 +50,10 @@ Codex doesn't error when files past the cap are dropped — they just aren't loa
 
 Codex `AGENTS.md` is plain markdown. Don't wrap it in YAML frontmatter — Codex doesn't parse it and the user just sees `---\nname: ...\n---` as the first block of the file.
 
+**6. Memories are a second instruction source next to `AGENTS.md`.**
+
+Codex CLI 0.165.0: *"Enabled memory v2 by default for fresh profiles and added support for importing external-agent memories into it."* The changelog says nothing about precedence between memories and `AGENTS.md`. When a Codex agent acts against a rule that is in `AGENTS.md`, check its memories (including ones imported from another agent) before rewriting the rule; keep standing rules in `AGENTS.md`, where a reviewer can see them. GPT-6 Astra's documented sensitivity to *"skills and other files"* (`../models/gpt.md` § GPT-6 Astra) makes stray instructions in any of these inputs more costly.
+
 ### Symptoms → wording fixes (Codex-specific)
 
 | Symptom | What's probably wrong |
@@ -70,8 +76,8 @@ Codex supports subagents conceptually similar to Claude Code's. The subagent def
 ### Frontmatter fields that affect wording review
 
 Optional fields the parent session inherits unless overridden:
-- `model` — e.g., `gpt-5.5`, `gpt-5.4`, `gpt-5.3-codex`. The body's wording must be tuned for this specific model — read the matching section in `../models/gpt.md`.
-- `model_reasoning_effort` — `none` / `low` / `medium` / `high` / `xhigh` (GPT-6 Astra: no `none`; its ladder is `low` … `max`). This is the **single biggest non-wording lever** affecting subagent behavior. If the user reports under-reasoning, raise this before rewriting the body.
+- `model` — e.g., `gpt-6.1-sol`, `gpt-6-luna`, `gpt-6.1-terra`. The body's wording must be tuned for this specific model — read the matching section in `../models/gpt.md`. A subagent still pinned to `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.3-codex` or `gpt-5.2` is a finding under ChatGPT sign-in: those are retired or deprecated in Codex (GPT-5.5 since 2026-10-14, replaced by `gpt-6.1-sol`, or `gpt-6-luna` on Free / Go).
+- `model_reasoning_effort` — the ladder is per model: `none` … `max` on GPT-6.1 Terra, GPT-6 Sol, GPT-6 Luna and GPT-5.6; `low` … `max` with no `none` on GPT-6 Astra and GPT-6.1 Sol (`../models/gpt.md` § GPT-6 family). This is the **single biggest non-wording lever** affecting subagent behavior. If the user reports under-reasoning, raise this before rewriting the body.
 - `description` — the delegation trigger. Same wording rules as Claude subagent descriptions in `../artifacts.md`.
 
 ### Wording differences from Claude subagents
@@ -80,9 +86,11 @@ Optional fields the parent session inherits unless overridden:
 
 A Claude subagent body might say "before answering, list edge cases, then evaluate each". On a Codex subagent with `model_reasoning_effort: high`, that prose is redundant — the model is already reasoning that deeply. Strip step prescriptions when effort is high; keep them when effort is low/none.
 
+Since Codex CLI 0.165.0 (2026-10-27) *"reasoning effort changes during a conversation"* are enabled by default for supported models, and 0.164.0 added inline `/model` arguments for model, effort and speed. Depth is now a per-turn setting the user changes on the fly — a line in `AGENTS.md` or a subagent body that tries to set depth ("think harder on migrations") competes with that setting instead of replacing it. Name the task's difficulty; leave depth to the knob.
+
 **2. Outcome-first description.**
 
-Codex subagents inherit GPT-5.x's outcome-first preference. The body should say what the agent produces, not how it works. Compare:
+Codex subagents inherit GPT's outcome-first preference. The body should say what the agent produces, not how it works. Compare:
 
 | Claude-style body | Codex-style body |
 |---|---|
@@ -107,9 +115,9 @@ Past that, the subagent's scope is too wide; split. Codex doesn't enforce this w
 
 ---
 
-## Codex skills (SKILL.md in `.codex/skills/`)
+## Codex skills (SKILL.md in `.agents/skills/`)
 
-Codex skills are conceptually similar to Claude skills — a `SKILL.md` with `name` + `description` frontmatter plus markdown body. They live in `.codex/skills/<skill-name>/SKILL.md` (project) or `~/.codex/skills/<skill-name>/SKILL.md` (global).
+Codex skills are conceptually similar to Claude skills — a `SKILL.md` with `name` + `description` frontmatter plus markdown body. Current docs: *"For repositories, Codex scans `.agents/skills` in every directory from your current working directory up to the repository root."* User scope is `$HOME/.agents/skills`, admin scope `/etc/codex/skills`, plus skills bundled with Codex. The December 2025 launch notes used `.codex/skills` / `~/.codex/skills`; the current docs list only `.agents/skills`, and whether the old path still loads is not stated — move skills found there. *"If two skills share the same `name`, Codex doesn't merge them; both can appear in skill selectors."*
 
 ### Frontmatter
 
@@ -121,50 +129,38 @@ Same body rules as Claude skills — open with what + why, "When to use" section
 
 ### Codex-specific notes
 
-**1. Description must work for Codex's delegation heuristic.**
+**1. The skill list has a budget — descriptions are cut first.**
 
-Codex's skill-trigger heuristic is similar to Claude Code's but slightly different — empirically, Codex is somewhat more conservative about auto-invoking. Lean toward more concrete trigger phrasing and explicit "use whenever..." cues.
+*"By default, this list uses at most 2% of the model's context window, or 8,000 characters when the context window is unknown. If many skills are installed, Codex shortens skill descriptions first. For large skill sets, Codex may omit some skills from the initial list and show a warning."* (`skills.max_context_tokens` raises it, up to 10,000 tokens.) The docs' wording rule follows from that: *"write concise descriptions with clear scope and boundaries. Front-load the key use case and trigger words so a host can still match the skill if descriptions are shortened."* A description whose trigger phrases sit in its last sentence is a finding in a repo with many skills.
 
-**2. Skills aren't auto-discovered in some configurations.**
+**2. Description must work for Codex's delegation heuristic.**
 
-If a skill isn't triggering at all, the wording fix may not help — confirm the skill is enabled in the user's `~/.codex/config.toml` or session config first. (This is a config-not-wording issue; flag it, don't try to solve with wording.)
+Codex picks a skill implicitly when the task *"matches the skill `description`"*, or explicitly via `/skills` or a `$skill-name` mention. Empirically, Codex is somewhat more conservative about auto-invoking than Claude Code. Lean toward concrete trigger phrasing and explicit "use whenever..." cues.
 
-**3. Cross-vendor skills are possible.**
+**3. A skill that never triggers may be switched off, not badly worded.**
 
-A `SKILL.md` written generically (no Claude-specific or Codex-specific assumptions) can be reused across vendors with a symlink or a copy. When reviewing such a skill, apply the cross-vendor wording rules from `../models/gpt.md`.
+Two config switches look like a wording failure: `[[skills.config]]` with `enabled = false` in `~/.codex/config.toml`, and `policy.allow_implicit_invocation: false` in the skill's `agents/openai.yaml` (explicit `$skill` invocation still works). Check both before rewriting the description — flag it, don't try to solve it with wording.
+
+**4. Cross-vendor skills are possible.**
+
+A `SKILL.md` written generically (no Claude-specific or Codex-specific assumptions) can be reused across vendors with a symlink or a copy (*"Codex supports symlinked skill folders"*). When reviewing such a skill, apply the cross-vendor wording rules from `../models/gpt.md`.
 
 ---
 
-## Codex slash commands (`.codex/commands/`)
+## Codex custom prompts and `/presets` — reusable prompts are skills now
 
-Markdown body that runs when the user types `/command-name` in Codex CLI. Optional YAML frontmatter for metadata (`description`, `argument-hint`, etc.).
+*"Custom prompts are now deprecated. Use skills for reusable instructions and workflows instead."* (Codex changelog, 2026-01-22; the docs index still lists the page as *"Deprecated. Use skills for reusable prompts"*.) A reusable-prompt file reviewed today should become a skill:
 
-### Wording rules
-
-Same as Claude slash commands (`../artifacts.md` § Slash-command prompts):
-1. Open with the task in 1–2 sentences.
-2. Reference `$ARGUMENTS` (Codex uses the same `$ARGUMENTS` placeholder convention as Claude Code) in context.
-3. Numbered workflow.
-4. Output format.
-5. Keep short — body loads on every invocation.
-
-### Codex-specific notes
-
-**1. Slash commands are explicitly invoked — descriptions matter less for delegation.**
-
-The user types `/foo`, so the description is just for the help menu. Spend the wording budget on the body.
-
-**2. `argument-hint` improves UX.**
-
-If the command takes structured arguments (a PR number, a file path), declare `argument-hint: <PR number>` in the frontmatter — Codex shows it during typeahead.
-
-**3. For commands that mutate state (commits, PRs, deploys), include explicit confirmation wording.**
-
-Codex's default behavior on destructive operations depends on approval mode (`auto` / `on-request` / `manual`). Don't assume the agent will pause — write the confirmation wording into the body if reversibility matters:
+- **Body:** the old slash-command rules carry over — open with the task in 1–2 sentences, a short numbered workflow, the output format, keep it short (it loads on every invocation).
+- **Description:** now it matters. A custom prompt ran only when typed; a skill can also trigger implicitly, so write the description by the skill rules above — or set `allow_implicit_invocation: false` to keep it explicit-only, like the old command.
+- **Arguments:** this file used to describe a `$ARGUMENTS` placeholder for custom prompts; the skills page read 2026-10-31 documents no placeholder — the user's request is the input. Don't carry `$ARGUMENTS` into a skill body.
+- **Commands that mutate state** (commits, PRs, deploys): include explicit confirmation wording. Codex's behavior on destructive operations depends on the approval mode, so don't assume the agent will pause:
 
 > "Before pushing, summarize the diff in 3 lines and pause for user approval. Only proceed after explicit go-ahead."
 
-(This is the action-vs-suggestion-mode lever from `../techniques.md` §9, applied to a Codex slash command.)
+(This is the action-vs-suggestion-mode lever from `../techniques.md` §9.)
+
+**`/presets` is not an artifact type.** Codex CLI 0.164.0 (2026-10-23): *"Save reusable prompts and slash commands in ten numbered /presets slots, with a keyboard menu for quick access."* Read from that wording (no file format is documented), a preset is a saved prompt for the user to fire, not a file the agent discovers; wording rules are those of an ad-hoc prompt (`../artifacts.md` § Ad-hoc prompt). A workflow other people or agents should reuse belongs in a skill.
 
 ---
 
@@ -231,12 +227,22 @@ This mirrors the subagent / skill description rules — same delegation heuristi
 |---|---|---|---|
 | Persistent context file | `CLAUDE.md` (and `AGENTS.md` shared) | `AGENTS.md` hierarchical with `.override.md` pattern | Codex assumes inheritance; rules in sub-dir AGENTS.md need only be the *delta*, not full restatement |
 | Context cap | Soft (context rot beyond ~300 lines) | Hard (`project_doc_max_bytes`, 32 KiB default) | Codex enforces brevity automatically; tune Claude side to match for cross-vendor |
-| Subagent `model:` field | Opus / Sonnet / Haiku | gpt-5.x family + `model_reasoning_effort` | Codex has an additional reasoning knob — use it before rewriting body |
-| Skill location | `~/.claude/skills/<name>/SKILL.md` | `~/.codex/skills/<name>/SKILL.md` | Wording rules identical; check delegation heuristic differences in description aggressiveness |
-| Slash command | `~/.claude/commands/*.md` | `~/.codex/commands/*.md` | Same `$ARGUMENTS` convention; body rules identical |
+| Subagent `model:` field | Opus / Sonnet / Haiku | GPT-6.x / GPT-5.6 + `model_reasoning_effort` | Codex has an additional reasoning knob — use it before rewriting body |
+| Skill location | `~/.claude/skills/<name>/SKILL.md` | `.agents/skills/<name>/SKILL.md` (repo, CWD up to root) / `~/.agents/skills/` | Wording rules identical; Codex's skill list has a budget and shortens descriptions first — front-load triggers |
+| Reusable prompt / slash command | `~/.claude/commands/*.md` | custom prompts deprecated — use a skill; `/presets` saves prompts in the TUI | Convert command files to skills; the description now matters |
 | Hooks | settings.json hooks | `hooks.json` / `config.toml [hooks]` | Wording-equivalent: same "wording vs hook" trade-off applies |
 | Headless | one-shot CLI invocation | `codex exec` | Codex makes this a first-class mode; tune ad-hoc prompts for non-interactive execution |
 | MCP | supported | supported (STDIO + HTTP) | MCP tool descriptions are the same wording surface on both sides |
-| Reasoning depth control | `effort: low/medium/high/xhigh` | `model_reasoning_effort` (same values + `none` — except GPT-6 Astra, which has no `none`) | Both vendors prefer the parameter over wording; `none` is Codex-specific |
+| Reasoning depth control | `effort: low/medium/high/xhigh` | `model_reasoning_effort`, ladder per model (`none` on 6.1 Terra / 6 Sol / 6 Luna / 5.6; not on 6 Astra / 6.1 Sol); changeable mid-conversation since 0.165.0 | Both vendors prefer the parameter over wording; `none` is GPT-only |
 
 When in doubt about a Codex artifact and there's no Codex-specific rule above, fall back to the Claude rule for the same artifact type — they're more often the same than different.
+
+---
+
+## Source notes
+
+- Skill paths, skill-list budget, description rule, `[[skills.config]]`, `agents/openai.yaml` `allow_implicit_invocation`, symlinks: https://learn.chatgpt.com/docs/build-skills.md — read 2026-10-31 (raw).
+- Custom prompts deprecated (2026-01-22); `.codex/skills` in the December 2025 skills launch note; Codex CLI 0.163.0–0.166.0 notes (mid-conversation effort, memory v2, `/presets`, inline `/model`): https://learn.chatgpt.com/docs/changelog (HTML, tags stripped) — read 2026-10-31 (raw). Docs index entry "Custom Prompts: Deprecated. Use skills for reusable prompts": https://learn.chatgpt.com/llms.txt — read 2026-10-31 (raw).
+- GPT-5.5 / 5.4 / 5.2 / 5.3-codex retirement in Codex, GPT-6.1 Terra CLI version: https://learn.chatgpt.com/docs/models.md — read 2026-10-31 (raw).
+- `AGENTS.md` discovery order and the 32 KiB `project_doc_max_bytes` default re-checked against https://learn.chatgpt.com/docs/agent-configuration/agents-md.md — read 2026-10-31 (raw); unchanged.
+- Subagent frontmatter fields, hooks, `codex exec`, MCP: not re-read in this revision.

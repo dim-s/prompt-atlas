@@ -34,16 +34,15 @@ Thanks for considering a contribution. prompt-atlas is built on the **matrix-cit
    - Cross-vendor rules (when this vendor is one of several targets)
    - **Source notes** at the bottom — cite vendor docs, model cards, benchmark publications, independent practitioner guides
 
-3. **Update `SKILL.md`**:
-   - **Step 2b** — add vendor signals so the workflow recognizes the new target
-   - **Step 2c** — add model version options
-   - **Step 3** — add the new model file path to the vendor-specific model file list
+3. **Update `references/lineup.md`** — id, status + date, reasoning knob (param, ladder, default, **whether thinking can be disabled**), section to read. If the vendor ships a delta list ("runs on your old prompts, but…"), add a checklist to **`references/model-audits.md`**. `SKILL.md` lists no versions; touch it only for a new vendor (Step 2b signals, Step 3 file list).
 
-4. **Update `references/models/_universal.md`** if the new vendor changes the cross-vendor compromise (e.g., new opposite-default axis vs Claude / GPT / Gemini).
+4. **Archive what the new model makes stale** (policy in `references/archive/README.md`): a model goes to the archive when its vendor retired or deprecated it, or when it is two or more generations behind and no current section is written as a delta against it. A model still callable but scheduled to retire stays live with a "retiring <date>" note. Move its matrix rows to `archive/matrix-legacy.md` and its section to `archive/models/<vendor>.md`, update the archive table, and grep the live tree for pointers to the moved section.
 
-5. **Update `CHANGELOG.md`** with the date, vendor, and what changed.
+5. **Update `references/models/_universal.md`** if the new vendor changes the cross-vendor compromise (e.g., new opposite-default axis vs Claude / GPT / Gemini).
 
-6. **Update `README.md`** "Coverage" table to include the new vendor.
+6. **Update `CHANGELOG.md`** with the date, vendor, and what changed — each status claim with its source pointer.
+
+7. **Update `README.md`** "Coverage" table to include the new vendor.
 
 ---
 
@@ -102,7 +101,9 @@ When opening a PR:
 ## Files touched
 - references/matrix.md (rows added)
 - references/models/<vendor>.md (new file or updates)
-- SKILL.md (Step 2b/2c/3)
+- references/lineup.md (+ model-audits.md if a delta list exists)
+- references/archive/ (if a model became stale)
+- SKILL.md (Step 2b/3 — new vendor only)
 - CHANGELOG.md
 - README.md (if Coverage table changed)
 
@@ -113,6 +114,7 @@ When opening a PR:
 ## Verification
 [ ] Matrix row uses `?` for unverified axes (no guesses)
 [ ] All sources are cited in the new/updated file's "Source notes" section
+[ ] lineup.md row added; superseded models archived or marked retiring
 [ ] CHANGELOG.md updated
 [ ] README.md Coverage table updated if applicable
 ```

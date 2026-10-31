@@ -79,7 +79,7 @@ The phrase doesn't work on either vendor. The lever is the API parameter (`effor
 
 ### Principle 13 — State scope explicitly
 
-Modern reasoning models, especially Opus 4.7 and GPT-5.5, interpret instructions literally and **will not** silently generalize. If the rule applies to "every section, not just the first", say so.
+Modern reasoning models — every current Claude and GPT — interpret instructions literally and **won't extend a rule to items it wasn't stated for** (GPT-6 Astra does fill *routine* gaps from context, per its guide — scope is still yours to state). If the rule applies to "every section, not just the first", say so.
 
 ### Principle 14 — Treat a new model version as a fresh baseline when the vendor says so
 
@@ -146,9 +146,9 @@ The correct move is to **keep the hint AND add a literal anchor** — preserving
 - **Permission to surface taste-uncertainty**: *"Если не уверен, какой из вариантов лучше — предложи списком, жди выбора. Не выбирай молча."*
 - **Place philosophy at file edges** (top or bottom), not middle — edges survive context rot better.
 
-When this pattern applies: target is a literal model (Opus 4.7 or GPT-5.5) AND the prompt contains deliberate hints-and-vibes framing. If the prompt is already all-literal-rules, skip — nothing to anchor.
+When this pattern applies: target is a literal model (any current Claude, GPT-5.x / 6.x) AND the prompt contains deliberate hints-and-vibes framing. If the prompt is already all-literal-rules, skip — nothing to anchor.
 
-Non-prompt lever: on Claude Code with Opus 4.7, raising `effort` to `xhigh` often restores hint-sensitivity better than any prompt edit.
+Non-prompt lever: raising effort often restores hint-sensitivity better than any prompt edit (first measured on Opus 4.7 at `xhigh`).
 
 ---
 
@@ -178,12 +178,12 @@ Full AGENTS.md cross-tool semantics in `agentic-systems/_common.md`. Claude-Code
 
 A prompt that must work across multiple models or vendors:
 
-1. **Write for the most literal version in scope.** If Opus 4.7 or GPT-5.5 are in the set, default to outcome-first phrasing and explicit scope.
+1. **Write for the most literal version in scope.** If any current Claude or GPT is in the set, default to outcome-first phrasing and explicit scope.
 2. **Avoid leaning on single-model features.** No 1M-context behavior assumptions, no specific reasoning-knob defaults, no tone defaults that read differently across models.
 3. **Use moderate emphasis.** All-caps and "CRITICAL:" only on genuine invariants — works acceptably across the whole range.
 4. **Use structure rather than intensity.** XML tags or clear headings — model-invariant. Emotional intensity — not.
 5. **Prefer positive framing and WHY-based rules.** Negative-only rules without alternatives are fragile.
-6. **Don't hardcode model names.** "You are Claude Opus 4.7" or "You are GPT-5.5" locks you to one model. Use functional roles.
+6. **Don't hardcode model names.** "You are Claude Opus 5.5" or "You are GPT-6.1 Sol" locks you to one model. Use functional roles.
 7. **When a universal prompt isn't enough, split.** Baseline for the weakest model + an "additional guidance" section that cites stronger-model behaviors without mandating them.
 
 Detailed cross-vendor compromises: `models/_universal.md`. The differences themselves: `matrix.md`.
@@ -206,4 +206,4 @@ Two principles can pull opposite directions:
 Resolution rules:
 - **Reliability wins over brevity**: a slightly-too-long prompt still works; a prompt missing its load-bearing clause doesn't.
 - **Coverage wins over filtering at review time**: surface findings even when uncertain; the user filters.
-- **Specificity wins for literal models**: when in doubt about Opus 4.7 / GPT-5.5, add scope rather than trust generalization.
+- **Specificity wins for literal models**: when in doubt about a literal model, add scope rather than trust generalization.

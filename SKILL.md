@@ -1,126 +1,76 @@
 ---
 name: prompt-atlas
-description: Review and improve the WORDING of agent-facing or task-facing prompts. Covers frontier models — Claude, GPT-5.x / GPT-6 Astra / Sol / Luna, Gemini 3.x, Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral frontier, Meta Muse Spark, Tencent Hunyuan — and small local 2-9B models (Gemma, small Qwen, Ministral, Phi, Llama, Granite, RU tunes). Trigger when reviewing CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagents / slash-commands / vendor overrides (AGENTS.deepseek.md etc.) / `suites/<name>/system*.md`. Russian — "проверь мой промпт", "улучши", "адаптируй под <модель>", "почему модель игнорирует / подменяет / не думает". English — "review my prompt", "tune for <model>", "why subagent isn't triggering", "Claude Code router prompt". Focuses on word choice, framing, structure, trigger heuristics — NOT on API params, SDK code, or file layout.
+description: Review and improve the WORDING of agent-facing or task-facing prompts. Covers frontier models — Claude (Fable 5.1, Opus / Sonnet / Haiku 5.5), GPT-6 / 6.1 and 5.6, Gemini 4 Argon and 3.x Flash, Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral Large 4, Meta Muse (Spark / Wonder / Glimmer), Tencent Hunyuan, MiniMax / MiMo / StepFun — and small local 2-9B models (Gemma, small Qwen, Ministral, Phi, Llama, Granite, MiniCPM, LFM, Nemotron, RU tunes). Trigger when reviewing CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagents / slash-commands / vendor overrides (AGENTS.deepseek.md etc.) / `suites/<name>/system*.md`. Russian — "проверь мой промпт", "улучши", "адаптируй под <модель>", "почему модель игнорирует / подменяет / не думает". English — "review my prompt", "tune for <model>", "why subagent isn't triggering", "Claude Code router prompt". Focuses on word choice, framing, structure, trigger heuristics — NOT on API params, SDK code, or file layout.
 ---
 
 # Prompt Tuner
 
-**Methodology:** apply the matrix-citation method — every finding cites a model × axis cell from `references/matrix.md`, so every recommendation is auditable and the user can challenge it from data, not authority.
+**Methodology:** apply the matrix-citation method — every finding cites a model × axis cell from `references/matrix.md` (or a section of a model file), so every recommendation is auditable and the user can challenge it from data, not authority.
 
-Review and improve **how agent-facing prompts are written** — the words, framing, and structure that steer the model's behavior.
-
-A complete review has two halves:
+Review and improve **how agent-facing prompts are written** — the words, framing, and structure that steer the model's behavior. A complete review has two halves:
 1. **What's in the text and written poorly** (Findings)
-2. **What's absent but should be there** given the prompt's purpose (Gap analysis)
+2. **What's absent but should be there** given the prompt's purpose (Gap analysis) — often the higher-impact half.
 
-The second half — gap analysis against documented techniques and known failure modes — is often the higher-impact one.
-
-This skill deals with text wording, NOT with API parameters, code, or where files live. (We surface non-wording levers like "raise `effort` before rewriting the prompt" when relevant.)
+This skill deals with text wording, NOT with API parameters, code, or where files live. (It surfaces non-wording levers like "raise `effort` before rewriting the prompt" as conversation points.)
 
 ## Coverage
 
-Two target classes — the workflow branches on which one applies (see Step 2b).
+Two target classes — the workflow branches on which one applies (Step 2a). **The current model lineup — ids, release status, reasoning knob, and the section to read — is in `references/lineup.md`.** This file never lists versions in detail; when a version matters, look it up there.
 
 ### Class 1 — Frontier agent-facing prompts
 
-**Claude / Anthropic side:** CLAUDE.md, AGENTS.md, SKILL.md, `.claude/agents/*.md`, `.claude/commands/*.md`.
+| Surface | Typical artifacts |
+|---|---|
+| Claude / Claude Code | CLAUDE.md, AGENTS.md, SKILL.md, `.claude/agents/*.md`, `.claude/commands/*.md` |
+| OpenAI / Codex | AGENTS.md, AGENTS.override.md, `.agents/skills/` (older: `.codex/skills/`), `.codex/agents/`, `codex exec` prompts |
+| Google / Gemini CLI | GEMINI.md, AGENTS.md (when configured), `.gemini/skills/`, `.gemini/agents/`, `.gemini/commands/`, headless prompts |
+| Other frontier vendors (Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral, Meta Muse, Tencent Hy, MiniMax / MiMo / StepFun) | system prompts over the vendor API, AGENTS.md / CLAUDE.md routed through Claude Code Router / OpenCode / Cline / Kilo Code / Cursor / OpenClaw, vendor overrides (`AGENTS.glm.md`, `AGENTS.deepseek.md`) |
 
-**OpenAI Codex side:** AGENTS.md, AGENTS.override.md, `.codex/skills/`, `.codex/agents/`, `.codex/commands/`, ad-hoc `codex exec` prompts.
-
-**Google Gemini side:** GEMINI.md, AGENTS.md (when Gemini CLI is configured to read it), `.gemini/skills/`, `.gemini/agents/`, `.gemini/commands/`, headless Gemini CLI prompts.
-
-**Moonshot Kimi side:** AGENTS.md / CLAUDE.md when accessed through Kimi Code CLI or routers; system prompts passed via `platform.kimi.ai` / `platform.moonshot.ai` API (OpenAI- and Anthropic-compatible), the `extra_body.thinking` toggle on K2.x or `reasoning effort` on K3; agent-swarm decomposition prompts.
-
-**Z.ai GLM side:** AGENTS.md / CLAUDE.md routed through Claude Code Router, OpenCode, Cline, Kilo Code, Cursor, or OpenClaw to GLM-5.2 / GLM-5.1 / GLM-5 / GLM-4.6; direct Z.ai API system prompts. Vendor-specific overrides like `AGENTS.glm.md` if the user maintains them.
-
-**Alibaba Qwen frontier side:** system prompts for Qwen3.8-Max / 3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview accessed via **QwenCloud** (the newer official host; OpenAI- and DashScope-compatible) or the legacy **DashScope** surface, Qwen Chat web UI, or Qwen-routed agentic harnesses. **Frontier Qwen only** — small Qwen 2-9B variants belong to Class 2.
-
-**DeepSeek side:** system + user prompts for DeepSeek V4-Pro / V4.1 Flash / V4-Flash / V4-Flash-Vision-Exp / V3.2 accessed via DeepSeek's hosted API, self-hosted endpoints, or cross-tool routers. DeepSeek's unusual user-prompt-priority makes vendor-specific overrides (`AGENTS.deepseek.md`) more common than for other vendors. Note the vision model's structural rule: images are accepted in **user messages only** (400 in system/assistant).
-
-**Tencent Hunyuan side:** system prompts for **Tencent Hy4 preview** (open weights, 770B/49B active, >1M context) accessed via Tencent Cloud TokenHub, OpenRouter, or Tencent products (WorkBuddy, CodeBuddy, Yuanbao, ima). Preview-state family; no vendor prompting guide published yet — see `models/tencent.md`.
+Frontier Qwen only — small Qwen variants are Class 2. DeepSeek's user-prompt-priority makes vendor overrides more common there than elsewhere.
 
 ### Class 2 — Small local model task prompts
 
-**Small-model side:** system prompts targeting 2-9B local models (Gemma 3/4, Qwen 3.5, Ministral, Phi-4-mini, Llama 3.2, IBM Granite 4.2 3B/8B, and fine-tunes). Typical locations:
-- `suites/<name>/system.md` and `suites/<name>/system_<model>.md` (eval / regression harnesses)
-- `prompts/<topic>/<hypothesis>.md` (prompt iteration scratchpads)
-- LM Studio / llama.cpp / Ollama / vLLM system prompts passed at inference time
-- Inline `--system` strings in CLI prompt-harness tools
-
-These are usually **task-facing** (compile-time: extract / classify / NL→DSL / route / score) with structured output, not agent-facing. Different axes apply — see `references/matrix-small.md`.
+System prompts for models run locally on a single-pass task (extract / classify / NL→DSL / route / score): dense 2–9B, or MoE with ≤ ~9B active and ≤ ~35B total (one consumer GPU / a 32–64 GB Mac). Typical locations: `suites/<name>/system.md` and `system_<model>.md`, `prompts/<topic>/<hypothesis>.md`, LM Studio / llama.cpp / Ollama / vLLM / MLX system prompts, inline `--system` strings. Different axes apply — `references/matrix-small.md`.
 
 ### Out of scope (both classes)
 
-`temperature` / `max_tokens` / `reasoning_effort` / `thinking_level` / `extra_body.thinking` / `thinking` toggle + `reasoning_effort` on DeepSeek (`low`/`high`/`max`, default `high`) value tuning, vendor `config.toml` / `settings.json` configuration, MCP server registration, hook scripts, SDK code, LoRA / SFT training data design (`prompt`/`completion` JSONL pair formulation). Those belong to `claude-api`, OpenAI's docs, Google's docs, Moonshot / Z.ai / DashScope / QwenCloud / DeepSeek vendor docs, `update-config`, or project-specific LoRA documentation.
+Parameter *value* tuning (`temperature`, `max_tokens`, `effort` / `reasoning_effort` / `thinking_level` / `thinking` toggles), vendor `config.toml` / `settings.json`, MCP registration, hook scripts, SDK code, LoRA / SFT data design — those belong to `claude-api`, vendor docs, `update-config`, or project docs. Also out of scope: **decision models** (state + typed questions in, calibrated probabilities out — no system prompt to word) and speech-to-speech voice models other than the one voice section in `models/gpt.md`. Legacy models live in `references/archive/` — load it only when a prompt still targets one.
 
-### Reasoning-depth knobs — surface, do NOT embed (all vendors)
+### Reasoning-depth knobs — surface, do NOT embed
 
-Each frontier vendor exposes reasoning depth as a **runtime parameter**, set out-of-band:
+Every current frontier vendor exposes reasoning depth as a **runtime parameter** set out-of-band (Claude `effort`, OpenAI / xAI / GLM / Qwen / Kimi / DeepSeek / Mistral / Meta `reasoning_effort` or `reasoning.effort`, Gemini `thinking_level`, …). The per-model ladder, default and whether thinking can be switched off at all are in `references/lineup.md`.
 
-| Vendor | Parameter | Where set |
-|---|---|---|
-| Claude (Fable 5.1 / Fable 5 / Opus 5.5 / Opus / Sonnet 5 / Haiku) | `effort` (low/medium/high/xhigh/max; **Opus 5.5: default `medium`, thinking cannot be disabled** — `thinking: disabled` → 400) | CLI (`/effort xhigh`), API param, **or subagent frontmatter `effort:`** (`.claude/agents/*.md` — official field, overrides session effort) |
-| OpenAI GPT-5.x | `reasoning_effort` (none/low/medium/high/xhigh; **`max` from 5.6**) | Codex `config.toml`, API param |
-| OpenAI GPT-6 Sol / Luna | same ladder, but **`none` is supported**; `temperature` / `top_p` / `top_logprobs` only at effort `none`; Chat Completions function calling only at `none` | API param (Responses / Chat Completions) |
-| OpenAI GPT-6 Astra | `reasoning.effort` / `reasoning_effort` (low/medium/high/xhigh/max) — **`none` unsupported**; change mid-conversation with a `configuration_update` input item (keeps the prompt prefix cached) | API param (Responses / Chat Completions) |
-| Google Gemini 3.x | `thinking_level` (**3.7 / 3.8 Flash: low/medium/high, default `medium`; `minimal` → error on 3.8**; others: minimal/low/medium/high) | Gemini CLI flags / settings, API param |
-| Moonshot Kimi K3 | `reasoning effort` (low/high/max, default `max`) — **thinking cannot be disabled** | API param |
-| Moonshot Kimi K2.7-Code | **no knob — thinking is forced on** (`forces thinking and preserve_thinking as True`) | n/a — model choice is the only lever |
-| Moonshot Kimi K2.6 / K2.5 | `extra_body={'thinking': {'type': 'enabled'\|'disabled'}}` | API extra_body |
-| Z.ai GLM-5.3-Flash | `reasoning_effort` (low/high/max, default `max`) — same effort model as GLM-5.3 (model card: "defaults to `max` if not passed") | API param; `clear_thinking` flag in the chat template (default `false` — pass `true` for chat) |
-| Z.ai GLM-5.3 | `reasoning_effort` (low/high/max, default `max`) — **thinking cannot be disabled** (`thinking.type` only accepts `enabled`; requests with `disabled` fail) | API param |
-| Z.ai GLM-5.2 | `reasoning_effort` (high/max) + `thinking` toggle | API param (5.2); endpoint default + router-injected `<reasoning_content>` directives as fallback under heavy host prompts |
-| Z.ai GLM-5.1 and earlier | thinking enabled at endpoint by default, no knob | endpoint default + router-injected `<reasoning_content>` directives as fallback under heavy host prompts |
-| Alibaba Qwen3.8-Max | `reasoning_effort` (low/medium/**xhigh**, default `xhigh`) + `enable_thinking` toggle (hosted only); **open-source weights are thinking-only (no off-switch)**; `thinking_budget` / `preserve_thinking` / `/think` `/no_think` (open-source hybrid) | QwenCloud / DashScope API param, Qwen Chat UI |
-| Alibaba Qwen3.8-Flash | `?` — no prompting guide or knob documentation published for Flash yet (hosted `qwen3.8-flash` vs open `Qwen3.8-Flash-Next` split confirmed; effort surface unconfirmed — test before claiming a knob) | ? |
-| Alibaba Qwen3.8-Omni-Flash | `reasoning_effort` — thinking on by default at `xhigh`, `none` disables (secondary source: MarkTechPost; vendor page unread) | QwenCloud / Model Studio API param |
-| Alibaba Qwen3.7-Max | thinking mode toggle | DashScope API param / Qwen Chat UI toggle |
-| xAI Grok 4.7 / 4.6 | `reasoning_effort` (low/medium/high/**xhigh**, default `high`) — **reasoning cannot be disabled**; 4.7 always returns encrypted reasoning (Responses API) | API param |
-| xAI Grok 4.5 | `reasoning_effort` (low/medium/high, default `high`; `xhigh` is treated as `high`) — **reasoning cannot be disabled** | API param |
-| DeepSeek V4-Pro / V4.1 Flash (`deepseek-flash`) / V4-Flash / V4-Flash-Vision-Exp | `thinking` toggle (`enabled`/`disabled` via `extra_body`) + `reasoning_effort` (`low`/`high`/`max` strings — the V4.1 Flash model card's integer 1–100 is not an API value, see `models/deepseek.md` rule #5; default enabled with effort `high`); Anthropic surface `reasoning.effort` none/low/high/max; Responses API `output_config.effort` | API param (OpenAI / Anthropic / Responses surfaces). The old `thinking: "off"\|"high"\|"max"` triplet is obsolete since 2026-08-13 |
-| Tencent Hy4 preview | `?` — no documented knob surface for the preview release | ? — check vendor docs (TokenHub / OpenRouter surfaces) before claiming anything |
-| Meta Muse Spark 1.3 | max reasoning documented as available — parameter name and ladder `?` | ? — check the Meta Model API / Muse Code surface before claiming anything |
+The model **cannot change its own reasoning depth from prose.** Lines like `Use effort: xhigh for this task`, `Think at high level`, `Set thinking_level to medium`, pasted into CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / a subagent body / a slash-command body are **inert text** — the same failure mode as "think step by step" (`antipatterns.md` #31). On several current models the vendor has *measured* that "think less / answer directly" lines don't reduce thinking (Sonnet 5.5, Haiku 5.5), and where thinking cannot be disabled such lines are unimplementable.
 
-The model **cannot change its own reasoning depth from prose**. Lines like `Use effort: xhigh for this task`, `Think at high level`, `Set thinking_level to medium for brainstorm`, `Set thinking: "max" for deep tasks`, pasted into CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagent **prose body** / slash-command body are **inert text** — same failure mode as the "think step by step" antipattern (`antipatterns.md` #31). (The subagent YAML *frontmatter* is the exception — `effort:` there is a real config field, not prose; see below.)
+When raising or lowering effort would help, **say it to the user as a conversation point** — never as an `[ADD]` snippet for the file:
 
-When raising effort would help (creative agent, hints-and-vibes prompt, "think step by step" used as a substitute, kernel install on Opus 4.7, GLM running under a heavy router prompt), **mention it as a conversation point to the user** — never propose it as an `[ADD]` snippet to paste into the artifact:
-
-**One thing `effort` does NOT control, on any Claude:** the length of the visible response (documented for Opus 5; Opus 5.5 is its baseline, not re-documented). This is worth stating explicitly on **Opus 5**, where the two are most often confused — lowering effort there reduces thinking volume without reliably shortening the answer, so "just drop to `medium`" is the wrong advice for a user complaining about verbosity. That one is a wording fix (`techniques.md §19`). Effort remains the right first lever for *depth* complaints (shallow reasoning, thin exploration, flat creative output).
-
-> ✅ "If you're running this on Claude Code, try `/effort xhigh` before we rewrite anything — that often restores the behavior you want and costs nothing."
-> ✅ "If you're on DeepSeek V4, try setting `reasoning_effort: 'max'` (with `thinking` enabled) at the API level before tuning the prompt — the lever is more powerful than wording changes here."
+> ✅ "If you're running this in Claude Code, try `/effort xhigh` before we rewrite anything — it often restores the behavior you want and costs nothing."
 > ❌ `[ADD]` to CLAUDE.md: `Use effort: xhigh for kernel work, medium for brainstorm.`
 
-**Two exceptions where a knob legitimately lives in declarative metadata:**
-1. **Subagent YAML frontmatter (Claude & Codex).** A reasoning knob in the agent-definition frontmatter is config, not prose — legitimate, and the clean way to pin a *fixed* effort per agent (e.g. `high` on a creative subagent). **Claude Code:** `.claude/agents/*.md` supports `effort:` (`low`/`medium`/`high`/`xhigh`/`max`) — an official field that **overrides the session effort** for that subagent (also settable via the `--agents` JSON or Agent SDK `AgentDefinition.effort`; per-agent effort is NOT available in `settings.json`). **Codex:** `.codex/agents/*.md` carries `model_reasoning_effort:`. Distinct from pasting `Use effort: high` into the prose body, which is inert. Propose it when fixing a per-agent effort is the actual goal — not just as a conversation point.
-2. **GLM "reasoning re-injection" markers under heavy host prompts.** When the user is running GLM through Claude Code Router / OpenCode / Cline and the model isn't engaging thinking, an explicit `<reasoning_content>...</reasoning_content>` instruction in the prompt body is a legitimate workaround — not a knob substitute, but the actual recommended mitigation (see `models/glm.md` § Family-wide rules #1). Distinct from "think step by step" prose because it targets a specific documented model behavior, not a generic exhortation. **On GLM-5.3 / 5.2 this is a fallback** — prefer `reasoning_effort` out-of-band where the router forwards it; keep re-injection for routers that don't, and for GLM-5.1 and earlier. Note GLM-5.3 removed the off-switch entirely — `thinking.type: "disabled"` now fails the request (`models/glm.md § GLM-5.3`).
+**`effort` does not control visible length** on the Opus 5 lineage — a verbosity complaint there is a wording fix (`techniques.md §19`), not "drop to `medium`". Effort remains the right first lever for *depth* complaints.
+
+**Exceptions — places where a knob legitimately lives in the artifact:**
+1. **Subagent frontmatter.** Claude Code `.claude/agents/*.md` `effort:` (`low`…`max`, overrides the session effort; also `--agents` JSON / Agent SDK `AgentDefinition.effort`; a session-wide default for subagents is the `CLAUDE_CODE_SUBAGENT_EFFORT` env var, not prose). Codex `.codex/agents/*.md` `model_reasoning_effort:`. Config, not prose — propose it when pinning a per-agent effort is the goal.
+2. **GLM reasoning re-injection** (`<reasoning_content>` markers) under heavy router prompts — a documented mitigation, but on GLM-5.2+ a *fallback* behind `reasoning_effort` where the router forwards it (`models/glm.md` § Family-wide rules #1).
+3. **Muse Spark Open** — Meta documents a `Reasoning strength: N.` line in the system prompt that overrides the request parameter (`models/meta.md`). A vendor-defined control string, valid only for that model; not a precedent for other vendors.
+4. **Claude Code `ultrathink`** typed in a user prompt runs that turn at `xhigh` (Claude Code 2.1.311+) — a CLI keyword, not wording guidance; don't write it into persistent files expecting the same effect.
 
 ## When to auto-trigger
 
-Trigger proactively whenever the user is working with any of the artifact types above, even without an explicit "review my prompt" request. Typical cues:
+Trigger proactively whenever the user works with any artifact type above, even without an explicit "review my prompt". Typical cues:
 
-- They opened, edited, or pasted content of one of the file types
-- They asked to write one from scratch
-- They report that a subagent or skill "isn't triggering" or "triggers too often"
-- They ask whether the wording "looks right" or "is clear enough"
-- They migrated to a newer Claude or GPT-5.x version (especially Opus 4.8 → Opus 5, or 5.4 → 5.5) and want prompts updated. The Opus 5 case is a *strip* audit more than an add one — see the Opus 5 row in the gap-analysis table
-- They report a model that suddenly got wordier, narrates more, delegates to subagents more eagerly, or re-checks its own work without being asked — on Claude, ask which version first: those are documented Opus 5 defaults, fixed by wording, not by rewriting the prompt's logic
-- They mention switching agentic environment (Claude Code ↔ Codex CLI) and need prompts adapted
-- They say any variant of: "проверь", "улучши", "review", "check", "audit", "почему не работает", "make this better", "адаптируй под кодекс", "tune for GPT-5.5"
-- They describe a creative / narrative / advisory / coaching / brainstorm agent and report it feels flat, mechanical, won't push back, or lost warmth on Opus 4.7 — apply the **Pattern: creative-domain kernel for Opus 4.7** below
-- They report code-switching / anglicism / language-mixing symptoms in non-English output ("много англицизмов", "соскальзывает на английский", "теряет регистр", "model keeps mixing languages", "vocabulary leakage") — load `references/multilingual.md`
-- They mention Kimi / GLM / Qwen frontier / DeepSeek / Grok / Tencent by name, or vendor host names (Moonshot, Z.ai, Zhipu, QwenCloud, DashScope, Alibaba Cloud, deepseek.com, x.ai, Tencent Cloud TokenHub, WorkBuddy, CodeBuddy, Yuanbao), or version strings (K2.6, GLM-5.3, GLM-5.3-Flash, ox-alpha, Qwen3.8-Max, Qwen3.8-Flash, DeepSeek V4, deepseek-v4-flash-vision-exp, Grok 4.6, Grok 4.5, Tencent Hy4 / hy4) — load `references/models/kimi.md` / `glm.md` / `qwen-frontier.md` / `deepseek.md` / `grok.md` / `tencent.md` as relevant
-- They report a vendor-specific failure that maps to a documented anti-pattern:
-  - "GLM не думает / не reasoning'ит в Claude Code", "GLM rarely thinks under Claude Code's prompt", "GLM identity confusion / claims it's Claude" → `models/glm.md` § Family-wide rules #1, #3
-  - "Qwen скипает разделы", "Qwen skipped a section without explicit emphasis", "Qwen needs more granular spec" → `models/qwen-frontier.md` § Family-wide rules #2, #1
-  - "DeepSeek игнорирует system prompt", "DeepSeek ignored my system prompt rules", "DeepSeek 400 error on second turn / reasoning_content" → `models/deepseek.md` § Family-wide rules #1, #3
-  - "DeepSeek-агент уверенно говорит что код/фичи 'нигде нет' / фабрикует ложные отрицания на absence-вопросах", "DeepSeek agent confidently says X 'doesn't exist anywhere' / mis-scopes its search" → `models/deepseek.md` § Family-wide rules #1 (field note — system overuse)
-  - "Kimi swarm не вызывается", "Kimi Agent Swarms not triggering" → `models/kimi.md` § K2.6 — Agent Swarms protocol
-- They mention cross-tool routers — Claude Code Router, OpenCode, Cline, Kilo Code, OpenClaw — and ask about prompt behavior; the most common case is GLM-routed setups → load `models/glm.md` § The Claude-Code-router pattern
-
-- They are editing or writing a `suites/<name>/system.md` or per-model override `system_<model>.md`, or any prompt clearly aimed at a local 2-9B model (Gemma 3/4, Qwen 3.5, Ministral, Phi-4-mini, Llama 3.2, IBM Granite 4.2 3B/8B, saiga, T-lite, Hermes, HORROR-Imatrix, etc.) — load `references/matrix-small.md` and the relevant section of `references/models/small-local.md`
-- They report a small-model failure symptom: "модель подменяет / выдумывает / игнорирует правила", "не держит negation", "ломается на ripe X", "thinking leaks into output", "markdown fences keep leaking", "качество просело когда добавил правила", "EN system дал прирост" — load `references/antipatterns-small.md`
-- They ask "почему этот промпт работает на Opus, но не работает на gemma / qwen / ministral" — load both matrix.md AND matrix-small.md, treat as a cross-target adaptation task
+- They opened, edited, pasted or asked to write one of the file types
+- A subagent or skill "isn't triggering" or "triggers too often"
+- They ask whether wording "looks right" / "is clear enough", or say "проверь", "улучши", "review", "audit", "почему не работает", "адаптируй под кодекс", "tune for <model>"
+- **They migrated to a newer model** and want prompts updated — most current releases ship as "runs on the old prompts" plus a short delta list, often a *strip* audit (Opus 5 lineage, GPT-5.6) rather than an add one. The per-model checklists are in `references/model-audits.md`
+- A model "suddenly" got wordier / terser, narrates more or less, delegates more eagerly, re-checks its own work, stops early or asks permission mid-task — ask which version first; most of these are documented release defaults fixed by wording
+- They switch agentic environment (Claude Code ↔ Codex CLI ↔ Gemini CLI) or route through Claude Code Router / OpenCode / Cline / Kilo Code / OpenClaw (most common: GLM-routed setups → `models/glm.md` § The Claude-Code-router pattern)
+- A creative / narrative / advisory / coaching / brainstorm agent feels flat, mechanical, won't push back → `references/patterns.md` § creative-domain kernel
+- Code-switching / anglicisms / language mixing in non-English output ("много англицизмов", "соскальзывает на английский", "теряет регистр") → `references/multilingual.md`
+- They name a non-Anthropic vendor, host or version string (Moonshot, Z.ai / Zhipu, QwenCloud / DashScope, deepseek.com, x.ai, Mistral, Meta Model API, Tencent TokenHub, MiniMax, Xiaomi MiMo, StepFun …) → the vendor file via `references/lineup.md`
+- A documented vendor failure: "GLM не думает в Claude Code / claims it's Claude" → `models/glm.md` rules #1, #3 · "Qwen скипает разделы" → `models/qwen-frontier.md` rules #2, #1 · "DeepSeek игнорирует system prompt / 400 on second turn / уверенно говорит, что X нигде нет" → `models/deepseek.md` rules #1, #3 · "Kimi swarm не вызывается" → `models/kimi.md` § Agent Swarms
+- **Class 2:** they edit `suites/<name>/system.md` / `system_<model>.md` or any prompt aimed at a small local model (dense 2–9B, small MoE) → `references/matrix-small.md` + `models/small-local.md`; small-model symptoms ("подменяет / выдумывает / игнорирует правила", "не держит negation", "thinking leaks into output", "markdown fences keep leaking", "качество просело, когда добавил правила") → `references/antipatterns-small.md`
+- "Works on Opus, fails on gemma / qwen / ministral" → load both matrices; treat as cross-target adaptation
 
 When borderline, lean toward triggering — a short review costs little, a missed issue costs more.
 
@@ -161,7 +111,7 @@ The same sentence is tuned differently depending on where it lives. Quickly clas
 - Heading + bullet list of project rules → **CLAUDE.md / AGENTS.md** (an `AGENTS.md` may belong to either vendor — see Step 2)
 - YAML frontmatter with `name` + `description` + body, no `model:` field → **SKILL.md**
 - YAML frontmatter with `name` + `description` + tools / `model:` field + body → **subagent**
-- Markdown body in `.claude/commands/` or `.codex/commands/` → **slash-command prompt**
+- Markdown body in `.claude/commands/` → **slash-command prompt**. A Codex custom prompt (`~/.codex/prompts/`) is deprecated — review it as a skill to convert (`agentic-systems/codex.md` § Codex custom prompts)
 - Free text the user wants to paste into a chat → **ad-hoc prompt**
 
 If unclear, ask: "Is this a CLAUDE.md / AGENTS.md / a subagent / a skill / a slash command / something else?"
@@ -170,310 +120,177 @@ If unclear, ask: "Is this a CLAUDE.md / AGENTS.md / a subagent / a skill / a sla
 
 #### Step 2a — Target class (frontier agent-facing vs small local task-facing)
 
-This is the first split because it decides which reference matrix applies. Get it right before the vendor question.
+This split decides which reference set applies. Get it right before the vendor question.
 
-**Frontier agent-facing** (Class 1) signals:
-- File lives under `.claude/`, `.codex/`, `.gemini/`, or is a project-root `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `AGENTS.override.md`
-- Frontmatter mentions Opus / Sonnet / Haiku / GPT-5.x / Gemini 3.x / 2.5
-- The prompt steers a multi-turn, tool-using, agent persona (subagent body, slash command, kernel install)
-- The user mentions Claude Code / Codex CLI / Gemini CLI
-- Goal is hidden-intent extrapolation, taste, judgement, generalization
+**Frontier (Class 1) signals:** file under `.claude/`, `.codex/`, `.agents/`, `.gemini/`, or a project-root `CLAUDE.md` / `AGENTS.md` / `GEMINI.md` / `AGENTS.override.md`; frontmatter names a frontier model; the prompt steers a multi-turn, tool-using agent; the user mentions Claude Code / Codex / Gemini CLI or a router; the goal is judgement, taste, generalization. → Step 2b → 2c → Path A.
 
-→ Workflow continues to Step 2b (Vendor) → Step 2c (Model version) → Step 3's frontier reference path
+**Small local (Class 2) signals:** `suites/<name>/system*.md`; LM Studio (`~/.lmstudio/`), llama.cpp, Ollama, vLLM, MLX; a local model named (Gemma, small Qwen, Ministral 3 3B / 8B, Phi-4-mini, Llama 3.2, Granite, MiniCPM, LFM, Nemotron small / Dory, fine-tunes like saiga / T-lite / Hermes); a single-pass compile-time task with structured output (JSON, schema, GBNF); small-model failure symptoms (substitution bias, dropped adjectives, skipped negation, thinking-token leak, markdown emission, repetition loops). → skip 2b/2c → Path B.
 
-**Small local task-facing** (Class 2) signals:
-- File lives under `suites/<name>/system.md` or `suites/<name>/system_<model>.md`
-- Path mentions LM Studio (`~/.lmstudio/`), llama.cpp, Ollama, vLLM, MLX
-- The user names a 2-9B local model: Gemma 3/4 (including e2b/e4b), Qwen 3.5, Ministral / Mistral 3B / 7B, Phi-4-mini, Llama 3.2, IBM Granite 4.2 (3B/8B), fine-tunes (saiga, T-lite, Hermes, HORROR-Imatrix, TrevorJS, …)
-- Prompt is a single-pass compile-time task: extract / classify / NL→DSL / route / score / decide
-- Heavy use of structured output (JSON object, JSON schema, GBNF grammar)
-- The user reports a behavioral failure typical for small models: substitution bias, dropped adjectives, skipped negation, thinking-token leak, markdown emission, repetition loops
+**Mixed target:** one prompt for both classes, a migration between them, or a hardware-tier decision. → load both paths; flag diverging axes (`principles-tolerance`, `few-shot-density`, `position-of-critical`, `thinking-on`, `persona`, `system-language`).
 
-→ Workflow jumps over the frontier Step 2b/2c and goes to Step 3's small-local reference path
+**If unclear,** ask one short question (in the user's language, § Language):
 
-**Mixed target** signals:
-- One prompt expected to run on both classes ("same DSL prompt for Claude AND for gemma-4-e2b")
-- Migration question ("we want to move this from Opus to a local Qwen")
-- Hardware tier decision ("which class will give better accuracy for our task")
-
-→ Load BOTH reference paths; compare; flag axes where the recommendation diverges (especially `principles-tolerance`, `few-shot-density`, `position-of-critical`, `thinking-on`, `persona`, `system-language`)
-
-**If unclear**, ask one short question. Default phrasing (translate to user's language per § Language):
-
-> "Is this prompt for a frontier model (Claude / GPT-5.x / Gemini 3) running in an agentic CLI, or for a small local model (2-9B, like Gemma / Qwen / Ministral / Phi / Llama) running on LM Studio / llama.cpp / Ollama?"
-
-When target class is `small local`, **skip Steps 2b/2c entirely** (vendor and model version below are frontier-specific) and proceed to Step 3 with the small-local reference path.
+> "Is this prompt for a frontier model running in an agentic CLI / API, or for a small local model (2–9B, like Gemma / Qwen / Ministral / Phi / Llama) on LM Studio / llama.cpp / Ollama?"
 
 #### Step 2b — Vendor (frontier only)
 
-Infer from signals; only ask if conflicting.
+Infer from signals; ask only if they conflict.
 
-**Claude / Anthropic signals:** path under `.claude/`, filename `CLAUDE.md`, frontmatter with `model: opus | sonnet | haiku`, mentions of Claude / Fable / Mythos / Opus / Sonnet / Haiku / Anthropic / Claude Code (incl. `claude-fable-5-1` / `claude-mythos-5-1`).
+| Vendor | Signals (paths, names, hosts, parameters) |
+|---|---|
+| Anthropic | `.claude/`, `CLAUDE.md`, `model: opus \| sonnet \| haiku`, Claude / Fable / Mythos / Opus / Sonnet / Haiku, `claude-*` ids |
+| OpenAI | `.codex/`, `.agents/skills/`, `AGENTS.override.md`, Codex, GPT, `gpt-6*` / `gpt-5.x` ids, `model_reasoning_effort`, `text.verbosity`, `phase`, `json_schema`, GPT-Live |
+| Google | `.gemini/`, `GEMINI.md`, Gemini CLI, `thinking_level`, `response_json_schema`, `google-genai`, AI Studio / Vertex, `gemini-4-*` / `gemini-3.x-*` ids, Antigravity |
+| Moonshot | Kimi, K3 / K3.1 / K2.x, `platform.kimi.ai` / `platform.moonshot.ai`, `preserve_thinking`, Agent Swarms, Kimi Code CLI |
+| Z.ai | GLM, Zhipu, `zai-org`, `api.z.ai`, `clear_thinking`, ox-alpha, routed through Claude Code Router / OpenCode / Cline |
+| Alibaba (frontier) | Qwen3.8-Max / Flash / Omni-Flash, QwenCloud, DashScope, Model Studio, `enable_thinking`, `preserve_thinking` |
+| DeepSeek | DeepSeek, V4 / V4.1, `deepseek-flash`, `deepseek-v4-pro`, `reasoning_content`, `thinking` toggle, `output_config.effort`, DeepSeek Harness. Pinned `deepseek-chat` / `deepseek-reasoner` / `deepseek-v4-flash*` ids are a **migration finding** (retired or re-routed), not a version signal |
+| xAI | Grok, `grok-4.x`, `x.ai`, Grok Skills, `guidelines` request parameter |
+| Mistral | Mistral Large 4 / Large / Medium / Small, Ministral 14B, La Plateforme, `mistral.ai`, `mistral-large-4` (Ministral 3 3B / 8B → Class 2) |
+| Meta | Muse Wonder / Spark / Spark Open / Glimmer, Muse Code (an agent, not a model), Meta Model API, `muse-wonder-*` / `muse-spark-*`, `meta.ai`, `Muse-Spark-Open-*`, `Muse-Glimmer-30B` |
+| Tencent | Hunyuan, Hy4, TokenHub, WorkBuddy / CodeBuddy / Yuanbao / ima |
+| Other frontier | MiniMax (M3.x, MiniMax Code), Xiaomi MiMo, StepFun Step → `models/other-frontier.md` |
 
-**OpenAI Codex signals:** path under `.codex/`, filename `AGENTS.override.md`, mentions of Codex / GPT / OpenAI / `codex exec` / `model_reasoning_effort` / `phase` / `text.verbosity` / `json_schema`, frontmatter with `model: gpt-5.x` (including `gpt-5.6`, `gpt-5.6-sol` / `-terra` / `-luna`) or `model: gpt-6-astra`.
-
-**Google Gemini signals:** path under `.gemini/`, filename `GEMINI.md`, mentions of Gemini / Gemini CLI / `thinking_level` / `thinking_budget` / `response_json_schema` / `google-genai` / Google AI Studio / Vertex AI, frontmatter with `model: gemini-3.x` (incl. `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash-lite`).
-
-**Moonshot Kimi signals:** mentions of Kimi / Kimi K3 / K2.7-Code / K2.6 / K2.5 / Moonshot / `platform.kimi.ai` / `platform.moonshot.ai` / `extra_body.thinking` / `preserve_thinking` / `kimi-k2-thinking` / Agent Swarms / MoonViT / Kimi Code CLI; frontmatter with `model: kimi-*`. Vendor name shifts: Moonshot AI (company), Kimi (product/model).
-
-**Z.ai GLM signals:** mentions of GLM / GLM-5.3 / GLM-5.3-Flash / GLM-5.2 / GLM-5.1 / GLM-5 / GLM-4.6 / ox-alpha / stealth/ox-alpha / Z.ai / Zhipu / `zai-org` / `api.z.ai` / `chat.z.ai` / `reasoning_effort` on a GLM endpoint / Claude Code Router / OpenCode / Cline routing to GLM; frontmatter with `model: glm-*`. Vendor name shifts: Zhipu AI → Z.ai (rebranded late 2025 / early 2026, same company).
-
-**Alibaba Qwen frontier signals:** mentions of Qwen3.8-Max / 3.8 / Qwen3.8-Flash / Qwen3.8-Omni-Flash / Qwen3.7-Max / 3.7 Plus / 3.6 Plus / 3.6 Max-Preview / Qwen3-Max-Thinking / QwenCloud / `qwencloud.com` / DashScope / `dashscope-intl.aliyuncs.com` / Alibaba Cloud Model Studio / Qwen Chat / `enable_thinking` / `preserve_thinking` / `reasoning_effort` on a Qwen endpoint. **Frontier Qwen only** — small Qwen 2-9B variants are Class 2 and route to small-local.md.
-
-**DeepSeek signals:** mentions of DeepSeek / V4-Pro / V4.1 Flash / `deepseek-flash` / V4-Flash / V4-Flash-Vision-Exp / V3.2 / V3.2-Speciale / R1 / DSA (Sparse Attention) / `reasoning_content` / `reasoning_effort` on a DeepSeek endpoint / `thinking` toggle / `output_config.effort` / CO-STAR / DSA Method / `deepseek-v4-flash-vision-exp` (vision model: images **user messages only**, 400 on system/assistant). The old `thinking: "off"/"high"/"max"` string still appears in the wild but is **obsolete since the 2026-08-13 effort-model update** — treat it as a migration signal. The `deepseek-chat` / `deepseek-reasoner` aliases were **discontinued 2026-07-24** per DeepSeek's official changelog — a prompt or config that still pins one is pointing at a dead endpoint, so treat it as a migration finding, not as a signal of which current model is in use.
-
-**xAI Grok signals:** mentions of Grok / **Grok 4.7** / **Grok 4.6** / **Grok 4.5** / Grok 4.3 / Grok 4.20 / Grok 5 / xAI / Colossus / `grok-4.7` / `grok-4.6` / `grok-4.5` / `grok-4.3` / `reasoning_effort` on an xAI endpoint / Grok Skills / `x.ai` API.
-
-**Mistral frontier signals:** mentions of Mistral Large 3 / **Mistral Medium 3.5** (`mistral-medium-3-5-26-04`) / Mistral Small 4 / Ministral 3-14B (or 8B reasoning) / Mistral AI / La Plateforme / `mistral.ai` API. **Disambiguate Ministral 3-3B / small Ministral 7B-era → Class 2 small-local.**
-
-**Meta Muse Spark signals:** mentions of Muse Spark / Muse Spark 1.1 / 1.2 / 1.3 / `muse-spark-1.3` / Muse Code / Muse Glimmer / Meta Superintelligence Labs / MSL / **Meta Model API** / `meta.ai` / `Muse-Glimmer-30B`. As of 1.2 (Aug 2026) this is a public-preview, OpenAI-compatible API family, plus open-weight **Muse Glimmer 30B** (local agentic, Apache 2.0) and coding-specialist **Muse Code** — but Meta has published **no prompting guide**, so behavioral axes stay `?`. See `models/meta.md`. **1.3 (Sep 2026)** adds a documented behavioral shift — asks clarifying questions on ambiguous prompts and confirms before consequential actions (`models/meta.md § Muse Spark 1.3`).
-
-**Tencent Hunyuan signals:** mentions of Tencent Hunyuan / Hy4 / `hy4` / Hunyuan / Tencent Cloud TokenHub / OpenRouter `tencent/*` routing / WorkBuddy / CodeBuddy / Yuanbao / ima. New open-weight frontier family (preview release 2026-08-28); **no prompting guide published** — see `models/tencent.md`.
-
-**Cross-vendor (`AGENTS.md`):** project-root `AGENTS.md` with no vendor-specific sibling directories (no `.codex/` / `.claude/` / `.gemini/`) and no vendor-specific overrides (`AGENTS.openai.md` / `AGENTS.glm.md` / `AGENTS.deepseek.md`) is genuinely cross-vendor — tune for the lowest-common-denominator constraint set. **Default to three-vendor (Claude + GPT-5.x + Gemini)** unless the user names one of Kimi / GLM / Qwen / DeepSeek / Tencent; only escalate to 4+ vendor universal when there's clear evidence (mixed-router setup, explicit user statement). See `models/_universal.md` § Cross-vendor (4+) for the warning about the 4+ trap.
+**Cross-vendor `AGENTS.md`:** a project-root `AGENTS.md` with no vendor-specific sibling directories or overrides is genuinely cross-vendor — tune for the lowest common denominator. **Default to three-vendor (Claude + GPT + Gemini)** unless the user names another vendor; escalate to 4+ only on clear evidence (mixed-router setup, explicit statement). See `models/_universal.md` § Cross-vendor (4+) for the 4+ trap.
 
 #### Step 2c — Model version (frontier only)
 
-Claude options: **Fable 5.1** (successor to Fable 5, Sep 2026; **Mythos 5.1** = same capabilities, Project Glasswing only) / **Fable 5** (frontier tier above Opus, Jun 2026) / **Opus 5.5** (current Opus tier, Sep 22 2026; thinking cannot be disabled; Sonnet 5.5 / Haiku 5.5 announced "in the coming weeks", not released as of Sep 24) / **Opus 5** (previous Opus tier, Jul 2026) / **Opus 4.8** / **Opus 4.7** (both now legacy) / **Sonnet 5** (current Sonnet, Jun 2026) / **Sonnet 4.6** (previous) / **Haiku 4.5** / **Universal Claude** / older.
+**Read `references/lineup.md`.** It lists, per vendor, the current and previous models with ids, release status, reasoning knob and the section to load, plus what moved to the archive. Two rules that the lineup does not replace:
 
-OpenAI options: **GPT-6 Astra** (`gpt-6-astra`, top of the GPT-6 generation, Sep 2026) / **GPT-6 Sol** / **GPT-6 Luna** (`gpt-6-sol` / `gpt-6-luna`, Sep 22 2026 — working and volume tiers; `none` effort supported, unlike Astra; not the same models as the 5.6 Sol / Luna) / **GPT-5.6** — `sol` / `terra` / `luna` (previous frontier, Jul 2026) / **GPT-5.5** (+ Instant) / **GPT-5.4** / **GPT-5.3 / 5.3-codex** / **GPT-5.2** / **GPT-5.1** (legacy) / **Universal GPT-5.x**.
+- **Ask the version even when the vendor is obvious.** Inside the Claude family the recommendation flips by version on self-review, task checks, delegation, narration and the thinking off-switch (Step 4); inside GPT-6, `none` effort and sampling exist on some tiers and not others. "It's a Claude prompt" no longer determines the advice.
+- **A version the lineup doesn't know is a gap to state, not to fill.** If the user names a model that isn't in the lineup or the archive, say the atlas doesn't cover it yet and review against the family rules — don't invent version deltas.
 
-Gemini options: **Gemini 3.1 Pro** (Pro-tier frontier) / **Gemini 3.8 Flash** (current Flash frontier, Sep 2026 — works harder by design; default `thinking_level` medium, `minimal` → error) / **Gemini 3.7 Flash** (previous Flash, Aug 2026 — default `thinking_level` medium; still supported for efficiency-first work) / **Gemini 3.6 Flash** (previous Flash, Jul 2026) / **Gemini 3.5 Flash** / **Gemini 3 Flash** / **Gemini 3.5 Flash-Lite** (Jul 2026, vendor-designated subagent tier) / **Gemini 3.1 Flash-Lite** / **Universal Gemini 3.x** / 2.5 (legacy). *Gemini 3.5 Flash Cyber exists but is closed-access (governments / trusted partners via CodeMender) — not a reviewable target. Gemini 3.8 Flash Cyber is likewise closed-access (trusted defenders via the Fairwind Program).*
+If you can't infer, ask one short question, in the user's language:
 
-Kimi options: **Kimi K3** (current frontier, Jul 2026) / **K2.7-Code** (coding specialist, Jun 2026) / **K2.6** (previous, Apr 2026) / **K2.5** / **K2** (retired May 25, 2026) / **Universal Kimi**.
-
-GLM options: **GLM-5.3-Flash** (cost/multimodal sibling, Aug 2026 — 320B-A18B, first natively multimodal GLM-5, `reasoning_effort` low/high/max default max, MIT weights; a.k.a. the former stealth `ox-alpha`) / **GLM-5.3** (current frontier, Aug 2026 — reasoning always on, `reasoning_effort` low/high/max default max, no off-switch) / **GLM-5.2** (previous, Jun 2026) / **GLM-5.1** (Apr 2026) / **GLM-5** (Feb 2026) / **GLM-4.6** (legacy, Sep 2025) / **Universal GLM**.
-
-Frontier Qwen options: **Qwen3.8-Max** (current frontier, GA Aug 2026 — open weights 2.4T-A95B; hosted on QwenCloud (OpenAI- and DashScope-compatible); `reasoning_effort` low/medium/xhigh default xhigh; hosted hybrid / open weights thinking-only) / **Qwen3.8-Omni-Flash** (Sep 2026, API-only omni-input, `reasoning_effort` default xhigh) / **Qwen3.8-Flash** (cost-efficient sibling, late Aug 2026 — 125B+51B n-gram embedding, 6B active, open weights `Qwen3.8-Flash-Next` (262K native ctx), hosted `qwen3.8-flash` on QwenCloud (1M ctx, built-in tools); thinking knobs unpublished — `?`) / **Qwen3.7-Max** (previous, May 2026) / **Qwen3.7 Plus** / **Qwen3.6 Plus** / **Qwen3.6 Max-Preview** / **Qwen3-Max-Thinking** (Jan 2026 predecessor) / **Universal frontier Qwen**.
-
-DeepSeek options: **DeepSeek V4.1 Flash** (`deepseek-flash`, Sep 10 2026 — new architecture, natively multimodal, MIT; the old `deepseek-v4-flash` / `-vision-exp` ids are temporarily routed to it) / **DeepSeek V4-Pro** (current frontier coder/reasoner, kept after Sep 14; April 2026 launch, **GA update 2026-08-13** — effort-model thinking low/high/max, Responses API, peak/off-peak pricing from 16.08) / **V4-Flash** (previous Flash; official release 31.07, id now routed to V4.1 Flash) / **V4-Flash-Vision-Exp** (experimental multimodal sibling, 21.08 — text on par with V4-Flash, vision-agent near Opus 4.8; images user-messages-only) / **V3.2 / V3.2-Speciale** (legacy, Feb 2026) / **R1** (reasoning-only legacy) / **Universal DeepSeek**.
-
-xAI Grok options: **Grok 4.7** (vendor's recommended model, Sep 21 2026 — 500K context; `reasoning_effort` low/medium/high/xhigh, default high, cannot be disabled; encrypted reasoning always returned) / **Grok 4.6** (previous recommended, Aug 2026 — **500K context, down from 4.3's 1M**) / **Grok 4.5** (previous recommended, Jul 2026 — 500K, effort low/medium/high) / **Grok 4.3** (previous flagship, 1M context) / Grok 4.20 (predecessor) / Grok 5 (still not shipped as of Aug 2026 — don't tune for it).
-
-Mistral frontier options: **Mistral Large 3** (Dec 2025 flagship) / **Mistral Medium 3.5** (`mistral-medium-3-5-26-04`, Apr 2026 mid-tier) / Mistral Small 4 (Mar 2026) / Ministral 3-14B reasoning / Ministral 3-8B instruct. Ministral 3-3B → Class 2.
-
-Meta options: **Muse Spark 1.3** (Sep 2026, current API flagship — asks clarifying questions on ambiguous prompts, confirms before consequential actions) / **Muse Spark 1.2** (Aug 2026, closed weights, public-preview Meta Model API — updated from 1.1 (Jul 2026)) / **Muse Glimmer** (Aug 2026, open weights `Muse-Glimmer-30B`, Apache 2.0 — 30B local agentic model) / **Muse Code** (Aug 2026, coding specialist — facts-only coverage in `models/meta.md`). No prompting guide exists for the family; behavioral axes stay `?`. See `models/meta.md`.
-
-Tencent options: **Tencent Hy4 preview** (Aug 2026 — open-source Hunyuan flagship, 770B/49B active, >1M context; API via Tencent Cloud TokenHub and OpenRouter; no prompting guide published — treat as facts-plus-`?`, see `models/tencent.md`).
-
-**Recent June–September 2026 updates worth flagging in reviews:**
-- **Claude Opus 5.5** (Sep 22, `claude-opus-5-5`) — current Opus tier; Anthropic: existing Opus 5 prompts "should perform well without changes", so the Opus 5 bullet below stays the baseline. Deltas: (1) **thinking cannot be disabled** (`thinking: disabled` / manual budgets → 400; forced `tool_choice` → 400 too) — prompts written for thinking-off need rework, and the "don't think" rule goes either way; effort is the only lever, **default `medium`** (Opus 5: `high`), and the same level thinks more than on Opus 5, so a carried-over `xhigh`/`max` means longer turns; (2) unattended agents can end a turn on a text progress report — official end-of-system-prompt block names the early stops to avoid (leave it out of human-in-the-loop apps); (3) new optional snippets: explore-broadly-before-acting for multi-app agents, time budget / time-matters sentence for multiagent harnesses, pasted-content tags with a random id, "treat answered as done" for multi-turn chat, name-the-patterns for frontend defaults. The vendor's "40% less verbose" and "checks its own work" claims are launch-post marketing — the prompting guide changes no verbosity or verification instruction, so keep the Opus 5 strip-audit and re-measure. **Sonnet 5.5 / Haiku 5.5 are announced ("in the coming weeks") but were not released as of Sep 24** — nothing to tune for yet. See `models/claude.md § Claude Opus 5.5`.
-- **OpenAI GPT-6 Sol / Luna** (Sep 22, `gpt-6-sol` / `gpt-6-luna`) — working and volume tiers of the GPT-6 generation (not the 5.6 Sol / Luna). Documented differences from Astra: **`none` effort is supported** (Astra has none), sampling params only at effort `none`, Chat Completions function calling only at `none`. The guide's behavior advice is written for Astra; whether Sol / Luna share the collaborator default, formatted style or `AGENTS.md` sensitivity is undocumented — test, don't port. See `models/gpt.md § GPT-6 Sol and GPT-6 Luna`.
-- **xAI Grok 4.7** (Sep 21, `grok-4.7`) — now the vendor's recommended model ("most capable model we've built"); 500K context, `reasoning_effort` low/medium/high/xhigh default `high`, always returns encrypted reasoning (Responses API); no prompting guide. The 500K-vs-4.3's-1M trap and the "don't think" unimplementability carry over from 4.6. See `models/grok.md § Grok 4.7`.
-- **DeepSeek V4.1 Flash** (Sep 10, `deepseek-flash`) — new-architecture Flash, natively multimodal, MIT; missed by the v1.8.0 window. `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp` are temporarily routed to it (a pinned old id now runs a different model); V4-Pro continues past Sep 14. **Effort stays `low`/`high`/`max`** — the model card's integer 1–100 is not documented on the API (decision recorded in `models/deepseek.md` rule #5). Field notes measured on V4-Flash were not re-run on V4.1.
-- **Qwen3.8-Omni-Flash** (Sep 18, `qwen3.8-omni-flash`, API-only) — text/image/audio/video in, text out; thinking on by default at `reasoning_effort` `xhigh`, `none` disables (secondary source only; vendor page unread). See `models/qwen-frontier.md § Qwen3.8-Omni-Flash`.
-- **Claude Fable 5.1 / Mythos 5.1** (Sep 2026, `claude-fable-5-1` / `claude-mythos-5-1`; Mythos 5.1 = same capabilities, Project Glasswing only) — successor to Fable 5 with an official prompting guide. Existing Fable 5 prompts run unchanged, but several deltas invert carried-over prompt content: (1) **formats and narrates less** — strip anti-formatting rules and "hold findings for the final response" lines; ask for an opening line + recap if the UI needs narration; (2) **one tool call per turn** in coding / computer-use loops — per-turn batching nudge; (3) async runs can end on a stated next step or ask permission for requested work — the guide's autonomous-run block; (4) **safeguard false positives now have wording fixes** (compile-check phrasing, unfamiliar languages, base64 tool output). API: forced `tool_choice` → 400 (say when a tool applies), append-only history, re-sweep effort. See `models/claude.md § Claude Fable 5.1 / Claude Mythos 5.1`.
-- **OpenAI GPT-6 Astra** (Sep 3, `gpt-6-astra`) — new generation above GPT-5.6, with a latest-model guide. Review-relevant deltas: (1) **collaborator default** — more likely to ask and stop where you expected it to persist (official initiative snippets; pair with an explicit confirmation policy); (2) **more sensitive to skills / `AGENTS.md`** — audit them and state user-over-skill precedence; (3) **detailed, formatted by default** — inverts 5.6's terseness; (4) **delegates less** — encourage delegation, the opposite of Claude Fable 5.1 / Opus 5; (5) **no sampling, no `none` effort** — `temperature` / `top_p` / `top_logprobs` unsupported, ladder `low` … `max`. See `models/gpt.md § GPT-6 Astra`.
-- **Google Gemini 3.8 Flash + 3.8 Flash Cyber** (Sep 2) — third Flash release in six weeks. 3.8 Flash **works harder by design** (extra reasoning steps, iterative tool calls, more tokens at higher effort) — the reverse of the 3.6 / 3.7 terseness trend, so don't port persistence scaffolding; the efficiency lever is lower effort or 3.7 Flash. `thinking_level` default `medium`, `minimal` → error. Cyber variant closed-access via the Fairwind Program. See `models/gemini.md § Gemini 3.8 Flash`.
-- **Meta Muse Spark 1.3** (Sep 2) — first Muse Spark release with a documented behavioral delta: asks clarifying questions on ambiguous prompts, invokes the user when stuck, confirms before consequential actions, adapts update cadence to user preference. Non-interactive pipelines must state what is authorized and what to do on ambiguity (no documented control — test). Also follows long instructions more reliably and is less verbose in coding; max reasoning available (parameter undocumented). Still no prompting guide. See `models/meta.md § Muse Spark 1.3`.
-- **Tencent Hy4 preview** (Aug 28, open weights 770B/49B active, >1M context) — the atlas's first Tencent Hunyuan family. Vendor's blind eval places it slightly ahead of GLM-5.3 / Kimi K3 on their productivity panel (2.99 vs 2.92 / 2.94 of 4); API via Tencent Cloud TokenHub + OpenRouter; free on WorkBuddy/CodeBuddy for two weeks at launch. **No prompting guide published** — behavioral axes `?`, don't invent deltas. See `models/tencent.md`.
-- **IBM Granite 4.2** (Aug 25, Class 2: 3B / 8B; 30B above the atlas's 2-9B range) — first IBM family in the atlas. **Switchable thinking via chat template** (thinking default / non-thinking / low-effort), prior turns' thinking stripped by default in multi-turn; native tool calling in OpenAI format; 512K context; Apache 2.0; the 8B went through RL inside SE/terminal/search environments. See `models/small-local.md § IBM Granite`.
-- **GLM-5.3-Flash** (Aug 26, MIT weights — the former stealth `ox-alpha` on OpenRouter) — first natively multimodal GLM-5: 320B-A18B, 1M context claimed (vendor's eval footnotes ran at 300K — treat 1M as claim until reconciled), same `reasoning_effort` low/high/max (default max) as GLM-5.3, `clear_thinking` flag in chat template (default false). $0.15/$0.50 per M, cached input $0.03 — a price-performance agentic workhorse; vision is the admitted weak axis. See `models/glm.md § GLM-5.3-Flash`.
-- **Qwen3.8-Flash** (25–27 Aug, open weights `Qwen3.8-Flash-Next`) — new cost-tier sibling of Qwen3.8-Max: 125B + 51B n-gram embedding, 6B active, hybrid GDN+QSA attention (early Qwen4 architecture preview), multimodal; **262K native context on open weights vs 1M default on hosted `qwen3.8-flash`** (QwenCloud) — ask which surface. ¥1/¥3 per M (≈$0.16/$0.47). Competitive with DeepSeek-V4-Flash on agentic coding (SWE-bench Pro 62.5 vs 56.0). Thinking knobs unpublished — `?`. See `models/qwen-frontier.md § Qwen3.8-Flash`.
-- **DeepSeek V4-Flash-Vision-Exp** (Aug 21) — the DeepSeek family's first multimodal model; text on par with V4-Flash, vision-agent benchmarks close to Opus 4.8. Two review-relevant facts: (1) **images accepted in user messages only** — 400 in system/assistant, making the family's user-prompt-priority structural for vision tasks; (2) up to 600 images/request, ≤384 tokens per image after auto-resize. Same effort-model thinking (low/high/max) as V4-Flash. See `models/deepseek.md § DeepSeek V4-Flash-Vision-Exp`.
-- **Meta Muse Spark 1.2 + Muse Code (Aug 5) and Muse Glimmer (Aug 10)** — Meta's API family moved from 1.1 to **1.2** (same public-preview surface), gained coding-specialist **Muse Code**, and opened a new lane: **Muse Glimmer 30B** (Apache 2.0 weights, runs on one consumer GPU, agentic tool-use training, controllable effort, failure recovery). Still no prompting guide — axes `?`; Glimmer's controllable-effort is a parameter question, not prose. See `models/meta.md`.
-- **Alibaba Qwen3.8-Max** (announced 19.07 as Preview, GA 03.08; open weights 12.08) — the atlas's previous frontier-Qwen tier (3.7-Max) is a generation behind. First open Max-class release `Qwen3.8-2.4T-A95B`; hosted `qwen3.8-max` on **QwenCloud** (new host, OpenAI- and DashScope-compatible; $2/$6, implicit cache $0.25) with hybrid thinking and vision input; open weights are thinking-only (no off-switch). `reasoning_effort` low/medium/xhigh (default xhigh), `thinking_budget`, `preserve_thinking`, `/think` `/no_think`. See `models/qwen-frontier.md § Qwen3.8-Max`.
-- **xAI Grok 4.6** (Aug 12) — was the vendor's recommended model until Grok 4.7 (Sep 21) ("for everything else, including code"); focus on long-running agents, AA Intelligence Index 61 (parity with GPT-5.6 Sol). The 1M→500K context regression from 4.3 persists — no 1M return. **`reasoning_effort` is now documented for grok-4.5 and grok-4.6** (default `high`, reasoning cannot be disabled) — earlier atlas text saying no reasoning knob exists is stale. $2/$6 per MTok, cached $0.50, double rate above 200K prompt. See `models/grok.md § Grok 4.6`.
-- **Z.ai GLM-5.3** (mid-Aug; launch post 17.08) — same base as 5.2, all gains from post-training (+50% Z.ai Code Bench; open-weight SOTA Terminal Bench 3.0 28.3, Agents' Last Exam 28.5; emergent cyber CyberGym 84.5 / ExploitBench 54.4). **Third vendor where thinking cannot be disabled**: `reasoning_effort` low/high/max (default max), `thinking.type` only accepts `enabled` — `disabled` requests fail. Text-only, 1M context, 128K output; weights ~2 weeks after launch. See `models/glm.md § GLM-5.3`.
-- **Google Gemini 3.7 Flash** (GA Aug 13) — new Flash frontier three weeks after 3.6 Flash; default for the **Antigravity agent** and engine of **Gemini Spark**. 1M context, 64K output, `thinking_level` low/medium/high (**default medium**), intro price $0.75/$3.75 (half of 3.6 Flash; 3.6 dropped to the same rate) to 31.12.2026, then $1.50/$7.50. FrontierCode 43.6 vs 34.4, DeepSWE 65.3 vs 49.0, AutomationBench 30.4 vs 17.0 (vs 3.6 Flash). See `models/gemini.md § Gemini 3.7 Flash`.
-- **DeepSeek V4-Pro GA (0813)** — GA release 13.08 under the unchanged `deepseek-v4-pro` name; agentic gains (HLE 42.7/60.0, Terminal-Bench 2.1 87.9, DeepSWE 62.7); native **OpenAI Responses API** support adapted for Codex; **thinking is now an effort model** — `low`/`high`/`max`, default enabled with effort `high` (the atlas's old `off`/`high`/`max` triad is obsolete). Pricing: peak/off-peak from 16.08 (off-peak half price), cache-hit tariffs up +1100%. Bonus: V4-Flash official release 31.07 + DeepSeek Harness v0.1 (open agent framework, MIT). See `models/deepseek.md § Family-wide rules #5`.
-- **OpenAI GPT-5.6 August update** (06.08) — improved Sol (Plus/Pro chat) + Luna default for Free/Go with an effort slider in ChatGPT; replaces GPT-5.5 Instant's chat role; factual-error rate −68% (Sol) / −62% (Luna) vs GPT-5.5 Instant on high-stakes prompts; HealthBench Pro +15.6. **Key review fact: the version now depends on the surface** — ChatGPT = August; Codex and ChatGPT Work stay on the July versions ("the version of GPT-5.6 Sol that powers Work and Codex is not changing"). Ask which surface before applying August-model claims to a Codex/Work prompt. See `models/gpt.md § August 2026 update`.
-- **OpenAI GPT-5.6** (Jul 9, `gpt-5.6-sol` / `-terra` / `-luna`; bare `gpt-5.6` aliases Sol) — whole new family; the atlas previously stopped at 5.5. Three review-relevant deltas: (1) **leanness is measured, not stylistic** — OpenAI reports leaner system prompts scoring +10–15% at 41–66% fewer tokens, so deleting duplicated instructions and verbose tool descriptions outranks rewriting them; (2) **verbosity inverted** — 5.6 is terser than 5.5 by default, so a carried-over "be brief" overcorrects (move the default to `text.verbosity`); (3) **effort ladder gains `max`**, and the vendor's migration rule is to test your current level **and one level lower**. Also: state the autonomy boundary per request, and describe tone as writing choices rather than labels like "friendly". See `models/gpt.md § GPT-5.6`.
-- **Moonshot Kimi K3** (Jul 16 API / Jul 26 weights) and **K2.7-Code** (Jun 12) — two missed releases. K3: 1M context, thinking **always on** with depth via `reasoning effort` (`low`/`high`/`max`, default `max`), full assistant message (incl. `reasoning_content`) must be round-tripped, top-p by task shape (0.95 single-step / 1.0 agentic). K2.7-Code: 256K, *"forces thinking and preserve_thinking as True"* — **the first model in the atlas where thinking cannot be disabled at all**, so "answer without reasoning" lines are structurally unimplementable, not merely inert. See `models/kimi.md`.
-- **Google Gemini 3.6 Flash + 3.5 Flash-Lite** (Jul 21) — and, more importantly, **`temperature` / `top_p` / `top_k` deprecated API-wide on the same date**. That makes sampling-locking a **cross-vendor trend** (Anthropic first, Google second), not Claude-specific: treat sampling as unavailable and steer tone/variety with wording. 3.6 Flash also ships ~17% shorter output than 3.5 Flash (same "be brief overcorrects" trap as GPT-5.6), and **3.5 Flash-Lite is the vendor's designated subagent tier**. See `models/gemini.md`.
-- **xAI Grok 4.5** (Jul 2026) — now the vendor's recommended model over 4.3, **but the context window shrinks 1M → 500K**. Rare case where "newer" means "smaller window": a prompt architecture built on Grok's 1M (whole-repo dumps, full history replay) breaks on upgrade — `[CRITICAL]` when spotted. Pricing also steps up at 200K of prompt (input *and* output rates double), giving prompt bloat a hard cost boundary. No prompting guide published. See `models/grok.md § Grok 4.5`.
-- **Meta Muse Spark 1.1** (Jul 9) — Meta became an ordinary API vendor: public-preview Meta Model API, OpenAI-compatible, 1M context the model **actively manages itself** (strip harness-side context-trimming scaffolding), documented support for planning mode, goal conditioning, subagent delegation, context compaction. No prompting guide — behavioral axes stay `?`. See `models/meta.md`.
-- **Mistral Medium 3.5** (`mistral-medium-3-5-26-04`, Apr 28) — new mid-tier, 256K, open weights. Vendor published **no prompting guidance**; family rules apply unchanged. Recorded so a later pass doesn't re-investigate.
-- **DeepSeek legacy aliases retired** (2026-07-24) — `deepseek-chat` / `deepseek-reasoner` are discontinued per the official changelog. A prompt or config still pinning them needs a migration note, not model-specific tuning.
-- **Claude Opus 5** (Jul 2026, `claude-opus-5`) — previous Opus tier (superseded by Opus 5.5 on Sep 22; still the baseline the 5.5 deltas are written against) and was Anthropic's default recommendation for agentic coding; Opus 4.8 / 4.7 drop to the legacy table. Runs out-of-box on 4.8 prompts, **but four carried-over patterns now hurt** — this is the largest set of inverted advice in any Claude release so far, so treat every Opus-5-targeted review as a migration audit: (1) **self-verification instructions must be stripped** — it verifies unprompted, and "double-check / final verification step / verify via subagent" causes over-verification (inverts `techniques.md §20`, the technique this skill has been recommending by default); (2) **verbosity no longer calibrates** — defaults run long and `effort` does not shorten visible output, so concision must be prompted, and files it writes need their own length calibration; (3) **subagent default flips** — delegates readily like Fable 5, so encouragement written for 4.8 must become boundaries + a spawn cap; (4) **narrates more** (opposite of Fable 5) and narrates its own corrections. Also: scope can widen (state the upper bound), code-review coverage language matters more, and with thinking disabled it leaks `<thinking>` tags and text-form tool calls — a "don't think" rule makes that worse. See `models/claude.md § Claude Opus 5`.
-- **Z.ai GLM-5.2** (Jun 16, `zai-org/GLM-5.2`) — current GLM frontier, ~753B MoE, MIT. Review-relevant delta: **explicit `reasoning_effort` (`high`/`max`) param** now exists — reasoning depth is an out-of-band knob like every other vendor, so the `<reasoning_content>` prose re-injection drops to a **fallback** for routers that don't forward the param. Also: **1M lossless context** (does NOT fix host-prompt thinking suppression — keep `AGENTS.md` <4 KiB), identity-pinning still fails, tops open-weight coding/tool-use benchmarks (Terminal-Bench 2.1 81.0, MCP-Atlas 77.0). See `models/glm.md § GLM-5.2`.
-- **Claude Sonnet 5** (Jun 2026, `claude-sonnet-5`) — current Sonnet frontier, drop-in on 4.6. Three review-relevant deltas: (1) **moved to Opus-level literalism** — state scope explicitly, 4.6-loose "it'll figure out the scope" prompts now under-apply; (2) **sampling params (`temperature`/`top_p`/`top_k`) → 400** — new for Sonnet-class (began on Opus 4.7); steer tone/variety with wording, use "propose N directions" for design variety; (3) **adaptive thinking ON by default** + **new tokenizer (~30% more tokens)** — revisit `max_tokens`. Also more agentic (readier tools + self-verify); no subagent-spawn flip (unlike Fable 5). See `models/claude.md § Claude Sonnet 5`.
-- **Claude Fable 5** (Jun 9) — new tier above Opus (first public Mythos-line model, $10/$50 per MTok). Three review-relevant deltas: (1) "show / explain your reasoning" instructions trigger the `reasoning_extraction` refusal classifier — audit skills when migrating; (2) subagent default **flips** vs Opus 4.8/4.7 — delegates readily, write boundaries not encouragement; (3) over-prescriptive skills from prior models can degrade output — trim. See `models/claude.md § Claude Fable 5`.
-- **Gemini 3.5 Flash** (May 19) — `thinking_budget` retired → `thinking_level` enum with **default dropped from `high` to `medium`**. Silent regression risk on naive migrations from `gemini-3-flash-preview`.
-- **GPT-5.5 Instant** (May 5) — new low-latency variant of GPT-5.5, same family rules apply.
-- **Grok 4.3 API rollout** (Apr 30 - May 4) — 8 legacy Grok models retire **May 15, 2026**; check pinned model strings.
-- **Kimi K2** (preceding K2.6) — retired **May 25, 2026**.
-
-**Cross-vendor universal:** must behave well across two or three frontier vendors. The strictest case — opposite defaults across vendors must be reconciled. Read `models/_universal.md` § Cross-vendor (three-vendor) for Claude+GPT+Gemini; § Cross-vendor (4+) for anything broader.
-
-If you can't infer, ask one short question. **Render in the user's detected language** (see § Language below):
-
-> "Which model is this prompt for — Claude (Fable 5.1 / Fable 5 / Opus 5.5 / Opus 5 / Opus 4.8 / 4.7 / Sonnet 5 / Sonnet 4.6 / Haiku 4.5), OpenAI GPT-6 Astra / Sol / Luna / GPT-5.x in Codex CLI (5.6 Sol/Terra/Luna / 5.5 / 5.4 / 5.3), Google Gemini 3.x (3.1 Pro / 3.8 Flash / 3.7 Flash / 3.6 Flash / 3.5 Flash-Lite), Moonshot Kimi (K3 / K2.7-Code / K2.6), Z.ai GLM-5.3-Flash / 5.3 / 5.2 / 5.1 / 5 / 4.6, Alibaba Qwen3.8-Max / 3.8-Flash / 3.8-Omni-Flash / 3.7-Max / 3.6, DeepSeek V4-Pro / V4.1 Flash / Flash / Vision-Exp, xAI Grok 4.7 / 4.6 / 4.5 / 4.3, Mistral frontier, Meta Muse Spark 1.3 / 1.2 / Glimmer, Tencent Hy4, or cross-vendor?"
-
-**Ask this even when the vendor is obviously Claude.** As of July 2026 the Claude family contradicts itself on three axes — self-verification, subagent delegation, narration — so "it's a Claude prompt" no longer determines the recommendation. See Step 4.
-
-When the answer is one of Kimi / GLM / Qwen / DeepSeek / Tencent, the workflow stays on **Path A (frontier)** but loads the vendor-specific model file (`models/kimi.md` / `models/glm.md` / `models/qwen-frontier.md` / `models/deepseek.md` / `models/tencent.md`) — see Step 3.
+> "Which model is this prompt for — and on which surface (API, Claude Code, Codex, Gemini CLI, a router)? If it has to work on several, name them."
 
 ### Step 3 — Read the relevant references
 
-**The references are the source of truth.** They get updated as vendors publish new guidance and as we observe new failure modes. If you generate a review from memory, you lock the skill's quality to whatever was in the model's training data months ago.
+**The references are the source of truth.** They are updated as vendors publish guidance and as new failure modes are observed. A review generated from memory locks the skill to months-old training data.
 
-The reference set differs by target class (decided in Step 2a). Load the path that applies, plus `principles.md` which is shared.
+**Every review:** `references/principles.md` (vendor-neutral principles) — read first.
 
-#### Required on every review (both classes)
+#### Path A — Frontier (Class 1)
 
-1. **`references/principles.md`** — universal principles that apply across all vendors, models, classes, and systems. Read this first.
+1. `references/lineup.md` — which model, which knob, which section.
+2. `references/matrix.md` — the row(s) for the target model(s). **Cite the cell** that drives each change.
+3. `references/model-audits.md` — the migration / targeting checklist for the target model.
+4. `references/models/<vendor>.md` — nuance the matrix can't hold (claude, gpt, gemini, kimi, glm, qwen-frontier — not small-local —, deepseek, grok, mistral-frontier, meta, tencent, other-frontier). Multi-model or cross-vendor prompts: `models/_universal.md` (the Universal-X section + the Cross-vendor section).
+5. `references/artifacts.md` — the section for the artifact type from Step 1 (plus the "Codex variant" for Codex artifacts).
+6. `references/antipatterns.md` — scan once; match findings to documented patterns rather than improvising.
+7. `references/agentic-systems/<system>.md` — Claude Code, Codex, Gemini CLI; `_common.md` for cross-tool `AGENTS.md` semantics. Routers and hosted APIs without a file: use `_common.md` + the vendor file (e.g. GLM's router interference lives in `models/glm.md`).
+8. `references/techniques.md` (on demand) — exact wording of frontier snippets. Don't paraphrase from memory — copy and adapt.
 
-#### Path A — Frontier agent-facing references (Class 1)
+#### Path B — Small local (Class 2)
 
-Load these when target is Claude / GPT-5.x / Gemini 3:
+1. `references/matrix-small.md` — small-model axes (few-shot-density, position-of-critical, principles-tolerance, implicit-negation, EN-system unlock, thinking-impact, tools-impact, multi-pass-tolerance, substitution-bias, markdown-tolerance). Cite cells the same way.
+2. `references/models/small-local.md` — family deltas; family quirks (Gemma no system role, Ministral markdown emission, Qwen substitution bias, chat-template thinking flags) override matrix defaults.
+3. `references/techniques-small.md` — ready-to-paste skeleton and blocks. Copy and adapt.
+4. `references/antipatterns-small.md` — scan once; each anti-pattern carries its reproduced regression size.
 
-2. **`references/matrix.md`** — frontier model × axis. Find the row(s) for the target model(s). When proposing a change, **cite the matrix cell** that drove it.
+#### Path C — Mixed
 
-3. **`references/artifacts.md`** — find the section matching the artifact type from Step 1. For Codex artifacts, also read the matching "Codex variant" section.
+Load A and B; use `principles.md` for the shared layer; highlight axes where they conflict (Step 4, cross-class table).
 
-4. **`references/antipatterns.md`** — scan once; match findings to documented patterns rather than improvising.
+#### Always available
 
-5. **Vendor-specific model file** — for nuance the matrix can't capture in a cell:
-   - Claude target → `references/models/claude.md`
-   - OpenAI/Codex target → `references/models/gpt.md`
-   - Google Gemini target → `references/models/gemini.md`
-   - Moonshot Kimi target → `references/models/kimi.md`
-   - Z.ai GLM target → `references/models/glm.md`
-   - Alibaba frontier Qwen target → `references/models/qwen-frontier.md` (NOT `small-local.md`, which is for 2-9B Qwen)
-   - DeepSeek target → `references/models/deepseek.md`
-   - xAI Grok target → `references/models/grok.md`
-   - Mistral frontier target → `references/models/mistral-frontier.md` (Large 3, Medium 3.5, Small 4, Ministral 3-8B+ reasoning; small Ministral → `small-local.md`)
-   - Meta Muse Spark target → `references/models/meta.md` (short by design — Meta published no prompting guide; most behavioral axes stay `?`)
-   - Tencent Hunyuan target → `references/models/tencent.md` (new family — preview release; no prompting guide; facts plus `?`)
-   - Universal Claude / GPT / Gemini / Kimi / GLM / Qwen / DeepSeek / Grok / Mistral / Meta / Tencent / Cross-vendor → `references/models/_universal.md` (multiple sections — load the relevant Universal-X section + the Cross-vendor section if the prompt is multi-vendor)
-
-6. **`references/agentic-systems/<system>.md`** — for system-specific overlays:
-   - Claude Code → `references/agentic-systems/claude-code.md`
-   - Codex CLI → `references/agentic-systems/codex.md`
-   - Gemini CLI → `references/agentic-systems/gemini-cli.md`
-   - Cross-tool `AGENTS.md` semantics → `references/agentic-systems/_common.md`
-   - **Kimi Code / Z.ai routers / DashScope / DeepSeek hosted**: no dedicated agentic-systems file yet. Use `_common.md` for `AGENTS.md` cross-tool semantics; rely on the vendor model file (`models/kimi.md` / `models/glm.md` / etc.) for vendor-specific harness quirks (e.g., GLM's Claude-Code-router interference pattern is documented in `models/glm.md`).
-
-7. **`references/techniques.md`** (load on demand) — exact wording of frontier-style snippets (uncertainty permission, verbosity control, safety/reversibility, action vs suggestion, outcome-first, creative kernel). Don't paraphrase from memory — copy the snippet and adapt.
-
-#### Path B — Small local task-facing references (Class 2)
-
-Load these when target is a 2-9B local model:
-
-2. **`references/matrix-small.md`** — small-model × axis. Has its own axes (few-shot-density, position-of-critical, principles-tolerance, implicit-negation, EN-system unlock, thinking-impact, tools-impact, multi-pass-tolerance, substitution-bias, markdown-tolerance). Cite cells the same way as frontier matrix.
-
-3. **`references/models/small-local.md`** — vendor family deltas (Gemma 3/4, Mistral / Ministral, Qwen 3.5, Phi-4-mini, Llama 3.2, RU tunes saiga / T-lite, fine-tunes Hermes / HORROR-Imatrix). Read the section for the target family. Don't skip — family-level quirks (Gemma no-system-role, Ministral markdown-emission, Qwen substitution-bias) override matrix-cell defaults.
-
-4. **`references/techniques-small.md`** — ready-to-paste snippets for the small-model task class. Skeleton layout, few-shot-at-end template, named anti-pattern blocks, markdown-tolerant output, EN system unlock, 2-pass decompose, worker+verifier, compile-once-decompose, per-model override file layout, structured output adaptation per provider, thinking-off across providers. Don't paraphrase — copy and adapt.
-
-5. **`references/antipatterns-small.md`** — scan once. Twelve anti-patterns specific to small models: abstract principles mid-prompt, thinking-on for 2-3B, same-model self-verify, native tool calling without few-shot, long blacklists, same-language system on 2-3B (counterintuitive — EN unlocks), frontier-style hidden-intent prose, persona block, "be concise / careful" instructions, system role on Gemma, `temperature=0` for all calls, long context with rules in middle. Each tagged with reproduced regression size.
-
-#### Path C — Mixed target (both)
-
-Load both Path A and Path B fully. Use the `principles.md` shared layer for everything that's vendor-agnostic. Highlight axes where Path A and Path B recommendations directly conflict (see Step 4 — Detect contradictions, with the cross-class additions).
-
-#### Always-available
-
-- **`references/multilingual.md`** — load when the prompt or expected output is non-English, OR when the user reports symptoms like "англицизмы", "code-switching", "model keeps switching to English", "теряет регистр", "vocabulary leakage". Applies to BOTH classes. Covers: latent-bias mechanism, model-by-model picture for 2026, Russian↔English asymmetry, style-anchor / whitelist / thinking-output split techniques with research citations, antipatterns. For small local models specifically, also see `antipatterns-small.md § 6` (same-language system) and `techniques-small.md § EN system unlocks`.
+- `references/multilingual.md` — non-English prompt or output, or symptoms like "англицизмы", "code-switching", "теряет регистр". Both classes.
+- `references/patterns.md` — the three install-once patterns (below).
+- `references/archive/` — legacy models; only when the prompt still targets one.
 
 ### Step 4 — Detect contradictions before findings
 
-Before producing any findings, scan the prompt for axes where the recommendation **flips depending on which target model the user has**. Contradictions come in two flavors — within-vendor (Class 1 internal) and cross-class (Class 1 vs Class 2).
+Before producing findings, scan the prompt for axes where the recommendation **flips depending on the target model**. If the prompt touches such an axis and the target is not disambiguated, ask first (template below).
 
-#### Within-vendor — three notorious axes (Claude / GPT / Gemini targets)
+#### Across vendors — the notorious axes
 
-1. **Persona / "You are X"** — Gemini 3 wants it (+5%), GPT-5.5/5.6 hurts, Claude neutral, Kimi helps (Moonshot guide), GLM functional-OK-but-no-identity-pinning, frontier Qwen OK, DeepSeek brief-only.
-2. **Sampling parameters in body** — **Gemini deprecated them API-wide (2026-07-21)**; **newest Claude rejects them** (`temperature`/`top_p`/`top_k` non-default → 400 on Fable 5 / Opus 5.5 / Opus 5 / Opus 4.8 / 4.7 / Sonnet 5; Sonnet 4.6 / Haiku 4.5 still tune); GPT-5.x tunable (GPT-6 Astra: unsupported — remove; GPT-6 Sol / Luna: only at effort `none`), Kimi mode-split (1.0 thinking / 0.6 instant, task-shaped top-p on K3), others tunable but vendor handles.
-3. **CoT scaffolding ("think step by step")** — hurts Gemini 3 and GPT-5.5/5.6, tolerated on Claude, inert on Kimi/GLM/Qwen/DeepSeek (the lever is the parameter, not prose).
-4. **Response-length instructions ("be brief" / "be thorough")** — new in July 2026 and pointing in **opposite directions**: **Opus 5** runs long, doesn't calibrate, and `effort` won't shorten it (concision must be prompted), while **GPT-5.6** and **Gemini 3.6 Flash** are terser than the versions they replace (a carried-over "be brief" overcorrects). Safe cross-vendor form: state length as a requirement of the deliverable ("at most 5 bullets"), not as a disposition.
-5. **"Answer without reasoning" / "don't overthink"** — inert on most vendors, **harmful** on Opus 5 with thinking off (tag leakage), and **structurally unimplementable** where thinking is forced on: Kimi K2.7-Code / K3, **GLM-5.3**, **Grok 4.5 / 4.6 / 4.7**, **Claude Opus 5.5** (thinking always on; the vendor's one sanctioned reduce-thinking line is a measured option, not an off-switch — `models/claude.md § Claude Opus 5.5`), and the **Qwen3.8 open weights** (which require thinking for all interactions). There is no target where it's the right instruction — strip unconditionally, and on the no-off-switch vendors the only depth lever is the effort parameter.
+1. **Persona / "You are X"** — Gemini 3.x wants it (+5%, Google); GPT-5.x hurts (measured on 5.5; GPT-6 guide silent); Claude neutral; Kimi helps (Moonshot guide); GLM functional-only, no identity pinning; frontier Qwen OK; DeepSeek brief-only; Gemini 4 Argon, Mistral Large 4, Meta, Tencent, other-frontier `?`.
+2. **Sampling parameters in the design** — gone on every Claude (API version `2026-10-21`: 400 at any value); Gemini ignores them (400 announced); GPT-6 Astra / 6.1 Sol: unsupported, other GPT-6.x tiers only at effort `none` (`models/gpt.md`); Kimi K3.x and several open-weight cards fix sampling server-side. Treat sampling as unavailable for tone or variety — steer with wording; "propose N directions, then implement the chosen one" is the cross-vendor variety pattern.
+3. **CoT scaffolding ("think step by step")** — hurts Gemini 3.x and GPT-5.x, tolerated on Claude, inert where depth is a parameter (Kimi, GLM, Qwen, DeepSeek, Grok, Mistral, Meta). Never the right lever on a current model.
+4. **Length instructions ("be brief" / "be thorough")** point in **opposite directions**: the Opus 5 lineage runs long and effort won't shorten it; GPT-5.6, Gemini 3.6 Flash and DeepSeek V4.1-Flash-1017 (vendor: "shorter outputs") are terser than what they replaced, so a carried-over "be brief" overcorrects; Gemini 3.8 Flash works harder by design. Safe cross-vendor form: state length as a requirement of the deliverable ("at most 5 bullets"), not as a disposition.
+5. **"Answer without reasoning" / "don't overthink"** — inert or harmful everywhere and **unimplementable where thinking cannot be disabled** (the lineup's knob column marks these: e.g. Claude Opus 5.5, Kimi K3.x / K2.7-Code, GLM-5.3 family, Grok 4.5+, Mistral Large 4, hosted Muse and Muse Spark Open, MiniMax M3.1-Flash, StepFun Step 5, the Qwen3.8-Max open weights; Sonnet 5.5's lowest mode is `between_tools`). Strip unconditionally; the only depth lever is the parameter.
 
-#### Within-family — three axes that now contradict *inside* Claude
+#### Inside the Claude family
 
-New as of July 2026, and easy to miss because the usual disambiguation ("it's for Claude") doesn't resolve them. If the prompt touches any of these and the Claude version is unknown, ask:
+If the prompt touches any of these and the Claude version is unknown, ask:
 
-| Axis | Fable 5 | Opus 5 | Opus 4.8 / 4.7 | Sonnet 4.6 / Haiku 4.5 |
+| Axis | Fable 5.1 | Opus 5.5 (Opus 5 baseline) | Sonnet 5.5 | Haiku 5.5 |
 |---|---|---|---|---|
-| Self-verification / "double-check" | neutral | **strip — over-verifies** | keep — helps | keep — helps |
-| Subagent delegation wording | boundaries | **boundaries + cap** | encouragement | mild |
-| Narration between tool calls | quiet — don't suppress further | **narrates more — suppress** | moderate | moderate |
+| Self-review / "double-check your answer" | neutral | **strip — over-verifies** | not addressed | not addressed |
+| Task check ("run a real check that exercises the change") | fine | fine (task verification) | **official snippet at `low`** | **official snippet at `low`/`medium`** |
+| Subagent delegation wording | boundaries | boundaries + cap | stop self-started reviewer subagents at `xhigh`/`max` | ? |
+| Narration between tool calls | quiet — don't suppress | narrates more — describe the shape | updates arrive as thinking blocks | ? |
+| Thinking off-switch | none | none | `between_tools` (≤ `high`) | `disabled` (≤ `high`) |
+| Forced `tool_choice` | 400 | 400 | 400 | accepted (no thinking block) |
 
-The self-verification row is the sharpest: a `[ADD] verification step` finding is correct on most of the family and a `[CRITICAL]` mistake on Opus 5. Universal-Claude wording that survives all of them is in `models/claude.md § Universal` rule 7.
+The verification rows are the sharpest: a `[CRITICAL] strip self-review` on Opus 5.5 and an `[ADD] real-check paragraph` on Haiku 5.5 at `low` are both correct, because one is a ritual and the other is part of the task. Universal wording that survives the family: `models/claude.md § Universal` rule 7.
 
-Less common but possible:
-- Few-shot examples (helps Claude / Kimi, hurts GPT-5.5 reasoning, mixed on Gemini, helps frontier Qwen for format)
-- Negative-constraint position (Gemini drops early ones, others tolerate anywhere)
-- Aggressive emphasis (Claude 4.5+ overtriggers, others mostly inert)
-- XML+Markdown mixing (Gemini strict, others tolerate)
+Less common: few-shot examples (help Claude / Kimi / frontier Qwen for format, hurt GPT-5.x reasoning, mixed on Gemini); negative-constraint position (Gemini drops early ones; Muse Spark Open "pays more attention to the beginning of the system prompt"); aggressive emphasis (overtriggers on current Claude); XML+Markdown mixing (Gemini strict).
 
-#### Cross-vendor new axes (Kimi / GLM / Qwen / DeepSeek-specific)
-
-When the prompt has — or might be retargeted to — Kimi, GLM, Qwen, or DeepSeek, these axes can flip direction in ways the original Claude/GPT/Gemini-trained intuition doesn't predict:
+#### Cross-vendor axes outside Claude / GPT / Gemini
 
 | Axis | Direction by vendor | Recommendation |
 |---|---|---|
-| **Instruction placement (system vs user prompt)** | **DeepSeek V4: user-prompt priority** — opposite to every other vendor; the ~85%-of-errors figure predates current builds and has twice failed to reproduce on them | If target may include DeepSeek: prefer user prompt for the bulk when you're writing fresh. Porting an existing Claude/GPT agent — measure before re-architecting; a system-side body can work as-is (`models/deepseek.md` field notes) |
-| **System prompt size sensitivity** | **GLM: heavy host system prompts suppress thinking** — Claude Code's prompt actively reduces GLM reasoning quality | If GLM-routed: target <4 KiB load-bearing; consider explicit reasoning re-injection |
-| **Self-verification prompts** | **Qwen: load-bearing for completeness** — free on other vendors | If target includes Qwen: always include "review your response before finishing" |
-| **Numbered requirements vs prose list** | **Qwen: skips un-emphasized sections in prose lists** — number explicitly | If target includes Qwen: convert "address the following considerations" prose to "address each of: A, B, C, D" |
-| **Identity pinning ("You are GLM-5.1")** | **GLM: distillation artifact — model occasionally claims "I am Claude"**; identity-check verifications fail randomly | Strip identity-pinning from cross-vendor prompts; functional roles only |
-| **XML context structure with `relevance` attrs** | **DeepSeek: 92% vs 45% accuracy** — load-bearing | Helps DeepSeek strongly; safe on other vendors |
-| **JSON demanded in prose AND `response_format` set** | **DeepSeek: both required** — `response_format` alone unreliable | Demand JSON in user prompt even with API param set |
-| **Granular constraints (hex colors, sizes, scopes)** | **Qwen: vagueness hurts more than other vendors** | When target includes Qwen, restore constraint detail you might strip for GPT-5.5 |
-| **Agent Swarms / parallel sub-agent decomposition** | **Kimi-only** (K2.6 lineage; K3-specific bounds undocumented) — opt-in via explicit ask; other vendors don't have this capability | Don't write swarm prompts for cross-vendor portability; vendor-specific if used |
-| **Thinking off-switch exists at all** | **Kimi K3 / K2.7-Code, GLM-5.3, Grok 4.5 / 4.6 / 4.7, Claude Opus 5.5, Qwen3.8 open weights: no** — thinking is forced on (or cannot be disabled); every other vendor exposes some way to reduce or disable it | Never write "answer without reasoning"; if latency is the complaint, it's an effort setting or a model choice |
-| **Context window on "upgrade"** | **Grok 4.5: 500K, down from 4.3's 1M** — the only current family where the newer model has a *smaller* window | If the artifact assumes 1M on Grok, confirm the version before recommending long-context patterns |
-| **Harness-side context management** | **Meta Muse Spark 1.2: the model manages its own 1M window** (compaction, re-retrieval) | Strip "summarize every N turns / drop old context" scaffolding for Muse Spark; keep it where the harness really owns trimming |
-| **Persistent reasoning across turns (preserve_thinking, keep:'all')** | **Kimi explicit, Qwen 3.6 Max-Preview explicit, DeepSeek implicit via reasoning_content round-trip** | Cross-vendor: don't write prompts that depend on visible-reasoning continuity across turns |
-| **Image content placement** | **DeepSeek V4-Flash-Vision-Exp: images only in user messages — 400 on system/assistant** (structural version of the family's user-prompt priority) | Put image blocks in user turns on any target; on the DeepSeek vision model it's the only legal position — never generate a system-side image for it |
-| **`reasoning_content` round-trip in multi-turn** | **DeepSeek V4 mandatory, V3 forbidden** — client-library concern | Don't reference in prose; flag if migrating V3→V4 prompts |
+| **Instruction placement (system vs user)** | **DeepSeek: user-prompt priority** per V4 practitioner guidance (citing R1-era vendor advice) — the ~85%-of-errors figure predates current builds and twice failed to reproduce (on V4-Flash-0731, now archived) | Authoring fresh for DeepSeek: bulk in the user prompt. Porting a working system-side body: measure before re-architecting (`models/deepseek.md` field notes) |
+| **System prompt size** | **GLM: heavy host prompts suppress thinking** (Claude Code's prompt included) | GLM-routed: <4 KiB load-bearing; `reasoning_effort` first, re-injection as fallback |
+| **Self-verification prompts** | **frontier Qwen: load-bearing for completeness**; Opus 5 lineage: strip | Qwen in scope: "review your response before finishing" — but not in a set that includes Opus 5.x without a condition |
+| **Numbered requirements vs prose list** | **frontier Qwen skips un-emphasized prose sections** | Number critical requirements explicitly |
+| **Identity pinning ("You are GLM-…")** | **GLM distillation artifact — may claim "I am Claude"**; MiniMax's open template injects its own identity line when no system prompt is given | Functional roles only in cross-vendor prompts |
+| **XML context with `relevance` attrs** | **DeepSeek: load-bearing** (92% vs 45% reported) | Helps DeepSeek; safe elsewhere |
+| **JSON demanded in prose AND `response_format`** | **DeepSeek: both required** | Demand JSON in the user prompt even with the API param set |
+| **Granular constraints (hex colors, sizes, scopes)** | **frontier Qwen: vagueness hurts more** | Restore detail you might strip for GPT |
+| **Agent Swarms / parallel sub-agent decomposition** | **Kimi only** (K2.6 lineage; K2 series retiring end of 2026) | Vendor-specific; don't write swarm prompts for portability |
+| **Context window on "upgrade"** | **Grok 4.5+: 500K, down from 4.3's 1M** | Confirm version before long-context patterns |
+| **Harness-side context management** | **Meta Muse Spark: the model manages its own 1M window** | Strip "summarize every N turns" scaffolding there; keep it where the harness owns trimming |
+| **Moderation rules in prose** | **xAI `guidelines` request parameter** moves moderation policy out of the system prompt | On Grok, prefer the parameter; keep prose rules vendor-neutral elsewhere |
+| **Persistent reasoning across turns** | Kimi explicit (`preserve_thinking`), Qwen explicit, DeepSeek (mandatory with tools) / Mistral Large 4 / MiMo via full-message replay; Muse Wonder: none on Chat Completions | Don't write prompts that depend on visible-reasoning continuity across turns |
+| **Image content placement** | Put image blocks in user turns (`models/deepseek.md` for the vision-model history) | Never generate a system-side image block |
 
 #### Cross-class — frontier vs small local
 
-Apply when the user wants one prompt to work on both classes, or is migrating between classes. These axes go in **opposite directions** on Class 1 vs Class 2:
+Apply when one prompt must work on both classes, or when migrating between them. These axes go in **opposite directions**:
 
 | Axis | Frontier (Class 1) | Small local (Class 2) |
 |---|---|---|
-| Abstract principles in prompt body | tolerated, often helpful | regression (−7 to −15pp on 2-3B) — must convert to few-shot demonstrations |
-| Thinking / CoT on | helps (Opus 4.7 with effort=xhigh) | regression (−25 to −44pp on 2-3B) — must disable across provider params |
-| Hint-and-vibes prose (creative kernel) | helps on Opus 4.7 creative work | regression — small models can't extrapolate from vibes; need literal demonstrations |
-| Same-model self-verify | sometimes helps (validation pass) | regression (−40pp) — confirmation anti-bias |
-| Persona block "You are an expert at X" | helps Gemini 3, neutral Claude, hurts GPT-5.5 | mostly noise on 2-3B compile tasks |
-| System role | first-class on all three frontier vendors | none on Gemma family (no system role); must fold into first user turn |
-| Native tool calling | works first-class | regression on 2-3B without 3-5 few-shot tool-call examples (Microsoft Phi-4-mini card admits hallucinations) |
-| Long blacklists of forbidden behaviors | tolerated | regression — Pink Elephant effect; switch to whitelist + 3-5 named anti-patterns |
-| Same-language system on non-EN task | preferred (matches input language) | **inverted** — EN system unlocks +4-8pp on RU/DE input for 2-3B base models |
-| Critical rules position | tolerated anywhere (frontier holds attention through long context) | must be at END after Forbidden — Google's Gemma docs explicit, observed across families |
+| Abstract principles in the body | tolerated, often helpful | regression (−7 to −15pp on 2-3B) — convert to few-shot demonstrations |
+| Thinking / CoT on | helps (depth via the effort parameter) | regression (−25 to −44pp on 2-3B) — disable via the chat-template / provider flag where one exists; always-thinking models (LFM2.5-24B-A2B, Dory in vLLM): budget + strip (`antipatterns-small.md` § 2) |
+| Hint-and-vibes prose (creative kernel) | helps on literal frontier models | regression — small models can't extrapolate from vibes; need literal demonstrations |
+| Same-model self-verify | sometimes helps (and strip on the Opus 5 lineage) | regression (−40pp) — confirmation anti-bias |
+| Persona block "You are an expert at X" | helps Gemini 3.x, neutral Claude, hurts GPT-5.x | mostly noise on 2-3B compile tasks |
+| System role | first-class on frontier vendors | none on Gemma — fold into the first user turn |
+| Native tool calling | first-class | regression on 2-3B without 3-5 few-shot tool-call examples |
+| Long blacklists of forbidden behaviors | tolerated | regression (Pink Elephant) — whitelist + 3-5 named anti-patterns |
+| Same-language system on a non-EN task | preferred | **inverted** — EN system unlocks +4-8pp on RU/DE input for 2-3B base models |
+| Critical rules position | tolerated anywhere | at the END, after Forbidden |
 
-**If the prompt contains content on a contradicting axis AND the user hasn't disambiguated the target, pause and ask** before producing findings. Never silently apply a recommendation whose direction depends on something the user hasn't told us — the cost of one clarification turn is far less than the cost of a wrong recommendation that breaks a working prompt.
+**If the prompt has content on a contradicting axis AND the target isn't disambiguated, pause and ask** before producing findings. One clarification turn costs less than a wrong recommendation that breaks a working prompt.
 
 #### Contradiction question template
 
-**Render in the user's detected language** (see § Language below). Template structure (English example — translate to the user's language, keep the structure, keep model names and quoted snippets verbatim):
+Render in the user's language; keep the structure, model names and quoted snippets verbatim. Fill the bullets from the matrix cells for the models actually plausible here — the example shows the shape:
 
 > ⚠️ **Before continuing, I need to clarify.** The prompt contains elements where the recommendation **depends on the target model**, and you haven't specified one:
 >
-> 1. **Persona block** ("You are a senior engineer..."):
->    - On Gemini 3.x: **keep — +5% reasoning boost** (Google research)
->    - On GPT-5.5: **strip — hurts performance** (OpenAI guidance)
->    - On Claude: neutral
->    - On Kimi K2.6: **keep — Moonshot guide explicit**
->    - On GLM-5.1: **functional only, no identity pinning** (distillation artifact)
->    - On DeepSeek V4: **brief only — system overuse causes 85% of errors**
+> 1. **"Double-check your work before finishing"**:
+>    - On Claude Opus 5.5 (Opus 5 baseline): **strip — over-verification** (Anthropic guide)
+>    - On Claude Haiku 5.5 at `low` effort: **replace with the official "run a real check that exercises the change" paragraph**
+>    - On frontier Qwen: **keep — load-bearing for completeness**
+> 2. **Persona block** ("You are a senior engineer..."): Gemini 3.x keep (+5%), GPT-5.x strip, Claude neutral, GLM functional-only.
 >
-> Which model is this prompt for? If multiple, I can apply the strictest cross-vendor compromise (in `models/_universal.md` § Cross-vendor 3-way or 4+).
+> Which model is this prompt for? If several, I can apply the strictest cross-vendor compromise (`models/_universal.md`).
 
-For specifically DeepSeek-suspicious prompts (large system prompt + complex instructions), add this contradiction:
-
-> 2. **Instruction placement** (bulk in system prompt vs user prompt):
->    - On Claude / GPT / Gemini / Kimi / GLM / Qwen: **bulk in system** preferred
->    - On DeepSeek V4: **bulk in user prompt** — opposite default (the 85%-of-errors figure predates current builds and twice failed to reproduce; for an existing working system-side body, measure before moving)
->
-> If DeepSeek is in scope, this contradiction is the largest in the file.
+For DeepSeek-suspicious prompts (large system prompt + complex instructions) add the instruction-placement contradiction from the table above.
 
 #### When NOT to ask
 
-- The vendor was already identified in Step 2 unambiguously and there's no within-vendor contradiction
-- The contradiction would change a `[POLISH]` finding only — not worth interrupting the flow
-- The user explicitly said "I don't care, give me the universal compromise" — apply cross-vendor wording
-- The artifact is clearly tied to one vendor (file under `.claude/`, `.codex/`, `.gemini/`, or vendor override file like `AGENTS.deepseek.md`, `AGENTS.glm.md`) — no contradiction to resolve
+- The vendor and version were identified unambiguously in Step 2 and there's no within-family contradiction
+- The contradiction would change a `[POLISH]` finding only
+- The user said "give me the universal compromise" — apply cross-vendor wording
+- The artifact is tied to one vendor (`.claude/`, `.codex/`, `.gemini/`, `AGENTS.deepseek.md`, `AGENTS.glm.md`)
 
 #### After clarification
 
-Once the user answers, **proceed with Step 5 (findings)**. Note in the review which findings were contingent on the clarification — gives auditability.
-
-If the user picks "cross-vendor / universal" — apply the strictest compromise from `models/_universal.md` § Cross-vendor and cite the table.
+Proceed to Step 5 and note which findings were contingent on the answer. If the user picks "cross-vendor / universal", apply the strictest compromise from `models/_universal.md` and cite it.
 
 ---
 
@@ -482,60 +299,40 @@ If the user picks "cross-vendor / universal" — apply the strictest compromise 
 #### Findings — what's broken in existing text
 
 Tag each:
-- `[CRITICAL]` — will cause the prompt to misfire (vague subagent description that never triggers, negative instructions with no alternative, missing verification on a side-effect command)
+- `[CRITICAL]` — will cause the prompt to misfire (vague subagent description that never triggers, negative instructions with no alternative, missing verification on a side-effect command, an instruction the target model cannot implement)
 - `[IMPROVE]` — will meaningfully improve behavior (missing WHY, no examples, negative framing, verbose rule list)
 - `[POLISH]` — small wording cleanup
 
-Each finding points to the exact line or phrase. For each finding, note current behavior vs. expected behavior after the change. **When citing the matrix, name the row × column** that drove the finding — makes the recommendation auditable.
+Each finding points to the exact line or phrase, with current behavior vs. expected behavior after the change. **When citing the matrix, name the row × column** that drove the finding.
 
 #### Gap analysis — what's missing
 
-Findings catch what's broken; gap analysis catches what was never written. Often higher-impact.
+1. **State the prompt's purpose in one sentence.**
+2. **Enumerate plausible failure modes** for that purpose — the ones THIS prompt would plausibly hit.
+3. **Cross-reference** `principles.md`, `matrix.md`, `model-audits.md`, `agentic-systems/<system>.md`, `techniques.md` for snippets addressing them.
+4. **Propose each missing element as `[ADD]`** with (a) the failure mode prevented, (b) the source, (c) the exact snippet. Don't paraphrase — copy and adapt.
 
-Method:
-
-1. **State the prompt's purpose in one sentence** — what behavior is it trying to steer?
-2. **Enumerate plausible failure modes** for that purpose. Pick the ones THIS prompt would plausibly hit.
-3. **Cross-reference references** for snippets directly addressing those failure modes — `principles.md`, `matrix.md`, `agentic-systems/<system>.md`, `techniques.md`.
-4. **Propose each missing element as `[ADD]`** with: (a) failure mode prevented, (b) source citation, (c) exact snippet to drop in. Don't paraphrase — copy and adapt.
+**When a target model is known, run its checklist in `references/model-audits.md` first** — on current releases the vendor's delta list (what to strip, what to add, what now returns 400) is usually most of the review.
 
 **Common high-value additions by artifact type** (always justify from THIS prompt, not this list):
 
 | Artifact | Often missing |
 |---|---|
-| Subagents with tool access | Verification step (`agentic-systems/claude-code.md` § Verification) — **but not when the target is Opus 5**, where a self-verification instruction is a `[CRITICAL]` strip, not an `[ADD]` (`antipatterns.md` #37); permission to express uncertainty (`principles.md` #11); output format with priority tags |
-| Subagents meant for delegation | "Use proactively" / "Use when..." in description; negative scope boundary against sibling agent |
+| Subagents with tool access | A task check for side-effecting work (`agentic-systems/claude-code.md` § Verification) — phrased as part of the task, never as a self-review ritual on the Opus 5 lineage (`antipatterns.md` #37); permission to express uncertainty (`principles.md` #11); output format with priority tags |
+| Subagents meant for delegation | "Use proactively" / "Use when..." in description; negative scope boundary against the sibling agent |
 | CLAUDE.md / AGENTS.md | WHY for non-obvious rules; concrete commands instead of abstractions; load-bearing invariants at edges; negative-scope section ("don't touch X") |
-| SKILL.md descriptions | Explicit trigger clauses with file names / user phrasings; "Do NOT use when..." boundary; bilingual keywords if domain is non-English |
-| Slash commands with side effects | Verification step (`agentic-systems/claude-code.md`); explicit reversibility wording; cleanup-after-yourself |
+| SKILL.md descriptions | Explicit trigger clauses with file names / user phrasings; "Do NOT use when..." boundary; bilingual keywords if the domain is non-English. Claude Code truncates `description` + `when_to_use` at 1,536 characters in the skill listing and escapes angle brackets — front-load the triggers |
+| Slash commands with side effects | Verification step; explicit reversibility wording; cleanup-after-yourself |
 | Slash commands meant for skill behavior | `disable-model-invocation: true` if side effects (Claude Code) |
-| Ad-hoc prompts | Functional role sentence; success criteria; one or two examples (Claude) or zero-shot + criteria (GPT-5.5) |
-| Long-context / RAG prompts | Document-at-top / question-at-bottom; quote-grounding; permission to say "I don't know" |
-| Agentic coding prompts | Anti-overengineering snippet; anti-hard-coding; subagent-orchestration guidance |
-| Per-task creative work on Opus 4.7 | Universal creativity unlockers (`techniques.md §25` top); pair with project-specific anchors. Surface non-prompt lever: raise `effort` before rewriting prompts |
-| Whole-agent creative domain on Opus 4.7 (game design, narrative, content, brand, coaching, brainstorm, advisory) | Install **creative-domain kernel** (`techniques.md §25` bottom + Pattern section in this file): 3–6 composable blocks at system-prompt level + style anchor. **Out-of-band advice to the user (NOT pasted into the file):** which `effort` to run — `high` default, `medium` for pure brainstorm, `xhigh` only for structured creative. Detection cues in Pattern section below |
-| Non-English prompt / target output (Russian, German, Japanese, etc.) | Load `references/multilingual.md`. Common adds: style anchor in target language; **whitelist** of allowed English terms (NOT blacklist); separate thinking-language from output-language for reasoning tasks; final-position language gate (`<output_language>...`); system-prompt language matches target where the agent is permanently localized |
-| Small local model task prompt (`suites/<name>/system.md`, system prompt for Gemma / Qwen / Ministral / Phi / Llama 2-9B) | Load `references/matrix-small.md`, `references/techniques-small.md`, `references/antipatterns-small.md`, and `references/models/small-local.md` for the target family. Common adds: 4-5 few-shot examples at END mirroring failure modes; Forbidden block of 3-5 named anti-patterns (`techniques-small.md § Anti-defaults block`); EN system unlock for non-EN inputs on 2-3B; per-model override file when one base has divergent failure modes across models. Common strips: abstract principles in body; persona block; native tool calling without few-shot; thinking-on for 2-3B; same-model self-verify |
-| Prompt targeting IBM Granite 4.2 (3B / 8B, Class 2) | (1) The model family exposes **switchable thinking in the chat template** — thinking (default) / non-thinking / low-effort: for compile-time tasks prefer the low-effort or non-thinking mode as a *template/serving* choice, not a prose instruction (don't write "don't think" — pick the mode). (2) Multi-turn: prior turns' thinking is stripped by default — never write prompts that depend on visible CoT from earlier turns. (3) Native tool calling exists in OpenAI format, but the small-model rule still applies: tool calls need few-shot examples below ~7B. (4) The 8B's environment-RL training (SE/terminal/search) makes agentic loop prompts viable where other 2-9B models regress — but scope tightly. Cite `models/small-local.md § IBM Granite` and `antipatterns-small.md` |
-| Per-model system override (`suites/<name>/system_<model>.md`) | Family-specific block above the Forbidden: anti-substitution block for Qwen, markdown-tolerance for Mistral / Ministral, "fold into first user turn" for Gemma. Cite `models/small-local.md § <family>` for the exact recommended block |
-| Prompt targeting Claude Fable 5.1 / Mythos 5.1 (or migrated from Fable 5) | Runs out-of-box on Fable 5 prompts, so look for the handful of deltas rather than rewriting. (1) Strip anti-formatting rules and "hold findings for the final response" lines — 5.1 formats and narrates less; if the UI needs narration, ask for an opening line + recap. (2) Agent loops: add the per-turn batching nudge as a turn-scoped system message, not as a static system-prompt line. (3) Autonomous / async runs that end early or ask permission for requested work: add the guide's autonomous-run block (it also lowers clarifying questions — keep it out of human-in-the-loop products). (4) Unrequested fixes or extra test files: add the extras / test-scope snippet. (5) Forced `tool_choice` any/tool → 400 — state in the prompt when the tool applies. (6) Benign coding refusals: rephrase compile-check questions, give context for unfamiliar languages, drop base64 tool output. Keep the Fable 5 reasoning-echo audit (not restated for 5.1 — carried by inference). Cite `models/claude.md § Claude Fable 5.1 / Claude Mythos 5.1` |
-| Prompt targeting Claude Opus 5 (or migrated from Opus 4.8) | Treat as a migration audit, and expect **strips to outnumber adds**. (1) Remove self-verification / double-check / verify-via-subagent instructions (`antipatterns.md` #37). (2) Add explicit concision wording — verbosity no longer calibrates and `effort` won't fix it — plus separate length calibration if the agent writes files (`techniques.md §19`). (3) Convert subagent encouragement into boundaries + a spawn cap (`techniques.md §17`). (4) Add a scope-boundary line for narrow tasks (`techniques.md §20`). (5) Remove any "don't think / answer directly" rule (`antipatterns.md` #38). Cite `models/claude.md § Claude Opus 5` |
-| Prompt targeting Claude Opus 5.5 (or migrated from Opus 5) | Run the Opus 5 row first — 5.5 keeps that baseline. Then: (1) `[CRITICAL]` if the harness or prompt assumes thinking can be switched off (`thinking: disabled`, budgets, forced `tool_choice` → 400) — the fix is an effort level (start at `low`) and dropping the "don't think" rule, not new prose. (2) Flag a carried-over `effort` value: default is `medium`, and the same level thinks more than on Opus 5. (3) For unattended agents that stop after a text progress report, the official early-stops block is the wording fix — not for human-in-the-loop apps. (4) Do not claim verbosity or self-verification changed: the vendor's launch-post numbers are not backed by a prompting-guide instruction change. Sonnet 5.5 / Haiku 5.5 are not released — a request to tune for them is a gap to state, not to fill. |
-| Prompt targeting OpenAI GPT-6 Astra (or migrated from GPT-5.6) | (1) If the agent should run autonomously, add the initiative / approval-at-the-end snippets — Astra asks and stops more readily than 5.6; pair them with an explicit confirmation policy naming the consequential actions that need approval. (2) Audit loaded skills and `AGENTS.md` for unclear or conflicting guidance (Astra is more sensitive to them); add the user-over-skill precedence line. (3) Describe prose and structure as behavior — the default runs detailed and formatted, the opposite of 5.6. (4) If parallel work is wanted, encourage delegation explicitly. (5) Calibrate testing for small changes. Out-of-band: remove `temperature` / `top_p` / `top_logprobs`; `none` / `minimal` effort → start at `low`; tool calling needs the Responses API. Cite `models/gpt.md § GPT-6 Astra` |
-| Prompt targeting OpenAI GPT-6 Sol / Luna | (1) Say which generation — the 5.6 Sol / Luna are different models. (2) Effort `none` exists here (not on Astra); sampling parameters are valid only at `none`, and Chat Completions tool calling only at `none` — flag the combinations that break. (3) Do **not** transplant the Astra delta list (collaborator default, formatted style, `AGENTS.md` sensitivity, under-delegation) as fact: the guide documents it for Astra only — mark such advice as a hypothesis to test. |
-| Prompt targeting OpenAI GPT-5.6 (or migrated from 5.5) | Like Opus 5, expect **strips to outnumber adds** — but for the opposite reasons. (1) Delete instructions restated across sections and verbose tool-usage prose (leanness is measured: +10–15% score at −41–66% tokens). (2) Delete global "be brief" — 5.6 is already terser than 5.5; move the default to `text.verbosity`, keep only task-scoped limits. (3) Add an autonomy-boundary line if the prompt is agentic and silent about how far the model may go. (4) Replace tone labels ("friendly", "empathetic") with described writing choices. Out-of-band: test the current `reasoning_effort` **and one level lower**. **If the prompt is for ChatGPT, check whether the August surface split applies** (Chat = August model; Codex/Work = July — the July wording guidance is the Codex-relevant one). Cite `models/gpt.md § GPT-5.6` and `§ August 2026 update` |
-| Prompt targeting Moonshot Kimi K3 / K2.7-Code | (1) Strip any "answer immediately / don't reason" line — thinking is forced on and cannot be disabled (`[IMPROVE]`, and on K2.7-Code the instruction is unimplementable). (2) Strip Instant-mode assumptions ported from K2.5/K2.6. (3) On K3, flag multi-turn flows that don't round-trip the full assistant message incl. `reasoning_content`. Otherwise Kimi's Claude-style tolerance still holds — restore persona / few-shot stripped during a GPT port. Cite `models/kimi.md § Kimi K3` / `§ Kimi K2.7-Code` |
-| Prompt targeting xAI Grok 4.7 / 4.6 / 4.5 (or migrated from 4.3) | (1) `[CRITICAL]` if the architecture assumes a 1M window — 4.5 / 4.6 / 4.7 have **500K**; the fix is chunking / retrieval / summarizing carried context, not rewording. (2) Flag accumulated persistent context that can cross the **200K pricing step**, where input and output rates double. (3) If the prompt says "don't think" / "answer immediately", it is **unimplementable** — Grok reasoning cannot be disabled; the lever is the `reasoning_effort` API parameter (default `high`), not prose. No dedicated prompting guide exists for 4.5 / 4.6 / 4.7 — don't invent version-specific wording deltas. Cite `models/grok.md § Grok 4.6` / `§ Grok 4.5` |
-| Prompt targeting Meta Muse Spark 1.3 | (1) Establish whether the run is interactive: 1.3 asks clarifying questions on ambiguous prompts and confirms before consequential actions — a feature with a user present, a stall in a non-interactive pipeline. For the latter, state that no one can answer mid-task, which actions are pre-authorized, and the fallback on ambiguity; mark suppression as "test it" (no documented control). (2) Say which update cadence you want (frequent notes vs silent background work). (3) Family rules from 1.2 hold (self-managed context, goal conditioning); re-test constraint restatements and coding concision lines added for 1.2. (4) Max reasoning is an endpoint setting — never prose. Other behavioral axes stay `?`. Cite `models/meta.md § Muse Spark 1.3` |
-| Prompt targeting Meta Muse Spark 1.2 / Muse Glimmer | Strip harness-side context-management scaffolding ("summarize every N turns", "drop old context") — the model manages its own 1M window (1.1 → 1.2 keeps this behavior). Frame the work as a goal, not as steps (the vendor's own "goal conditioning" framing). On Glimmer specifically: the documented controllable-effort lever is a *parameter question* for the user's inference stack, not a prose insertion, and the local-agent defaults (tool-use, failure recovery) mean agentic prompts should name tools and retry expectations plainly. Leave behavioral axes alone: no prompting guide exists, so persona / few-shot / emphasis recommendations would be guesses. Cite `models/meta.md` |
-| Prompt targeting Google Gemini 3.8 Flash (or migrated from 3.7 Flash) | Same family rules as any Gemini 3.x. (1) Don't carry over thoroughness / persistence scaffolding ("keep calling tools until you're sure", "be exhaustive") — 3.8 Flash takes extra reasoning steps and calls tools iteratively by design; if token use is the complaint, the lever is lower effort or staying on 3.7 Flash, not prose. (2) `thinking_level` default `medium`; `minimal` returns an error — fix configs ported from 3.5-era settings. (3) Sampling params stay deprecated. Gemini 3.8 Flash Cyber is closed-access (Fairwind Program) — not a reviewable target. Cite `models/gemini.md § Gemini 3.8 Flash` |
-| Prompt targeting Google Gemini 3.7 Flash (or migrated from 3.6 Flash) | Same family rules as any Gemini 3.x. (1) Check `thinking_level` — 3.7 Flash defaults to `medium` (not `high`): prompts that relied on a previous default are a silent-regression risk; set the level explicitly if the workload needs more depth. (2) Sampling params stay deprecated (family rule #3) — no temperature steering. (3) The Antigravity-agent default changed to 3.7 Flash — if the artifact runs inside Antigravity / Gemini Spark, target 3.7 Flash behavior, not 3.6. Cite `models/gemini.md § Gemini 3.7 Flash` |
-| Prompt targeting Moonshot Kimi K2.6 | If swarm work expected but not framed: add explicit "Decompose this into parallel sub-tasks..." line. Otherwise, often complete — Kimi tolerates Claude-style prompts well. Watch for stripped persona / few-shot from a GPT-5.5 port (restore them). Cite `models/kimi.md § Family-wide rules` |
-| Prompt targeting Z.ai GLM-5.3 / 5.2 / 5.1 routed through Claude Code / OpenCode / Cline | (1) On GLM-5.3 / 5.3-Flash / 5.2, set `reasoning_effort` out-of-band as the primary thinking mitigation (`low`/`high`/`max`, default `max` on 5.3 and 5.3-Flash; `high`/`max` on 5.2); the `<reasoning_content>` re-injection block is the fallback for routers that don't forward it (and the primary lever on 5.1 and earlier). (2) **On 5.3 / 5.3-Flash, `thinking.type: "disabled"` fails the request** — replace any no-reasoning pattern with `enabled` + effort `low`. (3) Strip identity-pinning if present. (4) Trim total load-bearing AGENTS.md size to <4 KiB — 5.3's 1M context does not lift this ceiling (it's a reasoning-gate effect). (5) On 5.3-Flash: multimodal input doesn't change the wording rules, and treat the 1M context as a claim until the vendor reconciles it with the 300K eval footnotes. Cite `models/glm.md § GLM-5.3-Flash`, `§ GLM-5.3`, `§ GLM-5.2` and `§ The Claude-Code-router pattern` |
-| Prompt targeting Alibaba Qwen3.8-Max | (1) Self-verification instruction ("before finishing, review your response..."). (2) Numbered requirements where critical sections must not be skipped. (3) Restore granular constraints (hex colors, sizes, scopes) if stripped during a GPT-5.5 port. (4) If the target is the open weights (or a self-host), drop any "answer immediately / don't think" line — thinking cannot be disabled there; on the hosted model use `enable_thinking` / `reasoning_effort` out-of-band. Cite `models/qwen-frontier.md § Qwen3.8-Max` and `§ Family-wide rules #2-5` |
-| Prompt targeting Alibaba Qwen3.8-Flash (hosted `qwen3.8-flash` vs open `Qwen3.8-Flash-Next`) | (1) Establish the surface first — open weights are 262K native context (extendable to 1M), the hosted QwenCloud model defaults to 1M with built-in tools; a prompt sized for 1M breaks on a self-host of the open weights. (2) Family rules #1–#6 hold (granularity, section emphasis, self-verify, thinking-knob out-of-band, abstention, iteration). (3) Thinking knobs for Flash are **unpublished** — do not claim `reasoning_effort` values; surface as a question. Cite `models/qwen-frontier.md § Qwen3.8-Flash` |
-| Prompt targeting Tencent Hunyuan Hy4 (preview) | (1) Preview-state open-weight frontier model with no prompting guide — do not invent behavioral deltas; apply cross-vendor universal defaults and mark axes `?`. (2) Long-context work (>1M claimed) should not assume the full window holds reasoning — validate on the actual endpoint before committing prompts (same discipline as other vendors' claims). (3) If the prompt runs through OpenRouter / TokenHub, check which surface forwards reasoning params — none are documented for Hy4 yet. Cite `models/tencent.md` |
-| Prompt targeting DeepSeek V4-Pro / V4.1 Flash (`deepseek-flash`) / V4-Flash / V4-Flash-Vision-Exp | (1) Prefer bulk of instruction in the user prompt with a one-line system role **when authoring fresh**; when the artifact is a working Claude/GPT-authored body being pointed at DeepSeek, do NOT open with this — two field notes show system-side bodies executing faithfully on current V4-Flash, so measure first and reserve the move for an observed failure. (2) Add XML-tagged `<context relevance="...">` structure if input has multiple sections. (3) Demand JSON in user prompt prose even when `response_format` is set. (4) Check the thinking parameter form: since 2026-08-13 it's the effort model (`thinking` toggle + `reasoning_effort` low/high/max, default enabled with effort high; Anthropic `reasoning.effort` none/low/high/max) — an integer `reasoning_effort` (the V4.1 Flash model card's 1–100) is not a documented API value — flag it, don't recommend it; the old `thinking: "off"` string is a migration finding, and a "don't reason" prose line is at best a `low`-effort request. (5) On the Vision-Exp model: image content blocks go in **user messages only** (400 otherwise) — never in system or assistant turns. Cite `models/deepseek.md § Family-wide rules #1, #2, #5, #6` and `§ DeepSeek V4-Flash-Vision-Exp` |
+| Ad-hoc prompts | Functional role sentence; success criteria; one or two examples (Claude) or zero-shot + criteria (GPT) |
+| Long-context / RAG prompts | Document at top / question at bottom; quote-grounding; permission to say "I don't know" |
+| Agentic coding prompts | Anti-overengineering / scope snippet; anti-hard-coding; subagent-orchestration guidance |
+| Unattended / async agents | The vendor's autonomous-run block where one exists (Fable 5.1, Opus 5.5 — `model-audits.md`); an explicit list of pre-authorized vs confirm-first actions |
+| Chat or research agents that answer from training knowledge | The vendor's search trigger line (Fable 5.1, Sonnet 5.5, Haiku 5.5 — `models/claude.md`) — not a blanket "always search" |
+| Creative / advisory whole-agent domain | Creative-domain kernel (`references/patterns.md`); out-of-band advice on effort |
+| Non-English prompt / target output | `references/multilingual.md`: style anchor in the target language; **whitelist** of allowed English terms; thinking-language vs output-language split; final-position language gate |
+| Small local model task prompt | `references/patterns.md` § small-model task prompt + `techniques-small.md`: 4-5 few-shot examples at END; Forbidden block of 3-5 named anti-patterns; EN system unlock on 2-3B; per-model override file where failure modes diverge; the model's chat-template thinking flag (not prose) |
+| Per-model system override (`suites/<name>/system_<model>.md`) | Family-specific block above the Forbidden (anti-substitution for Qwen, markdown tolerance for Ministral, fold-into-first-user-turn for Gemma) — `models/small-local.md` § <family> |
 
 When risk is real but you're unsure whether the user mitigates it elsewhere (parent CLAUDE.md, hooks, etc.), list it under Assumptions instead of `[ADD]`.
 
@@ -551,128 +348,19 @@ Either focused `Edit` (before/after) for small fixes and confirmed additions, or
 
 ### Step 6 — Explain the WHY for every change
 
-Claude models reason about instructions; they don't just pattern-match. The user should understand why each change helps so they can apply the principle themselves next time. One short sentence per change. Tie it to the behavior it fixes. Cite the matrix or principle when applicable.
+Frontier models reason about instructions; they don't just pattern-match. The user should understand why each change helps so they can apply the principle themselves next time. One short sentence per change. Tie it to the behavior it fixes. Cite the matrix or principle when applicable.
 
 ---
 
-## Pattern: hint + literal anchor
+## Patterns — install-once structures (full text in `references/patterns.md`)
 
-Some prompts are intentionally hints-and-vibes style — named lenses ("apply KISS / reuse-first"), philosophical framing, atmospheric description. On older Claude (pre-4.7) the model extrapolated from vibes automatically; on Opus 4.7 and GPT-5.5 it doesn't.
+| Pattern | Apply when | Core move |
+|---|---|---|
+| **Hint + literal anchor** | A deliberately hints-and-vibes prompt (named lenses, philosophy, atmosphere) targets a literal model — every current Claude, GPT-5.x / 6.x | Keep the hint AND add an anchor: a trigger clause, one concrete example, permission to surface taste-uncertainty, philosophy at the file edges. Never strip the hints |
+| **Creative-domain kernel** | The agent's *whole* function is creative / advisory / narrative (game design, content, brand, coaching, brainstorm), and it feels flat, won't push back, converges on the obvious | Ask about effort first (out-of-band); install 3–6 kernel blocks from `techniques.md §25` plus a style anchor. On the Opus 5 lineage install selectively — expansion license and tone re-frame fight its defaults |
+| **Small-model task prompt** | Class 2 target, structured output, single-pass compile-time task, prompt has abstract principles or no examples | Skeleton from `techniques-small.md`: neutral task line → output → whitelist → 3-5 step procedure → Forbidden (3-5 named anti-patterns) → examples at END; strip persona, principles, long blacklists, same-model self-verify, thinking-on for 2-3B |
 
-The anti-pattern is to react by stripping hints. That kills the frame the user was relying on for generalization, tone, and taste. The correct move is to **keep the hint AND add a literal anchor** — preserving extrapolation *and* giving the literal model a foothold.
-
-Four anchors to pair with load-bearing hints:
-
-- **Trigger clause** — *when* to invoke + *what observable output*. "Перед значимой правкой кода прогоняй через эти линзы; если линза подсвечивает — озвучь одной фразой до кода."
-- **One concrete example** showing the hint applied to a real decision.
-- **Permission to surface taste-uncertainty**: *"Если не уверен — предложи списком, жди выбора. Не выбирай молча."*
-- **Place philosophy at file edges** (top or bottom), not middle.
-
-Apply this pattern when target is a literal model (Opus 4.7 / GPT-5.5) AND the prompt has deliberate hints-and-vibes framing. Skip if the prompt is already all-literal-rules.
-
-**Non-prompt lever:** on Claude Code with Opus 4.7, raising `effort` to `xhigh` often restores hint-sensitivity better than any prompt edit. Surface this as a conversation point before proposing a rewrite — do not paste effort guidance into the file (effort is a CLI / config / API parameter, see § *Effort / reasoning_effort / thinking_level — surface, do NOT embed*).
-
-Full snippet examples in `references/principles.md`.
-
----
-
-## Pattern: creative-domain kernel for Opus 4.7
-
-A close cousin of hint+anchor, but for a different problem. When the agent's **entire function** is creative / advisory / narrative / non-technical (game design, narrative, content, brand, strategy, coaching, brainstorming partner, design crit, fiction editor), Opus 4.7's defaults work against it on every turn: literalism kills inference, the flatter tone reads as cold, first-obvious-answer convergence kills divergent options, format-drift pushes prose into bullets.
-
-The anti-pattern is to address this per-task — adding unlockers every turn. The correct move on a permanent-creative agent is to install a **kernel** at the system-prompt level (CLAUDE.md role section, subagent body, role-system text) that overrides Opus 4.7 defaults once.
-
-#### Detection — when to apply
-
-Triggers (at least two should match):
-- Agent's primary output is ideas / options / critique / narrative / pitch / scenario
-- Stated domain: game design, narrative, screenwriting, content, brand, marketing, strategy, coaching, therapy-adjacent, brainstorm, advisory, design
-- User symptoms: "feels mechanical", "doesn't push back", "won't suggest things I didn't ask", "lost the warmth", "gives one obvious answer", "skips to bullets when I want prose"
-- Russian cues: «сухо», «скучно», «без огонька», «не додумывает», «слишком технично», «как QA, не как дизайнер»
-
-When prompt-atlas detects this case, the review should:
-1. **First surface the non-prompt lever — ask the user about their effort setting, do NOT embed a recommendation in the file.** `low`/`medium` defeats any kernel. Advise out-of-band: for creative work default to `high`; `medium` for pure brainstorm; `xhigh` only when the creative task has a structured frame; `low` is almost always wrong here. Effort lives in the CLI / config / API call, not in CLAUDE.md or the kernel body — see § *Effort / reasoning_effort / thinking_level — surface, do NOT embed* above.
-2. **Then propose installing the kernel** — 3–6 composable blocks from `techniques.md §25 "Whole-agent creative kernel"`, NOT all of them. Pick by domain.
-3. **Always include the style anchor recommendation** — ask the user to paste 1–3 paragraphs in target voice. This is the single highest-leverage line on 4.7 for creative work.
-
-#### Composable kernel blocks (full snippets in `techniques.md §25`)
-
-Each line overrides a documented 4.7 default. Pick by which default is hurting the user:
-
-| 4.7 default that conflicts | Kernel block to install |
-|---|---|
-| Obedient executor — literal interpretation | Role re-frame ("senior collaborator, not executor") |
-| No inference / loss of "додумывание" | Expansion license ("treat request as minimum scope, raise adjacent moves") |
-| Flatter, less validation-forward tone | Tone re-frame ("warm, direct, prose by default, no bullets/emoji/summary") |
-| Checklist-clarify drift on ambiguity | Ambiguity handling ("interpret most likely meaning and proceed") |
-| First-obvious-answer convergence | Default divergence ("3+ options from different roots, include a risky one") |
-| Validation-forward agreement | Default pushback ("steelman opposition in one sentence before agreeing") |
-| Habitual scaffolding ("I'd be happy to" etc.) | Anti-defaults block (named prohibitions) |
-
-#### When NOT to apply
-
-- Agent is mostly technical (coding, refactoring, ops) and only occasionally creative → use per-task unlockers (`techniques.md §25` top half) instead. The kernel's tone block will pollute regular technical output.
-- Cross-vendor universal prompt — the tone block is Claude-shaped (warmth needs explicit reinstall specifically on 4.7); Gemini 3 and GPT-5.5 react differently. Keep role re-frame + expansion license + divergence; drop tone.
-- Sonnet 4.6 / Haiku 4.5 targets — Sonnet less literal than 4.7 so lighter touch works; Haiku needs more concrete examples and fewer abstract clauses.
-- **Opus 5 target — install selectively, two blocks now fight the model's defaults.** The kernel was tuned against 4.7's flatness, and Opus 5 no longer has the same defaults. **Expansion license** ("treat the request as minimum scope, raise adjacent moves") pushes in the same direction as Opus 5's own scope-widening — installing both produces an agent that reliably does more than asked. **Tone re-frame** ("prose by default, no bullets") compounds with defaults that already run long. Keep the blocks that still address real 4.7-era gaps — role re-frame, default divergence, default pushback, anti-defaults — and replace expansion license with the scope-boundary snippet (`techniques.md §20`) unless the user explicitly wants an agent that expands the brief. Verify against the symptom the user actually reported, not against the 4.7 default table.
-- Agent has strong existing register that conflicts (formal legal advisor, compliance bot) — adapt tone, keep the rest.
-
-**Prime directive interaction**: if the existing prompt already has lines that look like a kernel attempt — keep them, even if awkwardly worded. They're scar tissue from observed failures. Only add blocks that address gaps; don't rewrite an existing tone line unless the user asks.
-
----
-
-## Pattern: small-model task prompt (Class 2)
-
-Small local models on compile-time tasks live in a completely different prompt-engineering regime than frontier creative agents. This pattern is the small-model analog of the creative kernel — a standard layout that overrides the model's failure modes once at the structural level.
-
-#### Detection — when to apply
-
-All four should match:
-- Target is a 2-9B local model (Gemma 3/4, Qwen 3.5, Ministral, Phi-4-mini, Llama 3.2, or fine-tune)
-- Output is structured (JSON object, JSON schema, DSL command, classification label) — not free-form prose
-- Task is single-pass compile-time (extract / classify / NL→DSL / route / decide), not multi-turn conversation
-- The prompt currently has abstract principles, hint-and-vibes prose, or no examples
-
-#### What to install
-
-The full skeleton lives in `techniques-small.md § Skeleton: small-model task prompt`. The non-negotiable structural elements:
-
-1. **Task identity** in one neutral sentence at top (no persona block, no "You are an expert at...")
-2. **Output section** before whitelist — shape, "no prose, no fence, no explanation"
-3. **Whitelist / vocabulary** in a table
-4. **Resolution procedure** in 3-5 numbered steps
-5. **Forbidden** — 3-5 named anti-patterns, each one concrete failure mode
-6. **Examples** at END — 4 for Gemma, 5 for Qwen, 4-5 for Ministral, mirroring failure classes
-7. **Trailing "now read input below"** to prime the model
-
-#### Family-specific adaptations
-
-After installing the skeleton, layer on family-specific blocks from `models/small-local.md`:
-- **Gemma**: no system role — fold instructions into first user turn; EN system on non-EN task
-- **Mistral / Ministral**: markdown-tolerant output paragraph + named anti-patterns block ("CRITICAL: rules are sacred...")
-- **Qwen**: anti-substitution block with 5 examples; always pass `enable_thinking=False`
-- **Phi-4-mini**: avoid native tool calling without few-shot tool-call examples
-- **Llama 3.2 / Hermes**: standard system role; JSON tool calling template
-
-#### What NOT to install (small-model anti-patterns to strip)
-
-Pre-existing prompt has any of these → flag as `[CRITICAL]` or `[IMPROVE]`:
-- Abstract principles in body ("be careful with negations", "every adjective is mandatory")
-- Hint-and-vibes prose copied from a frontier agent prompt
-- Persona block ("You are an expert X with N years of experience")
-- Long blacklist (>5 prohibitions, especially if no positive example follows)
-- Same-model self-verify pass
-- Native tool calling without few-shot tool-call examples
-- System prompt in non-English when input is non-English and model is a base 2-3B (EN-system unlock applies)
-- Thinking on / `reasoning_effort: high` for 2-3B (cite the −25 to −44pp regressions from `antipatterns-small.md § 2`)
-
-Full inventory of 12 anti-patterns with reproduced regression sizes in `antipatterns-small.md`. Don't just flag from memory — cite the specific anti-pattern number so the user can audit.
-
-#### When NOT to apply this pattern
-
-- Target is a frontier model (Class 1) — use the frontier workflow path instead
-- Target is a small local model but the task is free-form prose generation (chat companion, narrative continuation) — closer to a creative-kernel adaptation than a compile-time skeleton
-- The user has a working benchmark suite showing the current prompt at >90% and is asking for marginal improvements — diminishing returns; recommend benchmark-driven iteration over more prompt edits
+**Prime directive interaction:** lines that look like an earlier kernel or anchor attempt are scar tissue — keep them, add only what addresses a gap.
 
 ---
 
@@ -702,7 +390,7 @@ Omit Gap analysis section if the prompt is genuinely complete. Prefer 0-3 items 
 [Before/after snippets OR direct Edit calls, each with a one-line WHY citing matrix.md / matrix-small.md / principles.md / antipatterns-small.md.]
 
 ## Model-specific notes (only if relevant)
-[Things that matter specifically for the target model — Opus 5 / Opus 4.7 / Sonnet 5 / Haiku 4.5 / GPT-5.5 / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B / etc.]
+[Things that matter specifically for the target model — e.g. Opus 5.5 / Haiku 5.5 / GPT-6.1 Sol / Gemini 4 Argon / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B.]
 ```
 
 If the user explicitly asked for a rewrite rather than a review, produce the rewritten text directly with a short rationale at the end.

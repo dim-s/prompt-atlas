@@ -78,11 +78,11 @@ Trust the model's own reasoning — don't prescribe the steps.
 
 ---
 
-## 7. Over-forcing progress updates on Opus 4.7
+## 7. Over-forcing progress updates on current Claude
 
 Old prompt: "After every 3 tool calls, summarize progress."
 
-Opus 4.7 already calibrates progress updates well in long agentic traces.
+From Opus 4.7 on, Claude writes progress updates on its own in long agentic traces (on Fable 5.1 / Opus 5.5 / Sonnet 5.5 they arrive as thinking blocks — check the client before adding prose).
 
 **Fix**: remove scaffolding. Re-evaluate. If updates are genuinely under-calibrated for your UX, describe the *shape* of the update (length, section format, trigger condition) with an example, not the frequency.
 
@@ -142,7 +142,7 @@ Biographical novella adds no behavioral signal. It consumes tokens and prompts u
 
 **Do NOT confuse with methodological anchors.** A role block that looks long but *names specific frames* — time horizons, analytical lenses, named frameworks ("2nd/3rd-order effects", "У-Вэй", "behavioral economics", "10–30 year horizon") — is earning its keep. Especially true for:
 - Generative/advisory prompts (strategy, therapy-adjacent, creative writing), where research shows persona framing *improves* output (USC 2026, [arxiv 2603.18507](https://arxiv.org/abs/2603.18507))
-- Literal models (Opus 4.7) that will NOT apply a "2nd-order effect" lens or a "10-year horizon" unprompted
+- Literal models (every current Claude, GPT) that will NOT apply a "2nd-order effect" lens or a "10-year horizon" unprompted
 
 The test: does the phrase name a **frame, horizon, method, or stance** the model can literally apply? Keep it. Is it just a **label of expertise** ("you are an expert X") or biography? Strip it. See `techniques.md` §6 for the full task-type breakdown.
 
@@ -188,7 +188,7 @@ Heavy-markdown prompt → heavy-markdown output. Dense bullet list prompt → de
 
 ---
 
-## 16. Old frontend-design scaffolding on Opus 4.7
+## 16. Old frontend-design scaffolding on current Claude
 
 Earlier models (pre-4.7) needed long "avoid AI slop" prompt blocks. Opus 4.7 generates distinctive frontends with much less guidance.
 
@@ -243,7 +243,7 @@ Lines like "be thoughtful", "be careful", "think holistically", "consider the us
 - ✅ "Objective mirror without cognitive biases" — stance, pairs with Zero-Flattery rules elsewhere
 - ✅ "Daoism as technology: У-Вэй, path of least resistance, asymmetric strategies" — named framework with specific primitives
 
-These are load-bearing on literal models (Opus 4.7 in particular): the model won't apply a "10-year horizon" or a "2nd-order effects" lens unless it's named. Research supports this for generative/advisory tasks — see USC 2026 ([arxiv 2603.18507](https://arxiv.org/abs/2603.18507)) and `techniques.md` §6.
+These are load-bearing on literal models (every current Claude; first measured on Opus 4.7): the model won't apply a "10-year horizon" or a "2nd-order effects" lens unless it's named. Research supports this for generative/advisory tasks — see USC 2026 ([arxiv 2603.18507](https://arxiv.org/abs/2603.18507)) and `techniques.md` §6.
 
 **The test** — for each line in a competency/role block, ask:
 - Does it name a *frame, horizon, method, or stance* the model can apply? → Keep.
@@ -458,11 +458,11 @@ The Claude-family analog of #36: the model already does the thing the prompt is 
 
 This one is unusually common because it was *correct advice* on every earlier Claude, so it's sitting in most prompts written before July 2026 (`techniques.md §20`).
 
-**Signs**: target is Opus 5; the prompt or its harness contains a standalone self-review, double-check, or verifier-subagent step that isn't tied to a concrete artifact (a test suite, a schema, a tool result).
+**Signs**: target is Opus 5 or Opus 5.5 (same baseline); the prompt or its harness contains a standalone self-review, double-check, or verifier-subagent step that isn't tied to a concrete artifact (a test suite, a schema, a tool result).
 
 **Fix**: remove it rather than soften it — Anthropic's migration guidance is explicit about removal. Keep verification that belongs to the task ("run the test suite and report failures", "check each claim against a tool result from this session"); strip verification that's aimed at the model's own confidence.
 
-**Do not generalize**: on Fable 5, Opus 4.8/4.7, Sonnet 5/4.6, and Haiku 4.5 the instruction still earns its keep. In a universal-Claude prompt, phrase verification as part of the task instead of as a self-review pass.
+**Do not generalize**: on legacy Claude (Opus 4.x, Sonnet 4.6, Haiku 4.5 — archive) the instruction earned its keep, and on Sonnet 5.5 / Haiku 5.5 at low effort the vendor adds the opposite — an official "run a real check that exercises the change" paragraph, which is task verification, not self-review. In a universal-Claude prompt, phrase verification as part of the task instead of as a self-review pass.
 
 ---
 
@@ -472,7 +472,7 @@ Lines like "don't overthink this", "answer directly without reasoning", or "do n
 
 As a reasoning-depth control they're inert prose — the lever is the parameter (#31). Worse, on **Opus 5 with thinking disabled** such a rule measurably *increases* leakage of internal XML tags (`<thinking>` and friends) into the visible response. The instruction produces the opposite of its intent.
 
-And on several models it **cannot be honored at all — the off-switch simply does not exist**: **Moonshot Kimi K3 / K2.7-Code** (K3 *"always has thinking enabled"* — depth via `reasoning effort`; K2.7-Code *"forces thinking and preserve_thinking as True"*), **Z.ai GLM-5.3** (`thinking.type` only accepts `enabled`; `disabled` requests fail), **xAI Grok 4.5 / 4.6 / 4.7** (reasoning cannot be disabled; the knob is `reasoning_effort`), **Claude Opus 5.5** (`thinking: disabled` → 400; the knob is `effort`), and the **Qwen3.8 open-source weights** (`Qwen3.8-2.4T-A95B` requires thinking for all interactions). The prompt asks for a state the model cannot enter — worse than inert: a visible mismatch between the instruction and every response. Kimi started this pattern in the atlas; as of August 2026 the same constraint covers four vendor families, so strip the pattern unconditionally rather than per-target.
+And on several models it **cannot be honored at all — the off-switch simply does not exist**: **Moonshot Kimi K3.1 Pro / K3 / K2.7-Code** (K3 *"always has thinking enabled"* — depth via `reasoning effort`; K2.7-Code *"forces thinking and preserve_thinking as True"*), **Z.ai GLM-5.3 / 5.3-Flash / FlashX** (`thinking.type` only accepts `enabled`; `disabled` requests fail), **xAI Grok 4.5 / 4.6 / 4.7** (reasoning cannot be disabled; the knob is `reasoning_effort` — Grok 4.3 does accept `none`), **Claude Opus 5.5** (`thinking: disabled` → 400; the knob is `effort`), **Mistral Large 4** (`reasoning_effort` low/medium/high, `none` not accepted), **hosted Meta Muse Wonder / Spark** (`none` → HTTP 400) and **Muse Spark Open** ("Reasoning can't be turned off"), **MiniMax M3.1-Flash** (`thinking: disabled` / `effort: none` → 400), **StepFun Step 5 Preview** (the template always opens `<think>`; no off-switch documented), and the **Qwen3.8-Max open weights** (`Qwen3.8-2.4T-A95B` requires thinking for all interactions; open Flash-Next can switch it off). The prompt asks for a state the model cannot enter — worse than inert: a visible mismatch between the instruction and every response. Kimi started this pattern in the atlas; as of October 2026 the same constraint covers most frontier vendor families (`lineup.md`, knob column), so strip the pattern unconditionally rather than per-target.
 
 **Fix**: delete the rule. If the goal was cost or latency, lower `effort` out-of-band — on Opus 5, thinking enabled at `low` effort outperforms thinking disabled at comparable cost. If the goal was clean output from an integration that must keep thinking off, use the general form and **don't name the tags** (naming them is less effective than a blanket rule):
 

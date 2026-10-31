@@ -1,14 +1,26 @@
-# Model-specific wording — Google Gemini 3.x
+# Model-specific wording — Google Gemini (4 Argon, 3.x)
 
-What changes about how you should PHRASE prompts for Gemini 3.x. Companion to `claude.md` (Claude) and `gpt.md` (GPT-5.x). Focused on wording — not API parameter values, pricing, or context limits beyond what affects the prompt.
+What changes about how you should PHRASE prompts for Gemini 4 Argon and Gemini 3.x. Companion to `claude.md` (Claude) and `gpt.md` (GPT). Focused on wording — not API parameter values, pricing, or context limits beyond what affects the prompt.
 
 When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via fileName config, Gemini CLI subagent, skill, slash command), also read `../agentic-systems/gemini-cli.md` — the CLI layers its own behavior on top of the underlying model.
 
+Retired, deprecated and older models (3 Flash, 3.5 Flash, 3.7 Flash, 3.1 Flash-Lite, 2.5) live in `../archive/models/gemini.md`.
+
 ---
 
-## Family-wide rules (apply to all Gemini 3.x versions)
+## Family-wide rules (Gemini 3 guide; what holds on Gemini 4 Argon)
 
-These hold across 3.0 → 3.8. Version-specific notes follow below.
+Rules 1–14 come from Google's prompt-design page, whose model-specific section is still titled "Gemini 3" (last updated 2026-10-13), and from the Gemini 3 developer guide. **Google has published no Gemini 4 prompting guide.** Argon's migration page (`/gemini-api/docs/latest-model`) is API-only: it neither confirms nor retracts any wording rule. So the rules hold on 3.x as documented; on Argon, the wording rules are the best available baseline, not Argon-documented facts — carry them over and test.
+
+| # | Rule | Gemini 3.x | Gemini 4 Argon |
+|---|---|---|---|
+| 1 | Concise prompts | documented | not restated — carry over, unverified |
+| 2 | No CoT scaffolding; depth via `thinking_level` | documented | lever documented (`low` / `medium` / `high`, default `medium`, no `minimal`); the CoT warning is not restated |
+| 3 | No sampling tuning | 3.6+: values ignored; earlier 3.x: keep defaults | documented: values ignored, remove them |
+| 4–11 | Identity persona, persona adherence, negatives at the end, no blanket "do not", one structure format, long-context anchoring, multimodal as peers, direct default tone | documented | not restated — carry over, unverified |
+| 12 | Thought signatures across turns | documented | generic thinking page applies; migration page: keep state on the server (`previous_interaction_id`) |
+| 13 | Output contract in `response_json_schema` | documented | structured outputs "Supported" (model page) |
+| 14 | No image segmentation | documented for 3 Pro / 3 Flash | `?` — the Argon model page doesn't list it |
 
 ### 1. Reasoning model — concise prompts win
 
@@ -16,7 +28,7 @@ Google's official prompting guide is explicit: *"Gemini 3 is a reasoning model. 
 
 Practical impact: prompt-stacks ported from Gemini 2.5 (or worse, from older GPT/Claude) with extensive scaffolding will **underperform** versus a leaner zero-baseline rewrite.
 
-This is the same family-wide pattern as GPT-5.5 and Claude Opus 4.7: frontier reasoning models prefer concise prompts. The patches accumulated against earlier-version quirks now address problems the new model doesn't have.
+Frontier reasoning models across vendors share this preference for concise prompts. The patches accumulated against earlier-version quirks now address problems the new model doesn't have.
 
 ### 2. Chain-of-thought scaffolding becomes harmful
 
@@ -24,23 +36,23 @@ Google's migration guide: *"If you were previously using complex prompt engineer
 
 When porting a 2.5-tuned prompt: **strip CoT scaffolding entirely**. Don't leave it "just in case" — internal thinking happens automatically on Gemini 3, and explicit CoT competes with it.
 
-When reviewing a Gemini 3 prompt that says *"think step by step"*, *"first do X, then Y, then Z"*, *"break this down"* → flag as `[IMPROVE]` and recommend deletion + raise `thinking_level` if reasoning is shallow.
+When reviewing a Gemini prompt that says *"think step by step"*, *"first do X, then Y, then Z"*, *"break this down"* → flag as `[IMPROVE]` and recommend deletion + raise `thinking_level` if reasoning is shallow. On Argon the same lever exists, and Google's advice is to pick it by eval, not by prose: *"Run your evaluations at all three levels, then pick the lowest level that meets your quality bar."*
 
-### 3. Sampling parameters — deprecated as of 2026-07-21 (was: don't tune)
+### 3. Sampling parameters — ignored on Gemini 4 and 3.6+ (was: don't tune)
 
 Google's long-standing recommendation was to leave temperature alone:
 
 > *"For Gemini 3, we strongly recommend keeping the temperature parameter at its default value of 1.0. Changing the temperature (setting it below 1.0) may lead to unexpected behavior, looping, or degraded performance, particularly with complex mathematical or reasoning tasks."*
 
-**As of July 21, 2026 the recommendation became a deprecation.** The Gemini API changelog for that date: *"The sampling parameters `temperature`, `top_p` and `top_k` are now deprecated."* Steering tone, determinism and variety through sampling is no longer an option on this vendor — only through wording.
+On 2026-07-21 the changelog made it a deprecation: *"The sampling parameters temperature, top_p and top_k are now deprecated."* The current prompt-design page states the split: *"Gemini 4 and Gemini 3.6+ models ignore custom values for `temperature`, `top_p`, and `top_k` and return deprecation warning headers (and will return `400` errors in a future release)… For earlier Gemini 3 models, keep these parameters at their default values to avoid degraded reasoning performance."* Argon's migration checklist: *"Remove `temperature`, `top_p`, and `top_k` from your requests. If provided, they are ignored."* Steering tone, determinism and variety through sampling is no longer an option on this vendor — only through wording.
 
 When reviewing a Gemini prompt:
 - If the prompt body mentions temperature → flag for removal (don't reference API params in prompt body anyway)
-- If the surrounding code sets `temperature`, `top_p` or `top_k` → flag as a non-wording finding, and note it's now deprecated, not merely inadvisable
+- If the surrounding code sets `temperature`, `top_p` or `top_k` → flag as a non-wording finding: on Argon / 3.6+ the values already do nothing, and a future release turns them into 400s
 - For variety across runs (design work, naming, creative options), use the **propose-N-directions** pattern instead of sampling — the same replacement the sampling-locked Claude models needed
 - For cross-vendor `AGENTS.md`: don't reference sampling parameters at all; let each vendor's API config handle what it still supports
 
-**This is now a cross-vendor trend, not a Gemini quirk.** Anthropic got there first (non-default `temperature`/`top_p`/`top_k` → 400 from Opus 4.7 onward, and on Sonnet 5), Google followed in July 2026. Only GPT-5.x and the older Claude models (Sonnet 4.6 / Haiku 4.5) still tune freely. The safe universal rule is now the strict one: **treat sampling as unavailable and steer with words.** See `_universal.md § Cross-vendor`.
+**This is a cross-vendor trend, not a Gemini quirk.** Anthropic rejects the three parameters on every Claude model since API version `2026-10-21` (`claude.md` § Cross-model wording principles), Google deprecated them in July 2026, and OpenAI's GPT-6 Astra lists `temperature` / `top_p` as unsupported. Which models still tune is tracked in `_universal.md § Cross-vendor`. The safe universal rule is the strict one: **treat sampling as unavailable and steer with words.**
 
 ### 4. Identity-based prompting — `+5%` reasoning boost
 
@@ -51,9 +63,9 @@ Effective patterns:
 - *"You must analyze before responding."*
 - *"You should evaluate risk and reorder steps."*
 
-**This is the OPPOSITE default to GPT-5.5**, where persona "hurts" and outcome-first beats "act as expert". On Gemini 3, **keep persona blocks** — they're load-bearing.
+**This is the OPPOSITE default to GPT**, where outcome-first beats "act as expert" (`gpt.md` family rule #12). On Gemini 3, **keep persona blocks** — they're load-bearing.
 
-⚠️ **Cross-vendor compromise**: a prompt with persona is GOOD for Gemini, NEUTRAL for Claude, BAD for GPT-5.5. The `/prompt-atlas` skill must detect this contradiction and ask the user which target(s) before recommending strip-or-keep on persona blocks.
+⚠️ **Cross-vendor compromise**: a prompt with persona is GOOD for Gemini, NEUTRAL for Claude, BAD for GPT. The `/prompt-atlas` skill must detect this contradiction and ask the user which target(s) before recommending strip-or-keep on persona blocks.
 
 Place identity prompts in **System Instructions** or at the **very top** of the prompt — Google explicitly: *"Place behavioral constraints and role definitions in the System Instruction or at the very top of the prompt to ensure they anchor the model's reasoning process."*
 
@@ -76,7 +88,7 @@ Suggested order for complex Gemini 3 prompts:
 2. Main task instructions
 3. Negative / formatting / quantitative constraints (bottom)
 
-This is **stricter** than Claude/GPT-5.x where constraint position is more forgiving.
+This is **stricter** than Claude/GPT where constraint position is more forgiving.
 
 ### 7. Anti-pattern — blanket "do not" instructions
 
@@ -96,13 +108,13 @@ Replace blanket negatives with positive scoped instructions:
 
 Mixing breaks the model's parsing of prompt structure. When reviewing a Gemini prompt with both XML tags and `## Markdown headings` → `[IMPROVE]` finding: pick one consistently.
 
-This is stricter than Claude/GPT-5.x where mixing is tolerated (though not optimal).
+This is stricter than Claude/GPT where mixing is tolerated (though not optimal).
 
 ### 9. Long-context anchoring
 
 > *"When working with large datasets (e.g., entire books, codebases, or long videos), place your specific instructions or questions at the **end** of the prompt, after the data context. Anchor the model's reasoning to the provided data by starting your question with a phrase like 'Based on the information above...'"*
 
-Same pattern as Claude and GPT-5.x. The "Based on the information above" anchor is Google's recommended phrasing.
+Same pattern as Claude and GPT. The "Based on the information above" anchor is Google's recommended phrasing.
 
 ### 10. Multimodal — text/image/audio/video equal-class
 
@@ -115,39 +127,72 @@ Gemini 3 treats multimodal inputs as first-class peers. When reviewing a Gemini 
 
 > *"By default, Gemini 3 is less verbose and prefers providing direct, efficient answers. If conversational output is needed, you must explicitly steer the model in the prompt (e.g., 'Explain this as a friendly, talkative assistant')."*
 
-Same as GPT-5.5's default. Cross-vendor: tone-prompts that worked on Gemini 2.5 ("be friendly", "use casual language") may need to be more explicit on 3.
+Same direction as GPT's default. Cross-vendor: tone-prompts that worked on Gemini 2.5 ("be friendly", "use casual language") may need to be more explicit on 3.
 
 ### 12. Tool use — function calling + thought signatures
 
 For agentic Gemini 3 prompts using tools:
 
 - **Combining built-in tools (Google Search, Maps, Code Execution, URL Context, File Search) with custom function calling is now supported.**
-- **Thought signatures** are required to maintain reasoning context across turns. *"The API enforces strict validation on the 'Current Turn'. Missing signatures will result in a 400 error."*
+- **Thought signatures** are required to maintain reasoning context across turns. *"The API enforces strict validation on the 'Current Turn'. Missing signatures will result in a 400 error."* In the Interactions API's stateful mode (`previous_interaction_id`) the server manages them; Argon's migration checklist points multi-turn and function-calling conversations there.
 
 This is configuration, not wording — but flag in reviews of Gemini agentic prompts: if the tool-use loop is breaking, check signatures before rewriting body.
 
 ### 13. Output format — `json_schema` preferred
 
-Same as GPT-5.x: push output contracts into API parameters rather than prose. Use `response_mime_type: "application/json"` + `response_json_schema: {...}` rather than describing JSON shape in the system prompt.
+Same as GPT: push output contracts into API parameters rather than prose. Use `response_mime_type: "application/json"` + `response_json_schema: {...}` rather than describing JSON shape in the system prompt.
 
 ### 14. Image segmentation removed in Gemini 3
 
-If the prompt relies on image segmentation features → image segmentation is **no longer supported in Gemini 3 Pro/Flash**. Use Gemini 2.5 Flash or Robotics-ER 1.6 instead. This is a capability change worth flagging in migration reviews.
+If the prompt relies on image segmentation → Google's Gemini 3 guide: *"Image segmentation capabilities (returning pixel-level masks for objects) are not supported in Gemini 3 Pro or Gemini 3 Flash. For workloads requiring built-in image segmentation, we recommend continuing to use Gemini 2.5 Flash with thinking turned off."* That fallback is now narrow: since 2026-09-18 Gemini 2.5 access is limited *"to users who have actively used them in the past"*, and Robotics-ER 1.6 is shut down. For a new project no current Gemini model is documented to do segmentation (Argon's model page doesn't list it) — flag it as a capability gap in migration reviews, not a wording problem.
 
 ---
 
-## Gemini 3.1 Pro (March 2026)
+## Gemini 4 Argon (October 13, 2026 — current Pro tier, first Gemini 4)
 
-The frontier model, optimized for deep reasoning and long-context work.
+`gemini-4-argon`, GA on release (stable id, not on the Free tier). Google's *"flagship reasoning model"*, above 3.1 Pro, and the first Gemini model outside 3.x. No other Gemini 4 model exists yet — the launch post: *"We're looking forward to bringing you the rest of the Gemini 4 family."*
+
+**No prompting guide.** The baseline is the family rules above, with the Argon status column as the honest caveat. What follows is the documented API-side change set, plus the launch post's behavior claims kept separate.
+
+### Documented changes that shape wording
+
+- **Default depth drops from 3.1 Pro's `high` to `medium`** (levels `low` / `medium` / `high`; `minimal` is not listed). A prompt ported from 3.1 Pro reasons less by default with no error — the same silent-regression class as the archived 3.5 Flash default drop. The fix is `thinking_level: high` where the workload needs it, not "think harder" prose. Google's level guide: `medium` *"Recommended for most tasks, including complex code and agentic use cases"*; `high` for *"Complex reasoning, hard math and science, and the most difficult code or agent tasks."*
+- **Thinking eats the output budget.** *"Gemini 4 Argon can spend more of the limit on thinking than earlier models. To use fewer tokens, lower the thinking level instead."* So a "keep your reasoning short" or "be brief" line is not the lever, and a small `max_output_tokens` truncates answers (Google: raise it to at least 32,768).
+- **One 1M window for input, thinking and output** (*"Input, thinking, and output share one window of 1,048,576 tokens"*). A prompt architecture that fills ~1M with input leaves no room to answer. A single answer over 64K needs background execution (long decode) — a prompt asking for a book-length single output fails synchronously.
+- **Sampling ignored** — family rule #3. Variety comes from wording.
+- **Explicit caching unsupported; implicit caching only** (on by default for prompts of at least 4,096 tokens). Derived consequence: keep the stable part of the prompt (system instruction, tool declarations, reference docs) as an unchanging prefix and put per-call content after it — there is no explicit cache handle to compensate for a reshuffled prefix.
+- **Computer use supported** (GA across the Interactions and GenerateContent APIs on 2026-10-30). Live API not supported.
+
+### Launch-post behavior claims — marketing, not guidance
+
+The launch post (blog.google, 2026-10-13) says: *"It communicates clearly, keeping you in the loop, and follows style instructions better than any of our previous Gemini models. Argon answers questions more directly with less hedging, doesn't repeat itself more than necessary, and skips clichés throughout the responses."* And: *"we trained Argon to respect system boundaries, report negative findings honestly, and pause for human confirmation before taking irreversible steps."* And on injection: *"Argon leads the Gray Swan Indirect Prompt Injection (IPI) benchmark, cutting attack success across 15 adaptive attempts to 0.7%."*
+
+These are vendor claims with no prompting guidance attached. Do not turn them into rules. In reviews:
+- Anti-hedging, anti-repetition and anti-cliché lines carried from 3.x *may* be redundant on Argon — that is a hypothesis to test on the user's own eval, not a documented delta; keep them until an eval says otherwise.
+- Keep explicit confirmation rules for irreversible actions and "treat retrieved content as data" instructions in agent prompts — a trained tendency is not a guarantee, and the prompt is where the operator's boundary is written down.
+
+### Migrating a prompt from 3.1 Pro
+
+- Wording: carry over as-is — Google says nothing either way about wording changes.
+- Set `thinking_level` explicitly if the 3.1 Pro prompt relied on the `high` default.
+- Remove sampling params and explicit-cache calls from the surrounding code (non-wording findings).
+- Raise `max_output_tokens` to at least 32,768 if it was set lower.
+
+---
+
+## Gemini 3.1 Pro (February 2026 preview — previous Pro tier)
+
+`gemini-3.1-pro-preview`, released 2026-02-19 and still a preview. Superseded at the top by Gemini 4 Argon on 2026-10-13; still served, no shutdown date announced. Optimized for deep reasoning and long-context work.
 
 ### Behaviors that shape wording
 
-- **`thinking_level: high` is the default** — internal reasoning is generous by default. Explicit "think harder" wording is dead weight.
+- **`thinking_level: high` is the default** (levels `low` / `medium` / `high`) — internal reasoning is generous by default. Explicit "think harder" wording is dead weight.
 - **1M+ context window** — long-document techniques apply (data top, question bottom, "Based on the above..." anchor)
 - **Strongest persona adherence** — gotcha #5 most pronounced here
 - **Identity-based +5% boost** most measurable on complex reasoning tasks
+- **Sampling: keep defaults** — as an earlier Gemini 3 model it is not in the "ignored" set (family rule #3)
 
-### Migration from Gemini 3 Pro Preview (deprecated 2026-03-09)
+### Migration from Gemini 3 Pro Preview (shut down 2026-03-09)
 
 Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 3.1; mostly an SDK-side migration. Audit:
 - `google-generativeai` package (EOL Nov 2025) → migrate to `google-genai`
@@ -156,33 +201,19 @@ Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 
 
 ---
 
-## Gemini 3 Flash
-
-Balanced model — speed and capability between Pro and Flash-Lite.
-
-### Behaviors that shape wording
-
-- **Same family rules apply** — concise, identity-based, no temperature tuning, no CoT
-- **`thinking_level: low` is a common choice for latency-sensitive use** — if so, system instruction *"think silently"* helps reduce visible-reasoning overhead
-- **Few-shot tolerance is more forgiving than Pro** — when format is genuinely strict, examples help here more than on Pro
-
-### When to use Flash vs Pro
-
-Flash is the default for interactive sessions, agentic loops, and high-volume work. Pro is for one-shot deep reasoning, long-context analysis, hard problems. Wording is the same; reasoning depth differs.
-
----
-
 ## Gemini 3.8 Flash (September 2, 2026 — current Flash frontier)
 
 `gemini-3.8-flash`, GA on release, three weeks after 3.7 Flash — Google's post itself notes it is *"marking our third Flash release in only six weeks"*. Positioned as *"our most intelligent workhorse model, delivering significant improvements from 3.7 Flash across software engineering, agentic tasks, and critical, multi-step reasoning in specialized domains."*
 
+**A prompt pinned to `gemini-3.7-flash` now runs on 3.8 Flash.** Google deprecated 3.7 Flash on 2026-10-08: *"API requests to gemini-3.7-flash are automatically routed to gemini-3.8-flash."* No error, no shutdown — the prompt silently gets the harder-working model below. Review it as a 3.8 Flash prompt: strip persistence scaffolding, re-check token budgets, and update the model string.
+
 ### Behaviors that shape wording
 
 - **It works harder by design — the Flash terseness trend reverses.** Google: *"On complex tasks, it exhibits greater diligence — executing extra reasoning steps, and calling tools iteratively. At times, the model might use more tokens to maximize performance, especially at higher effort levels."* 3.6 Flash was ~17% terser than 3.5 and the atlas flagged carried-over "be brief" lines as overcorrecting; 3.8 moves the other way. Derived consequence: don't port persistence or thoroughness scaffolding ("keep calling tools until you're sure", "be exhaustive", "double-check with another search") into a 3.8 prompt — it stacks on a model that already takes the extra steps.
-- **Efficiency is a parameter or model choice, not prose.** The vendor's own advice: *"developers can utilize lower effort levels to minimize token overhead or continue to rely on Gemini 3.7 Flash, which remains fully supported for efficiency-first workloads."* Per-token pricing matches 3.7 Flash, so extra tokens are the whole cost delta — a "be brief" line won't recover them.
-- **`thinking_level` `low` / `medium` / `high`, default `medium`; `minimal` returns an error** (API model page and thinking docs) — the same ladder as 3.7 Flash. Configs carried from 3.5-era `minimal` settings fail; the fix is `low`, not a "think silently" line.
+- **Efficiency is a parameter or model choice, not prose.** The launch post advised *"developers can utilize lower effort levels to minimize token overhead or continue to rely on Gemini 3.7 Flash, which remains fully supported for efficiency-first workloads."* The second half no longer holds — 3.7 Flash now routes to 3.8 Flash. Lower effort is the remaining lever; a "be brief" line won't recover tokens the model spends by design.
+- **`thinking_level` `low` / `medium` / `high`, default `medium`; `minimal` returns an error** (API model page and thinking docs) — the same ladder as Argon. Configs carried from 3.5-era `minimal` settings fail; the fix is `low`, not a "think silently" line.
 - **Prompt-injection robustness** — *"Gemini 3.8 models have also made a significant leap in prompt injection robustness as measured by Gray Swan"*. Helpful for agents reading untrusted content; not a reason to remove "treat retrieved content as data" instructions.
-- Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling params still deprecated.
+- Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling values ignored.
 
 ### When 3.8 Flash specific tuning helps
 
@@ -190,49 +221,33 @@ Flash is the default for interactive sessions, agentic loops, and high-volume wo
 
 ### When NOT to invest
 
-- Efficiency-first, high-volume loops — the vendor points these to lower effort or 3.7 Flash; rewording won't undo tokens the model spends by design.
+- Efficiency-first, high-volume loops — lower effort (or 3.6 Flash / 3.5 Flash-Lite) is the fix; rewording won't undo tokens the model spends by design.
 
-**No model-specific prompting guide was published for 3.8 Flash.** Everything above is quoted from or derived from Google's launch post (2026-09-02), the Gemini API changelog entry of the same date, the `gemini-3.8-flash` model page and the thinking docs (read 2026-09-13).
+**No model-specific prompting guide was published for 3.8 Flash.** Everything above is quoted from or derived from Google's launch post (2026-09-02), the Gemini API changelog entry of the same date, the `gemini-3.8-flash` model page and the thinking docs (read 2026-09-13; routing re-read 2026-10-31).
 
 ---
 
 ## Gemini 3.8 Flash Cyber (September 2, 2026 — closed access)
 
-A cybersecurity variant built on the same core — both releases *"are powered by the same foundational intelligence"* — and, like 3.5 Flash Cyber, **not generally available**: *"available to trusted defenders through our new Fairwind Program"* (government authorities, critical infrastructure operators, software maintainers). Note the access route changed from 3.5 Flash Cyber's CodeMender. Nothing to tune against; recorded so a later pass doesn't re-investigate.
+A cybersecurity variant built on the same core — both releases *"are powered by the same foundational intelligence"* — and, like the earlier 3.5 Flash Cyber, **not generally available**: *"available to trusted defenders through our new Fairwind Program"* (government authorities, critical infrastructure operators, software maintainers). Note the access route changed from 3.5 Flash Cyber's CodeMender. Nothing to tune against; recorded so a later pass doesn't re-investigate.
 
 One consequence for the GA model: *"3.8 Flash ships with safeguards against misuse in the domains of Chemical, Biological, Radiological, and Nuclear (CBRN) and cyber offense"* — the permissive cyber mitigations belong to the Cyber variant only. No wording workaround is documented for benign security prompts that hit those safeguards on 3.8 Flash.
 
 ---
 
-## Gemini 3.7 Flash (August 13, 2026 — previous Flash frontier)
-
-`gemini-3.7-flash`, GA on release, three weeks after 3.6 Flash. Google positions it as "our most intelligent workhorse model yet for coding and agents." It is the new default model powering the **Antigravity agent** (Gemini Managed Agents / Antigravity SDK) and the engine behind **Gemini Spark** (Google AI Pro / Ultra personal agent).
-
-### Behaviors that shape wording
-
-- **Better instruction-following fidelity and first-pass accuracy** — Google reports stronger gains on coding / issue resolution; FrontierCode 1.1 Main **43.6% vs 34.4%** (3.6 Flash), DeepSWE v1.1 **65.3 vs 49.0**, AutomationBench **30.4 vs 17.0**
-- **`thinking_level` values `low` / `medium` / `high`, default `medium`** — same default level as 3.5 Flash, not `high`; re-check prompts that assumed 3.6-era defaults (default level is a silent-regression risk on naive ports, same class as the 3.5 Flash migration gotcha)
-- **1M context, 64K max output** — long-context patterns apply unchanged
-- Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling params still deprecated
-- Intro price **$0.75 / $3.75 per MTok — half of 3.6 Flash's original rate** — through 31.12.2026, then $1.50 / $7.50; Google applied the same new rate to 3.6 Flash
-
-### When 3.7 Flash specific tuning helps
-
-- Agentic coding / agent loops migrating off 3.6 Flash — the first-pass / instruction-fidelity gains are the pitch; re-check any scaffold added to stop 3.6-era thrashing
-- Web-dev and knowledge-dense work (GDP.pdf 34.0 vs 22.0), enterprise workflow automation (AutomationBench 30.4 vs 17.0)
-
----
-
 ## Gemini 3.6 Flash (July 21, 2026 — previous Flash frontier)
 
-`gemini-3.6-flash`, GA on release. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
+`gemini-3.6-flash`, GA on release; the models page calls it *"Our previous-generation Flash model"*. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
+
+**A prompt pinned to `gemini-3.5-flash` now runs on 3.6 Flash** — 3.5 Flash was deprecated on 2026-10-08 and its requests are *"automatically routed to gemini-3.6-flash"*. Such a prompt silently gets the terser model below; re-check its length instructions.
 
 ### Behaviors that shape wording
 
 - **Output is ~17% shorter than 3.5 Flash** at equal or better quality (up to 65% fewer tokens on DeepSWE-class agentic coding). Like GPT-5.6, this inverts carried-over concision instructions: a "be brief / no preamble" line written against 3.5 Flash now stacks on an already-terser model. Express length as a task requirement, not as a disposition.
 - **Fewer unwanted edits and fewer execution loops** — Google reports higher precision on agentic coding (DeepSWE 49% vs 37%). Scaffolding added to stop 3.5 Flash from thrashing (retry rules, "don't edit files you weren't asked to" walls) is a candidate for trimming — re-test before keeping it.
+- **`thinking_level` default `medium`; `minimal` still accepted** (levels `minimal` / `low` / `medium` / `high`) — unlike 3.8 Flash and Argon.
 - **Family rules unchanged**: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format.
-- **Sampling parameters deprecated on the same date** — see family rule #3.
+- **Sampling values ignored** — deprecated on its release date; see family rule #3.
 
 ### When 3.6 Flash specific tuning helps
 
@@ -245,86 +260,19 @@ One consequence for the GA model: *"3.8 Flash ships with safeguards against misu
 
 ## Gemini 3.5 Flash-Lite (July 21, 2026 — the vendor's designated subagent model)
 
-`gemini-3.5-flash-lite`, GA on release. Google's changelog positions it explicitly: *"a low-latency, highly cost-effective subagent option designed for high-volume automation."* This is the first time a vendor in this atlas ships a model **named for the subagent role** rather than merely suited to it.
+`gemini-3.5-flash-lite`, GA on release. Google's changelog positions it explicitly: *"a low-latency, highly cost-effective subagent option designed for high-volume automation."* This is the first time a vendor in this atlas ships a model **named for the subagent role** rather than merely suited to it. It is also the designated replacement for 3.1 Flash-Lite (earliest shutdown 2027-05-07; section in `../archive/models/gemini.md`).
 
 ### Behaviors that shape wording
 
-- Same regime as 3.1 Flash-Lite: concise wording, bounded scope, few-shot helps more than on Pro, tool guidance pushed into tool descriptions.
+- The Lite regime: concise wording (every token costs latency), bounded scope, few-shot for strict formats helps more than on Pro, tool guidance pushed into tool descriptions with a minimal system prompt.
+- **`thinking_level` default `minimal`** (levels `minimal` … `high`).
 - **Stronger than the previous Lite tier at agentic work** — SWE-Bench Pro 54.2% vs 49.6% for 3 Flash, at ~350 output tokens/sec. Tasks previously escalated from Lite to Flash on capability grounds are worth re-testing.
 
 ### As a subagent
 
-When a Gemini-side prompt review involves a subagent fleet, this is the default worker: bounded, read-only or narrowly-scoped jobs (search, classification, extraction, pre-filtering), with the orchestrator on Pro or Flash. The wording implications are the standard ones for a cheap executor — spell out the success criteria, name the tools, keep the scope small, and put the format contract in `response_json_schema` rather than prose.
+When a Gemini-side prompt review involves a subagent fleet, this is the default worker: bounded, read-only or narrowly-scoped jobs (search, classification, extraction, pre-filtering), with the orchestrator on Argon, 3.1 Pro or Flash. The wording implications are the standard ones for a cheap executor — spell out the success criteria, name the tools, keep the scope small, and put the format contract in `response_json_schema` rather than prose.
 
-The mirror-image models across vendors: Claude Haiku 4.5, Gemini 3.1 Flash-Lite, GPT-5.6 Luna. A subagent prompt written for one usually ports to the others with only the format-contract syntax changing.
-
----
-
-## Gemini 3.5 Flash Cyber (July 21, 2026 — closed access)
-
-A 3.5 Flash fine-tune for finding and fixing security vulnerabilities, announced alongside the two models above but **not generally available** — access is limited to governments and trusted partners through CodeMender. Noted here so a future coverage pass doesn't re-investigate it: there is nothing to tune against, and a prompt targeting it can't be validated.
-
----
-
-## Gemini 3.5 Flash (May 19, 2026 — previous Flash frontier)
-
-A larger jump than the version number suggests. Beats Gemini 3.1 Pro on **coding and agentic benchmarks** (Terminal-Bench 2.1 76.2%, MCP Atlas 83.6%, GDPval-AA 1656 Elo) while 3.1 Pro still wins **abstract reasoning** (Humanity's Last Exam +4.2 pts, ARC-AGI-2 +5).
-
-### Critical migration gotcha — `thinking_level` default dropped
-
-The integer `thinking_budget` from Gemini 3 Flash Preview is **retired**. New `thinking_level` enum: `minimal` / `low` / `medium` (**default**) / `high`.
-
-**Silent regression risk:** the default moved from `high` (on the Preview) to `medium`. A naive port `gemini-3-flash-preview` → `gemini-3.5-flash` reasons less than the old prompt did, with no error. Audit prompts that depended on the prior default; set `thinking_level: high` explicitly if the workload needs it.
-
-**Also retuned:** `low` is no longer "skip reasoning" — Google retuned it specifically for code/agentic tasks. Use `low` deliberately for agentic loops where you want fast turns; don't avoid it as if it disables thinking.
-
-### Wording differences from 3 Flash
-
-- Family rules unchanged (concise, identity-based, no temperature tuning, no CoT scaffolding)
-- Coding benchmarks now Flash-leading — older Flash prompts that punted hard coding to Pro can be revisited
-- Long-context (1M) behavior same; documents-top / question-bottom anchor still applies
-
-### When 3.5 Flash specific tuning helps
-
-- Agentic coding loops migrating from 3.1 Pro for cost/speed
-- High-volume agentic workloads where 3.5 Flash now matches Pro on coding-shaped tasks
-- Migration audits from any `gemini-3-flash-preview` codebase
-
----
-
-## Gemini 3.1 Flash-Lite (March 2026)
-
-Speed/cost-optimized — 363 tokens/sec, $0.25/$1.50 per 1M tokens, 1M context. Designed for high-volume, latency-sensitive workloads.
-
-### Behaviors that shape wording
-
-- **Concise wording is critical** — every token costs latency at this throughput
-- **`thinking_level: low` is typical** — explicit "think silently" in system instruction is common
-- **Few-shot for format helps more than on Pro** — Lite needs more guidance for strict formats
-- **Bounded scope wins** — like Haiku 4.5, Lite excels at classification, extraction, summarization, translation. If you find yourself writing a 10-step workflow for Lite, promote to Flash or Pro
-- **Tool descriptions matter more** — push tool guidance into descriptions, keep system prompt minimal
-
-### As a subagent
-
-Lite is the right default when the subagent's job is bounded and read-only: classifiers, extractors, cheap pre-filters, language tasks. Use Flash or Pro for the main conversation where reasoning quality matters.
-
----
-
-## Gemini 2.5 Pro / Flash (legacy — for migration reviews)
-
-Older generation. When migrating from 2.5 to 3.x, the changes are large enough that Google recommends a fresh-baseline approach:
-
-### Wording fixes when migrating 2.5 → 3.x
-
-| Old 2.5-style | 3.x-style |
-|---|---|
-| "Think step by step." / "First, do X. Then do Y." | (Delete.) Set `thinking_level: high` if reasoning is shallow. |
-| Long block of "DO NOT do X / Y / Z" | Replace with positive scoped instructions ("Use the provided context for deductions"). Move remaining negatives to the END of the prompt. |
-| Few-shot block of 5 examples | Test zero-shot first; keep examples only if format drifts. |
-| Mixed XML + Markdown structure | Pick one. |
-| Persona absent or weak | **Add identity-based persona** ("You are a planner...") — measurable boost. |
-| `temperature: 0.3` for deterministic output | **Remove.** Gemini 3 default 1.0 is required. |
-| `thinking_budget: <number>` | Migrate to `thinking_level: minimal/low/medium/high`. |
+The mirror-image models across vendors are the cheap volume tiers (Claude Haiku, GPT Luna — see `claude.md` / `gpt.md`). A subagent prompt written for one usually ports to the others with only the format-contract syntax changing.
 
 ---
 
@@ -333,52 +281,71 @@ Older generation. When migrating from 2.5 to 3.x, the changes are large enough t
 | Anti-pattern | Symptom | Fix |
 |---|---|---|
 | **Chain-of-thought scaffolding** | "Think step by step" + numbered mental moves in the body | Strip; raise `thinking_level` to medium or high |
-| **Sampling params in prompt body** | "Set temperature to 0.3" / `top_p` / `top_k` mentioned in body | Remove from body — and note the params themselves are **deprecated as of 2026-07-21**, so the code around it needs a fix too. For variety, use propose-N-directions |
+| **Sampling params in prompt body** | "Set temperature to 0.3" / `top_p` / `top_k` mentioned in body | Remove from body — and the params themselves are **ignored on Argon / 3.6+** (400 in a future release), so the code around it needs a fix too. For variety, use propose-N-directions |
 | **Mixed XML + Markdown** | `<context>...</context>` and `## Section` in same prompt | Pick one structure; prefer XML for inline, Markdown for top-level structure |
 | **Blanket "do not"** | `"do not infer / do not guess / do not hallucinate"` | Replace with positive scoped instructions |
 | **Negative constraints at top** | "Don't include X" in the first paragraph | Move to end; model drops early negatives |
-| **Missing persona** | Prompt has no identity-based system instruction | Add 1 line: "You are a [planner / analyst / writer]" — measurable boost |
+| **Missing persona** | Prompt has no identity-based system instruction | Add 1 line: "You are a [planner / analyst / writer]" — measurable boost on 3.x (unverified on Argon) |
 | **Over-strong persona vs task** | Strong persona conflicts with output format requirements | Soften persona OR move format constraints into System Instructions where persona lives |
 | **Hardcoded model name** | "You are Gemini 3.1 Pro" | Strip; use functional role |
 | **Legacy `thinking_budget`** | Old SDK pattern in code | Migrate to `thinking_level` (cannot coexist — 400 error) |
+| **"Be brief" to save thinking tokens** | Prose asks the model to think less | Lower `thinking_level` — Google's stated lever on Argon |
 
 ---
 
 ## Cross-vendor implications
 
-When the prompt is **cross-vendor** (Claude + GPT-5.x + Gemini), several Gemini-specific defaults conflict with other vendors:
+When the prompt is **cross-vendor** (Claude + GPT + Gemini), several Gemini-specific defaults conflict with other vendors:
 
-| Axis | Gemini 3 | Claude | GPT-5.5 / 5.6 | Cross-vendor compromise |
+| Axis | Gemini 3.x (Argon: carried over, unverified) | Claude | GPT | Cross-vendor compromise |
 |---|---|---|---|---|
 | Persona / "act as" | **+5% boost — keep** | Neutral | Hurts | **Conditional persona** OR drop with -5% Gemini cost |
-| Sampling params | **deprecated 2026-07-21** | non-default → 400 on Fable 5 / Opus 4.7+ / Sonnet 5 | Tunable | Don't reference sampling in body, and don't design around it — two of three vendors have removed it |
-| Response length default | 3.6 Flash ~17% terser than 3.5 | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults now move in opposite directions per vendor |
+| Sampling params | **ignored on Argon / 3.6+**; earlier 3.x: defaults | → 400 on every model (API version `2026-10-21`) | Tunable on 5.x; GPT-6 Astra: unsupported | Don't reference sampling in body, and don't design around it |
+| Response length default | 3.6 Flash ~17% terser than 3.5; 3.8 Flash works harder; Argon `?` | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults move in opposite directions per model |
 | Negative constraint position | At end (strict) | Anywhere | Anywhere | Place at end (strictest wins) |
 | Structure mixing | XML or Markdown, not both (strict) | Tolerates mixing | Tolerates mixing | Pick one (strictest wins) |
 | CoT scaffolding | Hurts | Tolerated | Hurts | Strip — works for all three |
 | Blanket "do not" | Over-indexes | Tolerated | Tolerated | Replace with positive scoped instructions (works for all three) |
 
 The persona conflict is the most painful: there's no neutral position. Cross-vendor `AGENTS.md` must either:
-- **Drop persona entirely** (lose 5% on Gemini, gain on GPT-5.5)
+- **Drop persona entirely** (lose 5% on Gemini, gain on GPT)
 - **Keep functional persona that's also a methodological anchor** ("Apply systems-thinking lenses, evaluate risk before recommending") — this works on all three vendors because it names *frames*, not *credentials*. See `gpt.md` and `claude.md` on methodological anchors.
 - **Conditional persona** — split prompts by vendor (heavier maintenance but optimal)
 
-When this conflict shows up in a review, the `/prompt-atlas` skill must **flag and ask** which target(s) the user actually has — see SKILL.md § "Contradiction detection".
+When this conflict shows up in a review, the `/prompt-atlas` skill must **flag and ask** which target(s) the user actually has — see SKILL.md Step 4 (contradiction detection).
 
 ---
 
-## Universal Gemini 3.x prompts
+## Universal Gemini prompts (Argon + 3.x)
 
-A prompt that works across Pro / Flash / Flash-Lite:
+A prompt that works across Argon / Pro / Flash / Flash-Lite:
 
 - [ ] Concise (Flash-Lite needs it most)
 - [ ] No CoT scaffolding (all internalize reasoning)
-- [ ] No sampling params in body (deprecated API-wide since 2026-07-21)
-- [ ] Length stated as a task requirement, not a disposition (3.6 / 3.7 Flash are terser than 3.5 — a global "be brief" overcorrects)
-- [ ] Identity-based persona present (helps all three)
+- [ ] No sampling params in body (ignored on Argon / 3.6+; keep defaults on earlier 3.x)
+- [ ] Length stated as a task requirement, not a disposition (3.6 Flash is terser than 3.5, 3.8 Flash works harder — one global "be brief" is wrong for one of them)
+- [ ] Identity-based persona present (documented for 3.x; carry to Argon and test)
 - [ ] XML or Markdown, not both
 - [ ] Negative constraints at end
 - [ ] Output format via `response_json_schema` if structured
 - [ ] Tool guidance in tool descriptions, not system prompt
 - [ ] No model name hardcoded
 - [ ] If long context: data at top, question at end, "Based on the above..." anchor
+- [ ] Stable prefix first, per-call content last (Argon caches implicitly only)
+
+---
+
+## Source notes
+
+Facts added or re-checked in v2.0.0 (2026-10-31):
+
+- Argon id, GA, "flagship reasoning model", capabilities (structured outputs, computer use, Live API, implicit-only caching), 1M unified window, 64K synchronous / 1M long-decode output — https://ai.google.dev/gemini-api/docs/models/gemini-4-argon, read 2026-10-31 (raw; "Last updated 2026-10-30").
+- Argon thinking levels and level guidance, "evaluate at all three levels", 32,768 output minimum and "spend more of the limit on thinking", "Input, thinking, and output share one window", sampling "ignored", explicit caching unsupported, implicit caching ≥4,096 tokens, `previous_interaction_id` — https://ai.google.dev/gemini-api/docs/latest-model (`.md.txt`), read 2026-10-31 (raw; "Last updated 2026-10-27"). The page has no prompting section.
+- Thinking table (Argon / 3.8 Flash `low`–`high` default `medium`; 3.6 Flash default `medium` with `minimal`; 3.5 Flash-Lite default `minimal`; 3.1 Pro preview default `high`, `low`–`high`) and thought signatures in stateful mode — https://ai.google.dev/gemini-api/docs/thinking.md.txt, read 2026-10-31 (raw). The page's Go samples name a `gemini-3.8-pro`; no catalog, changelog or deprecation entry lists it — a doc artifact, not a model.
+- Sampling split (Gemini 4 and 3.6+ ignore, 400 in a future release; earlier Gemini 3 keep defaults) and the absence of a Gemini 4 prompting section — https://ai.google.dev/gemini-api/docs/prompting-strategies, read 2026-10-31 (raw; "Last updated 2026-10-13").
+- Image segmentation quote — https://ai.google.dev/gemini-api/docs/gemini-3 (Gemini 3 developer guide), read 2026-10-31 (raw).
+- 3.7 Flash → 3.8 Flash and 3.5 Flash → 3.6 Flash routing (2026-10-08), Argon GA (2026-10-13), Computer Use GA (2026-10-30), 2.5 access limited to past users (2026-09-18), sampling deprecation (2026-07-21) — https://ai.google.dev/gemini-api/docs/changelog, read 2026-10-31 (raw).
+- 3.1 Pro preview release 2026-02-19 / no shutdown date, 3 Pro preview shut down 2026-03-09, 3.1 Flash-Lite earliest shutdown 2027-05-07 → 3.5 Flash-Lite — https://ai.google.dev/gemini-api/docs/deprecations, read 2026-10-31 (raw; "Last updated 2026-10-22").
+- 3.6 Flash "previous-generation Flash", Robotics ER 1.6 "Shut down", Gemini 4 section lists only Argon — https://ai.google.dev/gemini-api/docs/models, read 2026-10-31 (raw).
+- Argon behavior claims and "rest of the Gemini 4 family" — https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-4-argon/, read 2026-10-31 (raw; vendor marketing, quoted, not used as guidance).
+- Not read: the Gemini 4 Argon model card; the `whats-new-gemini-3.8` and `whats-new-gemini-3.6` pages; Vertex AI model pages.

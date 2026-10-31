@@ -177,9 +177,9 @@ Same as skills — concrete verb, "use when...", "use proactively" if undertrigg
 
 Body length under ~150 lines. Past that, subagent's scope is too wide — split.
 
-### Spawning behavior on Opus 4.7
+### Spawning behavior differs by model
 
-Boris and Anthropic both report: Opus 4.7 spawns subagents more conservatively than 4.6 did. If you want aggressive delegation (e.g., "spawn a subagent for each of: frontend, backend, database"), prompt for it explicitly.
+Opus 4.7 / 4.8 (archived) spawned conservatively and needed encouragement; the Fable 5 line and the Opus 5 line (incl. Opus 5.5) delegate readily and need boundaries plus a spawn cap; Sonnet 5.5 self-starts reviewer subagents at `xhigh`/`max` (official stop snippet in `models/claude.md § Claude Sonnet 5.5`). Pin the wording to the subagent's `model:` — see `techniques.md §17`. A session-wide default effort for subagents is the `CLAUDE_CODE_SUBAGENT_EFFORT` env var (Claude Code 2.1.316); per-agent `effort:` in frontmatter still wins.
 
 ### Subagents as context isolation, not just parallelization
 
@@ -378,7 +378,7 @@ These show up in Claude Code artifacts specifically:
 | Anti-pattern | Symptom | Fix |
 |---|---|---|
 | **Kitchen-sink CLAUDE.md** | One file mixes code style + architecture + commands + sprint context | Split via `@import`; move sprint context out (it ages) |
-| **Hardcoded model name** | "When using Opus 4.7, do X" | Strip; use functional role; pin via subagent `model:` field if needed |
+| **Hardcoded model name** | "When using Opus 5.5, do X" | Strip; use functional role; pin via subagent `model:` field if needed |
 | **Plan-mode prose in default mode** | Slash command body says "first explore, then plan, then code" but doesn't actually enter plan mode | Either invoke plan mode explicitly or remove the prose — it's confusing the model |
 | **Hook-duplicating rule** | CLAUDE.md says "always run eslint after edits" + a `PostToolUse` hook does the same | Delete the rule, leave a one-line pointer at the hook |
 | **Skill without `disable-model-invocation`** for side-effect ops | Side-effect skill auto-fires on description-keyword match | Add `disable-model-invocation: true` |

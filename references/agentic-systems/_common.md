@@ -62,7 +62,7 @@ Tools defined in Claude Code or other hosts are passed to the routed model via t
 
 ### 5. Identity behaviors differ across hosts and models
 
-A prompt that runs cleanly on native Claude Opus 4.7 may misfire on the same Claude Code session routing to GLM-5.1 — different model, different identity quirks (GLM's "I am Claude" distillation artifact), different reasoning gates. **A `CLAUDE.md` is no longer automatically a Claude prompt** in 2026 — it's a Claude Code prompt that runs on whichever model the user has routed.
+A prompt that runs cleanly on native Claude Opus 5.5 may misfire on the same Claude Code session routing to GLM-5.3 — different model, different identity quirks (GLM's "I am Claude" distillation artifact), different reasoning gates. **A `CLAUDE.md` is no longer automatically a Claude prompt** in 2026 — it's a Claude Code prompt that runs on whichever model the user has routed.
 
 ### Review implication
 
@@ -128,7 +128,7 @@ Edges of a file get attended to more reliably than the middle as context fills. 
 
 ### 8. Don't pin specific tool/model names
 
-`When using Opus 4.7, do X` or `Codex CLI users should Y` defeats the cross-tool purpose. Use functional descriptions: `When generating code, do X. When reviewing, do Y.`
+`When using Opus 5.5, do X` or `Codex CLI users should Y` defeats the cross-tool purpose. Use functional descriptions: `When generating code, do X. When reviewing, do Y.`
 
 ### 9. Personal preferences go in a personal file, not the shared AGENTS.md
 
@@ -152,13 +152,13 @@ A bare `AGENTS.md` at project root meant to be read by multiple agents. Apply th
 | Axis | Strictest rule | Reason |
 |---|---|---|
 | Length | Under 8 KiB load-bearing | Codex's 32 KiB hard cap |
-| Step prescription | Outcome-first; steps as "typical sub-tasks, choose order yourself" | GPT-5.5 treats step prescription as noise |
-| Few-shot examples | Skip unless format genuinely strict | GPT-5.5 reasoning models are hurt by them |
-| Persona / role | **CONTRADICTION** — Gemini wants persona (+5%), GPT-5.5 hurts | Surface to user; see SKILL.md § Contradiction detection. Compromise: methodological anchors only ("Apply systems-thinking lenses..."), drop credential-naming |
-| Temperature in body | Don't reference temperature | Gemini fixed at 1.0; mentioning is dead weight |
+| Step prescription | Outcome-first; steps as "typical sub-tasks, choose order yourself" | GPT treats step prescription as noise (5.5 guide) |
+| Few-shot examples | Skip unless format genuinely strict | GPT reasoning models are hurt by them (5.5 guide) |
+| Persona / role | **CONTRADICTION** — Gemini wants persona (+5%), GPT hurts | Surface to user; see SKILL.md Step 4 (contradiction detection). Compromise: methodological anchors only ("Apply systems-thinking lenses..."), drop credential-naming |
+| Temperature in body | Don't reference temperature | Ignored on Gemini 4 / 3.6+, 400 on every Claude, unsupported on GPT-6 Astra / 6.1 Sol — dead weight everywhere |
 | Tool guidance | Inside tool description, not AGENTS.md | OpenAI's strong split |
 | Reasoning prompts | Never "think step by step" in body | All three vendors prefer the API parameter |
-| CoT scaffolding | Strip entirely | Hurts on Gemini 3 and GPT-5.5; tolerated on Claude (so safe to remove) |
+| CoT scaffolding | Strip entirely | Hurts on Gemini 3.x and GPT (5.5 guide); tolerated on Claude (so safe to remove) |
 | Aggressive emphasis | Reserve for safety invariants only | Claude 4.5+ overtriggers |
 | Output format | `json_schema` if downstream supports it | All three vendors prefer over prose constraints |
 | Negative constraints | Place at end of file | Gemini drops early negatives |
@@ -167,7 +167,7 @@ A bare `AGENTS.md` at project root meant to be read by multiple agents. Apply th
 
 Full cross-vendor rules in `../models/_universal.md`.
 
-**The unique three-vendor problem:** persona blocks. There's no neutral position — adding helps Gemini, hurts GPT-5.5, neutral on Claude. The `/prompt-atlas` skill should detect this and ask the user which target(s) before recommending strip-or-keep. See SKILL.md § Contradiction detection.
+**The unique three-vendor problem:** persona blocks. There's no neutral position — adding helps Gemini, hurts GPT, neutral on Claude. The `/prompt-atlas` skill should detect this and ask the user which target(s) before recommending strip-or-keep. See SKILL.md Step 4 (contradiction detection).
 
 ---
 
