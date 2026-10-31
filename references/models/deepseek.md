@@ -92,7 +92,7 @@ Quantitative claim from V4 prompting guides: **system prompt overuse causes ~85%
 > (V4-Pro 2026-08-13, V4-Flash 2026-07-31; read 2026-08-19) says **nothing** about system-prompt
 > adherence in either direction, so neither this note nor the rule above can currently be settled from
 > the vendor. Rule #1 stands; treat this as a datapoint that it may be narrower than stated. Detail in
-> `FINDINGS.md § Заход 2026-08-19`.
+> the maintainers' reconciliation log of 2026-08-19 (not published).
 
 **Agentic failure mode (practitioner reports, V4).** A tool-using DeepSeek agent that carries its rules and search methodology in the system prompt tends to **fabricate confident false negatives** on absence questions ("X doesn't exist anywhere" for something that does) and mis-scope its searches. Moving the bulk to the user turn (system kept to a one-line role) is reported to fix it on the same model and tools. Symptom → diagnosis: a confident "doesn't exist anywhere" from a DeepSeek agent → suspect system-prompt overuse and verify before trusting the negative. (The 08-19 note above is the one atlas measurement of this exact failure class, and it did not reproduce.)
 

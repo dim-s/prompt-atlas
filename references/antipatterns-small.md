@@ -312,7 +312,7 @@ client.chat.completions.create(
 - **`temperature=0.1`** is a safer default for structured-output tasks — still nearly deterministic, breaks repetition loops, matches our project default
 - For tasks where you genuinely need full determinism: `temp=0` + low `repeat_penalty` setting (1.1-1.2 on llama.cpp), AND test on a sample before committing
 - **Where the vendor card gives sampling values, they beat this project default**, and the opposite failure exists. MiniCPM5-2B's card recommends `temperature=1.0, top_p=0.95, min_p=0.0` and warns that llama.cpp's default `min_p=0.05` "can lead to repetitive output". Dory's card recommends 1.0 / 0.95. LFM3 and LFM2.5 recommend 0.1 for general tasks, and Ministral 3 "below 0.1". A loop on llama.cpp can be the sampler (`min_p`, `top_k`), not the prompt, so check the harness before you rewrite.
-- Variance reminder: `temp=0.1` on 32-case suite gives ±10pp run-to-run. Any effect <10pp is within noise. See `FINDINGS.md`.
+- Variance reminder: `temp=0.1` on 32-case suite gives ±10pp run-to-run. Any effect <10pp is within noise (maintainers' measurement log, not published).
 
 ---
 
