@@ -18,3 +18,6 @@ TODO.local.md
 # Local skill cache / index files (if any tool creates them)
 .skill-cache/
 .skill-index/
+
+# Cockpit staff summaries (local, never published)
+.BRIEFING.md.prev
