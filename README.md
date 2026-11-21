@@ -65,6 +65,8 @@ Also out of scope: decision models (state + typed questions in, calibrated proba
 
 **Known limit:** on a case-insensitive filesystem (default macOS), a Claude Code session whose working directory is `references/models/` auto-loads `claude.md` as if it were a `CLAUDE.md` — run sessions from the repo root.
 
+**Known gap:** Google's prompt-design page has an "Agentic workflows" section with an evaluated agentic system-instruction template (`ai.google.dev/gemini-api/docs/prompting-strategies`, read 2026-11-21); `models/gemini.md` does not cover it yet.
+
 The skill **surfaces** non-wording levers (e.g., "raise `effort` before rewriting", "switch to a different quant") as conversation points when relevant — but never embeds them into the artifact under review.
 
 ---
