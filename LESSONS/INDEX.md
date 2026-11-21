@@ -13,7 +13,7 @@
 
 | id | адресат | триггеры | мишень (кратко) |
 |----|---------|----------|------------------|
-| [L-0003-param-fact-from-lossy-read](L-0003-param-fact-from-lossy-read.md) | executor | webfetch, paraphrase, raw-source, curl-md, hf-raw, merged-cells, api-table, effort-field, thinking-toggle, reasoning-knob, negative-claim, param-mapping | факт о параметре API взят из пересказа WebFetch / плоской таблицы, не сверен с сырым первоисточником |
+| [L-0003-param-fact-from-lossy-read](L-0003-param-fact-from-lossy-read.md) | executor | webfetch, paraphrase, raw-source, curl-md, hf-raw, merged-cells, api-table, effort-field, thinking-toggle, reasoning-knob, negative-claim, param-mapping, capability-badge, model-card, strip-markup | факт о параметре или возможности модели (бейдж supported) взят из пересказа WebFetch / плоской таблицы / очищенной от тегов разметки, не сверен с сырой разметкой |
 
 ---
 
