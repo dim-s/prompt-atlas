@@ -1,6 +1,7 @@
 ---
 name: prompt-atlas
 description: Review and improve the WORDING of agent-facing or task-facing prompts. Covers frontier models — Claude (Fable 5.1, Opus / Sonnet / Haiku 5.5), GPT-6 / 6.1 and 5.6, Gemini 4 (Carbon / Neon / Hydrogen / Argon) and 3.x Flash, Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral Large 4, Meta Muse (Spark / Wonder / Glimmer), Tencent Hunyuan, MiniMax / MiMo / StepFun — and small local 2-9B models (Gemma, small Qwen, Ministral, Phi, Llama, Granite, MiniCPM, LFM, Nemotron, RU tunes). Trigger when reviewing CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagents / slash-commands / vendor overrides (AGENTS.deepseek.md etc.) / `suites/<name>/system*.md`. Russian — "проверь мой промпт", "улучши", "адаптируй под <модель>", "почему модель игнорирует / подменяет / не думает". English — "review my prompt", "tune for <model>", "why subagent isn't triggering", "Claude Code router prompt". Focuses on word choice, framing, structure, trigger heuristics — NOT on API params, SDK code, or file layout.
+agyDescription: "Review and improve the WORDING of agent- or task-facing prompts for frontier models (Claude, GPT, Gemini, Qwen, DeepSeek, others) and small local models. Use when reviewing CLAUDE.md/AGENTS.md/SKILL.md, subagents, slash commands — «проверь мой промпт», tune for <model>, why a subagent isn't triggering. Words, framing, structure, triggers — NOT API params, SDK code, layout."
 ---
 
 # Prompt Tuner
