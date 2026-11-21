@@ -1,6 +1,6 @@
 # Gemini CLI — agentic system specifics
 
-How Google's Gemini CLI (`gemini-cli`) layers on top of Gemini models (4 Argon, 3.x). This file covers the **system**, not the **model** — for model behavior, see `../models/gemini.md` and `../matrix.md`.
+How Google's Gemini CLI (`gemini-cli`) layers on top of Gemini models (Gemini 4, 3.x). This file covers the **system**, not the **model** — for model behavior, see `../models/gemini.md` and `../matrix.md`.
 
 Read this file when:
 - The artifact is a `GEMINI.md` file, or `AGENTS.md` configured for Gemini CLI
@@ -79,11 +79,11 @@ Same universal AGENTS.md rules from `_common.md`:
 - WHY for non-obvious rules
 - Load-bearing invariants at edges, not middle
 
-**Plus Gemini-specific overlays from `../models/gemini.md`** (documented for Gemini 3.x; Google has no Gemini 4 prompting guide, so on Argon they are a carried-over baseline — see the family-rules status table there):
+**Plus Gemini-specific overlays from `../models/gemini.md`** (documented for Gemini 3.x; Google's only Gemini 4 prompting text is the Carbon developer guide's workflow tips, so on Gemini 4 they are a carried-over baseline — see the family-rules status table there):
 - **Add identity-based persona** at the top — "You are a senior backend engineer working in this codebase" — measurable boost on Gemini 3.x
 - **Negative constraints at the end** — Gemini drops early negatives
 - **Pick XML or Markdown, not both** — Gemini is stricter than Claude/GPT here
-- **Don't reference temperature** — sampling values are ignored on Argon / 3.6+ (400 in a future release) and must stay at defaults on earlier 3.x; mentioning it in the body is dead weight
+- **Don't reference temperature** — sampling values are ignored on Gemini 4 / 3.6+ (400 in a future release) and must stay at defaults on earlier 3.x; mentioning it in the body is dead weight
 
 ### Cross-vendor GEMINI.md = AGENTS.md
 
@@ -113,7 +113,7 @@ The description is the trigger. Concrete verb, "use when...", "use proactively" 
 
 ### Body rules — same plus Gemini-specific
 
-Apply universal SKILL.md body rules + the Gemini-specific patterns from `../models/gemini.md` (3.x-documented; carried over to Argon unverified):
+Apply universal SKILL.md body rules + the Gemini-specific patterns from `../models/gemini.md` (3.x-documented; carried over to Gemini 4 unverified):
 - Identity-based persona in the body (when the skill represents a "kind of thinker")
 - No CoT scaffolding
 - Negative constraints at the end
@@ -148,7 +148,7 @@ Same as Claude Code subagents (see `claude-code.md` § Subagents):
 
 ### Gemini-specific
 
-For subagents running on Gemini 3.x (and on Argon, as an unverified carry-over):
+For subagents running on Gemini 3.x (and on Gemini 4, as an unverified carry-over):
 - **Add identity-based role line at top** — "You are a [planner / reviewer / analyst]"
 - **No CoT scaffolding in body** — `thinking_level` handles it
 - **Persona will be obeyed strongly** — verify persona doesn't conflict with task constraints (gotcha in `../models/gemini.md` rule #5)
@@ -156,9 +156,9 @@ For subagents running on Gemini 3.x (and on Argon, as an unverified carry-over):
 ### Frontmatter — model selection
 
 Subagent definitions can pin a specific Gemini model variant. The body's wording must be tuned for that variant:
-- `gemini-4-argon` — current Pro tier; `thinking_level` default `medium` (no `minimal`); no Gemini 4 prompting guide
+- `gemini-4-carbon` / `gemini-4-neon` / `gemini-4-hydrogen` / `gemini-4-argon` — the Gemini 4 API ids (gemini.md); whether Gemini CLI offers them was not found in the CLI source read 2026-11-21 (`packages/core/src/config/models.ts` on `main` lists no `gemini-4` id) — check the user's CLI version. Defaults: Carbon / Argon `medium`, Neon / Hydrogen `high` with `xhigh`; no `minimal` on any
 - `gemini-3.1-pro-preview` — previous Pro tier; deep reasoning, default `high`; less few-shot needed
-- `gemini-3.8-flash` — current Flash; works harder by design — don't add persistence scaffolding
+- `gemini-3.8-flash` — previous Flash (Hydrogen is Google's recommended upgrade); works harder by design — don't add persistence scaffolding
 - `gemini-3.5-flash-lite` — bounded scope; concise mandatory; the vendor's designated subagent tier
 
 A definition still pinned to `gemini-3.7-flash` or `gemini-3.5-flash` runs on 3.8 Flash / 3.6 Flash since 2026-10-08 (auto-routed, no error) — tune its body for the model it actually gets. `gemini-3.1-flash-lite` has an earliest shutdown of 2027-05-07 (replacement `gemini-3.5-flash-lite`).
@@ -227,8 +227,8 @@ Same as Codex's `codex exec` and Claude Code's `claude -p`:
 | Subagents | ✅ + remote subagents | ✅ + isolation: worktree | ✅ |
 | Skills | ✅ (Agent Skills) | ✅ | ✅ |
 | Slash commands | ✅ | ✅ | ✅ |
-| Reasoning depth knob | `thinking_level` (low/medium/high on Argon and 3.8 Flash; `minimal` too on 3.6 Flash / 3.5 Flash-Lite) | `effort` (low…max on current Claude) | `model_reasoning_effort` (none/.../xhigh; GPT-6 Astra: low…max, no `none`) |
-| Temperature | **Ignored on Argon / 3.6+; defaults on earlier 3.x** | Rejected (400 on every Claude since API version `2026-10-21`) | Tunable on GPT-5.6; GPT-6 Astra / 6.1 Sol: unsupported (6.1 Terra / 6 Sol / 6 Luna: only at effort `none`) |
+| Reasoning depth knob | `thinking_level` (low/medium/high on Carbon, Argon and 3.8 Flash; `xhigh` too on Neon / Hydrogen; `minimal` too on 3.6 Flash / 3.5 Flash-Lite) | `effort` (low…max on current Claude) | `model_reasoning_effort` (none/.../xhigh; GPT-6 Astra: low…max, no `none`) |
+| Temperature | **Ignored on Gemini 4 / 3.6+; defaults on earlier 3.x** | Rejected (400 on every Claude since API version `2026-10-21`) | Tunable on GPT-5.6; GPT-6 Astra / 6.1 Sol: unsupported (6.1 Terra / 6 Sol / 6 Luna: only at effort `none`) |
 | Persona / identity prompting | **+5% boost — keep** | Neutral / OK | Hurts on GPT — strip unless it is a methodological anchor (`gpt.md` rule #12) |
 | MCP support | ✅ | ✅ | ✅ |
 
@@ -262,7 +262,7 @@ Cross-vendor `AGENTS.md`: target the strictest constraint along each axis. Most 
 | **GEMINI.md without persona** | No identity-based system instruction | Add 1-line "You are a [role]" — Gemini-specific +5% boost |
 | **GEMINI.md duplicating CLAUDE.md** | Same project has both files with overlapping rules | Consolidate into shared `AGENTS.md`, configure both CLIs to read it |
 | **CoT scaffolding in GEMINI.md** | "Think step by step before answering" type rules | Strip; rely on `thinking_level` |
-| **Temperature mention in body** | "Use temperature 0.3 for deterministic output" | Remove; sampling values are ignored on Argon / 3.6+ and wording is the only lever |
+| **Temperature mention in body** | "Use temperature 0.3 for deterministic output" | Remove; sampling values are ignored on Gemini 4 / 3.6+ and wording is the only lever |
 | **GEMINI.md > 8 KiB load-bearing** | File is large with mixed concerns | Split via `@import` |
 | **Negative constraints at top** | Rules like "Don't do X" in first paragraph | Move to end of file |
 | **Mixed XML + Markdown** | `<context>` tags + `## Headings` in same file | Pick one |

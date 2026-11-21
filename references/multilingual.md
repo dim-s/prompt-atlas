@@ -54,11 +54,11 @@ The folk model says: "the prompt was unclear, so the model mixed languages". The
 - GPT-Live 1's guide is the one OpenAI text that gives language guidance: *"Write the prompt and examples in the language you want the assistant to speak, and specify any pronunciations that matter."*
 - 5.5 was more aggressive about pruning "redundant" instructions — language instructions that are repeated may be dropped by the model's own attention budgeting. Counter: put the language constraint where it matters (final position) and don't dilute it with stylistic adjectives in three places.
 
-### Gemini (Argon / 3.1 Pro / Flash / Flash-Lite)
+### Gemini (Gemini 4 / 3.1 Pro / Flash / Flash-Lite)
 
 - **Most concrete public evidence of language mixing.** [Google gemini-cli issue #13715](https://github.com/google-gemini/gemini-cli/issues/13715) is a master issue consolidating reports of *"Multiple languages and alphabet appear in the CLI output"*. The merged duplicates explicitly include **"Cyrlic/russian"** and Arabic-English mixing. **Status: closed as not planned.** Google does not have a fix in 2026.
 - Google's [Gemini 3 prompting best practices](https://www.philschmid.de/gemini-3-prompt-practices) does not address language mixing.
-- `thinking_level: high` (default for 3.1 Pro) — adaptive thinking can leak Latin-script reasoning into output. For non-English output where reasoning isn't required: drop to `low` (Argon / 3.1 Pro / 3.8 Flash — no `minimal`, 3.8 Flash errors on it) or `minimal` (3.6 Flash, 3.5 Flash-Lite) and rely on adherence improving.
+- `thinking_level: high` (default for 3.1 Pro, Gemini 4 Neon and Hydrogen; `xhigh` on Neon / Hydrogen goes further) — adaptive thinking can leak Latin-script reasoning into output. For non-English output where reasoning isn't required: drop to `low` (Gemini 4 / 3.1 Pro / 3.8 Flash — no `minimal`; Gemini 4 and 3.8 Flash error on it) or `minimal` (3.6 Flash, 3.5 Flash-Lite) and rely on adherence improving.
 
 ### Cross-vendor universal
 

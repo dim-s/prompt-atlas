@@ -1,6 +1,6 @@
 ---
 name: prompt-atlas
-description: Review and improve the WORDING of agent-facing or task-facing prompts. Covers frontier models — Claude (Fable 5.1, Opus / Sonnet / Haiku 5.5), GPT-6 / 6.1 and 5.6, Gemini 4 Argon and 3.x Flash, Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral Large 4, Meta Muse (Spark / Wonder / Glimmer), Tencent Hunyuan, MiniMax / MiMo / StepFun — and small local 2-9B models (Gemma, small Qwen, Ministral, Phi, Llama, Granite, MiniCPM, LFM, Nemotron, RU tunes). Trigger when reviewing CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagents / slash-commands / vendor overrides (AGENTS.deepseek.md etc.) / `suites/<name>/system*.md`. Russian — "проверь мой промпт", "улучши", "адаптируй под <модель>", "почему модель игнорирует / подменяет / не думает". English — "review my prompt", "tune for <model>", "why subagent isn't triggering", "Claude Code router prompt". Focuses on word choice, framing, structure, trigger heuristics — NOT on API params, SDK code, or file layout.
+description: Review and improve the WORDING of agent-facing or task-facing prompts. Covers frontier models — Claude (Fable 5.1, Opus / Sonnet / Haiku 5.5), GPT-6 / 6.1 and 5.6, Gemini 4 (Carbon / Neon / Hydrogen / Argon) and 3.x Flash, Kimi, GLM, frontier Qwen, DeepSeek, Grok, Mistral Large 4, Meta Muse (Spark / Wonder / Glimmer), Tencent Hunyuan, MiniMax / MiMo / StepFun — and small local 2-9B models (Gemma, small Qwen, Ministral, Phi, Llama, Granite, MiniCPM, LFM, Nemotron, RU tunes). Trigger when reviewing CLAUDE.md / AGENTS.md / GEMINI.md / SKILL.md / subagents / slash-commands / vendor overrides (AGENTS.deepseek.md etc.) / `suites/<name>/system*.md`. Russian — "проверь мой промпт", "улучши", "адаптируй под <модель>", "почему модель игнорирует / подменяет / не думает". English — "review my prompt", "tune for <model>", "why subagent isn't triggering", "Claude Code router prompt". Focuses on word choice, framing, structure, trigger heuristics — NOT on API params, SDK code, or file layout.
 ---
 
 # Prompt Tuner
@@ -204,7 +204,7 @@ Before producing findings, scan the prompt for axes where the recommendation **f
 
 #### Across vendors — the notorious axes
 
-1. **Persona / "You are X"** — Gemini 3.x wants it (+5%, Google); GPT-5.x hurts (measured on 5.5; GPT-6 guide silent); Claude neutral; Kimi helps (Moonshot guide); GLM functional-only, no identity pinning; frontier Qwen OK; DeepSeek brief-only; Gemini 4 Argon, Mistral Large 4, Meta, Tencent, other-frontier `?`.
+1. **Persona / "You are X"** — Gemini 3.x wants it (+5%, Google); GPT-5.x hurts (measured on 5.5; GPT-6 guide silent); Claude neutral; Kimi helps (Moonshot guide); GLM functional-only, no identity pinning; frontier Qwen OK; DeepSeek brief-only; Gemini 4, Mistral Large 4, Meta, Tencent, other-frontier `?`.
 2. **Sampling parameters in the design** — gone on every Claude (API version `2026-10-21`: 400 at any value); Gemini ignores them (400 announced); GPT-6 Astra / 6.1 Sol: unsupported, other GPT-6.x tiers only at effort `none` (`models/gpt.md`); Kimi K3.x and several open-weight cards fix sampling server-side. Treat sampling as unavailable for tone or variety — steer with wording; "propose N directions, then implement the chosen one" is the cross-vendor variety pattern.
 3. **CoT scaffolding ("think step by step")** — hurts Gemini 3.x and GPT-5.x, tolerated on Claude, inert where depth is a parameter (Kimi, GLM, Qwen, DeepSeek, Grok, Mistral, Meta). Never the right lever on a current model.
 4. **Length instructions ("be brief" / "be thorough")** point in **opposite directions**: the Opus 5 lineage runs long and effort won't shorten it; GPT-5.6, Gemini 3.6 Flash and DeepSeek V4.1-Flash-1017 (vendor: "shorter outputs") are terser than what they replaced, so a carried-over "be brief" overcorrects; Gemini 3.8 Flash works harder by design. Safe cross-vendor form: state length as a requirement of the deliverable ("at most 5 bullets"), not as a disposition.
@@ -390,7 +390,7 @@ Omit Gap analysis section if the prompt is genuinely complete. Prefer 0-3 items 
 [Before/after snippets OR direct Edit calls, each with a one-line WHY citing matrix.md / matrix-small.md / principles.md / antipatterns-small.md.]
 
 ## Model-specific notes (only if relevant)
-[Things that matter specifically for the target model — e.g. Opus 5.5 / Haiku 5.5 / GPT-6.1 Sol / Gemini 4 Argon / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B.]
+[Things that matter specifically for the target model — e.g. Opus 5.5 / Haiku 5.5 / GPT-6.1 Sol / Gemini 4 Hydrogen / Gemma 4 e2b / Qwen 3.5 2B / Ministral 3B.]
 ```
 
 If the user explicitly asked for a rewrite rather than a review, produce the rewritten text directly with a short rationale at the end.

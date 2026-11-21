@@ -1,6 +1,6 @@
 # Model lineup — ids, status, reasoning knob, where to read
 
-State as of **2026-10-31**. One row per model the atlas covers; the vendor files hold the prompting guidance, this file holds the facts needed to pick the right section and to know which knob exists. **Knob values are runtime parameters — surface them to the user, never write them into a prompt** (`SKILL.md` § Reasoning-depth knobs). Models two generations behind or retired by the vendor live in `archive/` (`archive/README.md`); a row here that points into `archive/` only says where the section went.
+State as of **2026-11-21** (Google section; other vendors as of 2026-10-31). One row per model the atlas covers; the vendor files hold the prompting guidance, this file holds the facts needed to pick the right section and to know which knob exists. **Knob values are runtime parameters — surface them to the user, never write them into a prompt** (`SKILL.md` § Reasoning-depth knobs). Models two generations behind or retired by the vendor live in `archive/` (`archive/README.md`); a row here that points into `archive/` only says where the section went.
 
 When a row and a vendor file disagree, the vendor file wins (it carries the source); fix the row in the same change.
 
@@ -34,14 +34,17 @@ Not models: GPT-6.1 Astra and GPT-6.1 Luna do not exist (404). GPT-6 Rosalind (`
 
 | Model (id) | Status + date | Reasoning knob — param, ladder, default, **can it be disabled** | Read |
 |---|---|---|---|
-| Gemini 4 Argon (`gemini-4-argon`) | current Pro tier; GA 2026-10-13 (stable; not on Free tier) | `thinking_level` low/medium/high, default `medium`; no `minimal`, no off level listed | gemini.md § Gemini 4 Argon |
+| Gemini 4 Carbon (`gemini-4-carbon`) | strongest Gemini 4 reasoning tier; GA 2026-11-10 (stable; not on Free tier) | `thinking_level` low/medium/high, default `medium`; no `minimal`, no `xhigh`, no off level listed | gemini.md § Gemini 4 Carbon |
+| Gemini 4 Neon (`gemini-4-neon`) | between Hydrogen and Carbon; GA 2026-11-18 (stable; paid API tier only — in AI Studio also with Google AI Pro / Ultra plans) | `thinking_level` low/medium/high/xhigh, **default `high`**; `minimal` → error; no off level | gemini.md § Gemini 4 Neon |
+| Gemini 4 Hydrogen (`gemini-4-hydrogen`) | default general-purpose model, recommended upgrade from 3.8 Flash; GA 2026-11-12 (stable; Free + paid tier) | `thinking_level` low/medium/high/xhigh, **default `high`**; `minimal` → error; no off level | gemini.md § Gemini 4 Hydrogen |
+| Gemini 4 Argon (`gemini-4-argon`) | efficient Gemini 4 reasoning tier, below Carbon ("lower token spend per turn compared to Gemini 4 Carbon"); GA 2026-10-13 (stable; not on Free tier) | `thinking_level` low/medium/high, default `medium`; no `minimal`, no `xhigh`, no off level listed | gemini.md § Gemini 4 Argon |
 | Gemini 3.1 Pro (`gemini-3.1-pro-preview`) | previous Pro tier; preview since 2026-02-19, no shutdown date | `thinking_level` low/medium/high, default `high`; no off level | gemini.md § Gemini 3.1 Pro |
-| Gemini 3.8 Flash (`gemini-3.8-flash`) | current Flash; GA 2026-09-02, no shutdown date; also serves `gemini-3.7-flash` requests since 2026-10-08 | `thinking_level` low/medium/high, default `medium`; `minimal` → error; no off level | gemini.md § Gemini 3.8 Flash |
+| Gemini 3.8 Flash (`gemini-3.8-flash`) | previous Flash — Google names Gemini 4 Hydrogen its recommended upgrade; GA 2026-09-02, no shutdown date; also serves `gemini-3.7-flash` requests since 2026-10-08 | `thinking_level` low/medium/high, default `medium`; `minimal` → error; no off level | gemini.md § Gemini 3.8 Flash |
 | Gemini 3.6 Flash (`gemini-3.6-flash`) | previous Flash ("previous-generation Flash"); GA 2026-07-21; also serves `gemini-3.5-flash` requests since 2026-10-08 | `thinking_level` minimal/low/medium/high, default `medium`; lowest is `minimal` (off not documented) | gemini.md § Gemini 3.6 Flash |
 | Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) | current Lite / subagent tier; GA 2026-07-21 | `thinking_level` minimal…high, default `minimal` | gemini.md § Gemini 3.5 Flash-Lite |
 | Gemini 3.7 Flash / 3.5 Flash (`gemini-3.7-flash`, `gemini-3.5-flash`) | deprecated 2026-10-08; endpoints auto-route to 3.8 Flash / 3.6 Flash, no shutdown | n/a (runs as the target model) | archive/models/gemini.md |
 | Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite`) | archived; earliest shutdown 2027-05-07 → 3.5 Flash-Lite | not in the current thinking table (`?`) | archive/models/gemini.md |
-| Gemini 2.5 Pro / Flash / Flash-Lite | not deprecated; access limited to past users since 2026-09-18 | `thinking_level` low/medium/high (thinking table); 2.5 Flash-Lite default off | archive/models/gemini.md |
+| Gemini 2.5 Pro / Flash / Flash-Lite | 2.5 Pro and 2.5 Flash deprecated 2026-11-02 — from 2026-12-01 their requests will route to 3.8 Flash / 3.5 Flash-Lite; 2.5 Flash-Lite not deprecated, access limited to past users since 2026-09-18 | `thinking_level` low/medium/high (thinking table); 2.5 Flash-Lite default off | archive/models/gemini.md |
 | Gemini 3.8 Flash Cyber | closed access (Fairwind Program) | n/a | gemini.md § Gemini 3.8 Flash Cyber |
 
 ### Moonshot — Kimi

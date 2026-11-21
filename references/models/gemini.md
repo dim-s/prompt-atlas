@@ -1,6 +1,6 @@
-# Model-specific wording — Google Gemini (4 Argon, 3.x)
+# Model-specific wording — Google Gemini (4 Carbon / Neon / Hydrogen / Argon, 3.x)
 
-What changes about how you should PHRASE prompts for Gemini 4 Argon and Gemini 3.x. Companion to `claude.md` (Claude) and `gpt.md` (GPT). Focused on wording — not API parameter values, pricing, or context limits beyond what affects the prompt.
+What changes about how you should PHRASE prompts for the Gemini 4 family (Carbon, Neon, Hydrogen, Argon) and Gemini 3.x. Companion to `claude.md` (Claude) and `gpt.md` (GPT). Focused on wording — not API parameter values, pricing, or context limits beyond what affects the prompt.
 
 When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via fileName config, Gemini CLI subagent, skill, slash command), also read `../agentic-systems/gemini-cli.md` — the CLI layers its own behavior on top of the underlying model.
 
@@ -8,19 +8,19 @@ Retired, deprecated and older models (3 Flash, 3.5 Flash, 3.7 Flash, 3.1 Flash-L
 
 ---
 
-## Family-wide rules (Gemini 3 guide; what holds on Gemini 4 Argon)
+## Family-wide rules (Gemini 3 guide; what holds on Gemini 4)
 
-Rules 1–14 come from Google's prompt-design page, whose model-specific section is still titled "Gemini 3" (last updated 2026-10-13), and from the Gemini 3 developer guide. **Google has published no Gemini 4 prompting guide.** Argon's migration page (`/gemini-api/docs/latest-model`) is API-only: it neither confirms nor retracts any wording rule. So the rules hold on 3.x as documented; on Argon, the wording rules are the best available baseline, not Argon-documented facts — carry them over and test.
+Rules 1–14 come from Google's prompt-design page, whose model-specific section is still titled "Gemini 3" (re-read 2026-11-21: Gemini 4 appears on that page only in the sampling note), and from the Gemini 3 developer guide. The Gemini 4 migration pages (`whats-new-gemini-4-*`) are API-side: they neither confirm nor retract any wording rule. **The one Gemini 4 prompting source is the Gemini 4 Carbon developer guide (2026-11-10, § Gemini 4 Carbon)** — five workflow tips for Carbon, none of which restates or retracts rules 1–14. So the rules hold on 3.x as documented; on Gemini 4 they are the best available baseline, not documented facts — carry them over and test.
 
-| # | Rule | Gemini 3.x | Gemini 4 Argon |
+| # | Rule | Gemini 3.x | Gemini 4 (Carbon / Neon / Hydrogen / Argon) |
 |---|---|---|---|
 | 1 | Concise prompts | documented | not restated — carry over, unverified |
-| 2 | No CoT scaffolding; depth via `thinking_level` | documented | lever documented (`low` / `medium` / `high`, default `medium`, no `minimal`); the CoT warning is not restated |
-| 3 | No sampling tuning | 3.6+: values ignored; earlier 3.x: keep defaults | documented: values ignored, remove them |
+| 2 | No CoT scaffolding; depth via `thinking_level` | documented | lever documented — Carbon / Argon `low`…`high`, default `medium`; Neon / Hydrogen `low`…`xhigh`, default `high`; no `minimal` on any; the CoT warning is not restated |
+| 3 | No sampling tuning | 3.6+: values ignored; earlier 3.x: keep defaults | documented: values ignored, remove them (Neon / Hydrogen: out-of-range values → 400) |
 | 4–11 | Identity persona, persona adherence, negatives at the end, no blanket "do not", one structure format, long-context anchoring, multimodal as peers, direct default tone | documented | not restated — carry over, unverified |
-| 12 | Thought signatures across turns | documented | generic thinking page applies; migration page: keep state on the server (`previous_interaction_id`) |
-| 13 | Output contract in `response_json_schema` | documented | structured outputs "Supported" (model page) |
-| 14 | No image segmentation | documented for 3 Pro / 3 Flash | `?` — the Argon model page doesn't list it |
+| 12 | Thought signatures across turns | documented | generic thinking page applies; migration pages: keep state on the server (`previous_interaction_id`); Neon / Hydrogen: return signatures unchanged, don't copy one across parallel `functionCall` parts |
+| 13 | Output contract in `response_json_schema` | documented | structured outputs supported on all four (model pages); Neon / Hydrogen add a wording rule — declare tools / schemas natively, don't ask for raw-text JSON tool calls (§ Gemini 4 Hydrogen) |
+| 14 | No image segmentation | documented for 3 Pro / 3 Flash | `?` — no Gemini 4 model page lists it |
 
 ### 1. Reasoning model — concise prompts win
 
@@ -36,7 +36,7 @@ Google's migration guide: *"If you were previously using complex prompt engineer
 
 When porting a 2.5-tuned prompt: **strip CoT scaffolding entirely**. Don't leave it "just in case" — internal thinking happens automatically on Gemini 3, and explicit CoT competes with it.
 
-When reviewing a Gemini prompt that says *"think step by step"*, *"first do X, then Y, then Z"*, *"break this down"* → flag as `[IMPROVE]` and recommend deletion + raise `thinking_level` if reasoning is shallow. On Argon the same lever exists, and Google's advice is to pick it by eval, not by prose: *"Run your evaluations at all three levels, then pick the lowest level that meets your quality bar."*
+When reviewing a Gemini prompt that says *"think step by step"*, *"first do X, then Y, then Z"*, *"break this down"* → flag as `[IMPROVE]` and recommend deletion + raise `thinking_level` if reasoning is shallow. On Gemini 4 the same lever exists, and Google's advice is to pick it by eval, not by prose: *"Run your evaluations at all three levels, then pick the lowest level that meets your quality bar."* (Argon / Carbon; Neon / Hydrogen: *"at all four levels"*).
 
 ### 3. Sampling parameters — ignored on Gemini 4 and 3.6+ (was: don't tune)
 
@@ -48,7 +48,7 @@ On 2026-07-21 the changelog made it a deprecation: *"The sampling parameters tem
 
 When reviewing a Gemini prompt:
 - If the prompt body mentions temperature → flag for removal (don't reference API params in prompt body anyway)
-- If the surrounding code sets `temperature`, `top_p` or `top_k` → flag as a non-wording finding: on Argon / 3.6+ the values already do nothing, and a future release turns them into 400s
+- If the surrounding code sets `temperature`, `top_p` or `top_k` → flag as a non-wording finding: on Gemini 4 / 3.6+ the values already do nothing (Neon / Hydrogen already return 400 on out-of-range values), and a future release turns them into 400s
 - For variety across runs (design work, naming, creative options), use the **propose-N-directions** pattern instead of sampling — the same replacement the sampling-locked Claude models needed
 - For cross-vendor `AGENTS.md`: don't reference sampling parameters at all; let each vendor's API config handle what it still supports
 
@@ -144,15 +144,73 @@ Same as GPT: push output contracts into API parameters rather than prose. Use `r
 
 ### 14. Image segmentation removed in Gemini 3
 
-If the prompt relies on image segmentation → Google's Gemini 3 guide: *"Image segmentation capabilities (returning pixel-level masks for objects) are not supported in Gemini 3 Pro or Gemini 3 Flash. For workloads requiring built-in image segmentation, we recommend continuing to use Gemini 2.5 Flash with thinking turned off."* That fallback is now narrow: since 2026-09-18 Gemini 2.5 access is limited *"to users who have actively used them in the past"*, and Robotics-ER 1.6 is shut down. For a new project no current Gemini model is documented to do segmentation (Argon's model page doesn't list it) — flag it as a capability gap in migration reviews, not a wording problem.
+If the prompt relies on image segmentation → Google's Gemini 3 guide: *"Image segmentation capabilities (returning pixel-level masks for objects) are not supported in Gemini 3 Pro or Gemini 3 Flash. For workloads requiring built-in image segmentation, we recommend continuing to use Gemini 2.5 Flash with thinking turned off."* That fallback is now narrow: since 2026-09-18 Gemini 2.5 access is limited *"to users who have actively used them in the past"*, 2.5 Flash itself is deprecated (2026-11-02; its requests will route to 3.5 Flash-Lite from 2026-12-01), and Robotics-ER 1.6 is shut down. For a new project no current Gemini model is documented to do segmentation (no Gemini 4 model page lists it) — flag it as a capability gap in migration reviews, not a wording problem.
 
 ---
 
-## Gemini 4 Argon (October 13, 2026 — current Pro tier, first Gemini 4)
+## Gemini 4 Carbon (November 10, 2026 — strongest Gemini 4 reasoning tier)
 
-`gemini-4-argon`, GA on release (stable id, not on the Free tier). Google's *"flagship reasoning model"*, above 3.1 Pro, and the first Gemini model outside 3.x. No other Gemini 4 model exists yet — the launch post: *"We're looking forward to bringing you the rest of the Gemini 4 family."*
+`gemini-4-carbon`, GA on release (stable id, paid tier only). Google: *"our strongest reasoning model, built for sustained agentic workflows across complex software engineering, multimodal knowledge work, scientific reasoning, and cybersecurity defense. On hard problems, Carbon spends more thinking tokens to explore hypotheses, verify its work, and check edge cases before responding."* Same API shape as Argon — the migration page: *"upgrading to `gemini-4-carbon` requires no request schema changes"* — so the Argon change set below (1M unified window, long decode, implicit-only caching, sampling ignored) applies unchanged.
 
-**No prompting guide.** The baseline is the family rules above, with the Argon status column as the honest caveat. What follows is the documented API-side change set, plus the launch post's behavior claims kept separate.
+### Documented changes that shape wording
+
+- **`thinking_level` `low` / `medium` / `high`, default `medium`** — Argon's ladder, no `xhigh`. Per level (developer guide): `high` *"for multi-file root-cause debugging, security vulnerability patching, formal math, and upfront architecture design"*, `medium` *"an optimal balance of speed, cost efficiency, and high first-pass accuracy across interactive coding and agentic tool use"*, `low` *"for high-speed classification, routing, and targeted extraction."*
+- **More thinking per turn than Argon on complex tasks.** *"Carbon spends more thinking tokens per turn than Argon on complex tasks. Keep `thinking_level` at `medium` (default) unless a workload needs `high`, and make sure your `max_output_tokens` and HTTP timeouts allow for longer reasoning passes."* Derived: a prompt moved from Argon to Carbon should not gain "be thorough / verify everything" lines — the model already spends the extra tokens; on the depth side, the lever is the level.
+
+### The Carbon developer guide — vendor tips for Carbon
+
+The first Google prompting text for a Gemini 4 model (aistudio.google.com/learn, 2026-11-10): five patterns *"we've seen our teams use"*, written for Carbon. They are vendor advice for this model; the atlas does not extend them to Neon / Hydrogen / Argon without a source.
+
+1. **Align on intent before long runs** — *"Share your goal and ask Carbon to surface clarifying questions about edge cases and success criteria upfront"*; a pre-flight check that it has the tools and docs; then *"let Carbon execute the full plan autonomously … while pausing for your confirmation before taking irreversible steps."* Review consequence: in a long-run agent prompt, a measurable goal plus an upfront-questions step is the documented shape; turn-by-turn micro-instructions are not.
+2. **Give it a way to verify its work** — *"point it at your test suite, pipe in runtime logs, let it take browser screenshots … or ask it to write a verification script and iterate in a loop until every check passes."* This is task verification (a concrete pass/fail signal), not a self-review ritual — compare the Claude Opus 5 strip-audit (`claude.md`), which targets "double-check yourself" lines, not checks the task needs.
+3. **Multimodal references** — 1–2 concrete visual references, or a `DESIGN.md` summarizing typography, palette and layout rules first; Google also ships a `gemini-frontend-design` skill (`google-gemini/demolab`).
+4. **Carbon as orchestrator** — *"Pin Gemini 4 Carbon (thinking_level="medium" or "high") as the lead orchestrator and verifier"*; delegate parallel implementation slices to faster models (the guide names 3.8 Flash / Argon; the Hydrogen page names Hydrogen for the same role).
+5. **Reflection into persistent context** — ask Carbon at the end of a hard task to review where the session stalled and *"Propose updates to our AGENTS.md or custom skills"*. A vendor-endorsed source of AGENTS.md edits — review such generated edits like any other persistent-context change (SKILL.md Step 2 rules), not as pre-approved.
+
+### Migrating a prompt to Carbon
+
+- From Argon: wording unchanged; check `max_output_tokens` and client timeouts (*"Hard prompts can take several minutes"* — at least 15 minutes per the migration page, 15–20 per the developer guide, or background execution).
+- From 3.x: the Argon checklist below (`thinking_budget` → `thinking_level`, sampling and explicit caching out, `max_output_tokens` ≥ 32,768).
+
+---
+
+## Gemini 4 Neon (November 18, 2026 — between Hydrogen and Carbon)
+
+`gemini-4-neon`, GA on release (stable id, paid tier only). Google: *"It sits between Gemini 4 Hydrogen and Gemini 4 Carbon for high-frequency complex tasks."* No prompting guide; the migration page is API-side. It shares Hydrogen's ladder and migration rules, so read § Gemini 4 Hydrogen for the wording-relevant items (raw-text JSON tool calls, `xhigh` overthinking); the differences are positioning and tier.
+
+- **`thinking_level` `low` / `medium` / `high` / `xhigh`, default `high`; `minimal` → error.** A prompt moved from Carbon or Argon gets a deeper default with no error — the inverse of the Argon default drop. Google: *"Neon defaults to `high` and supports `xhigh`, like Hydrogen. Carbon and Argon default to `medium` and cap at `high`. Set `thinking_level` when you want different behavior."*
+- **Launch claims — vendor says, not guidance:** *"Across long sessions with many tool calls, Neon reduces redundant file reads, handles context compaction reliably, and minimizes fabricated claims and task shortcuts"*; *"reduces agentic overreach and under-service in multi-step workflows."* As with Argon's launch claims, keep grounding, scope and confirmation lines until the user's own eval says they're redundant.
+
+---
+
+## Gemini 4 Hydrogen (November 12, 2026 — default general-purpose model, successor to 3.8 Flash)
+
+`gemini-4-hydrogen`, GA on release (stable id, Free and paid tier). Google: *"our default general-purpose model for everyday coding, interactive web apps, tool-using agents, multimodal document workflows, and parallel subagent execution, and is the recommended upgrade from Gemini 3.8 Flash and earlier Gemini 3 and 2.5 models."* Also the default model of the Antigravity managed agent. No prompting guide; the migration page is API-side.
+
+### Documented changes that shape wording
+
+- **`thinking_level` `low` / `medium` / `high` / `xhigh`, default `high`** — 3.8 Flash's default was `medium`, so a migrated prompt reasons more by default. `minimal` → error. `xhigh` *"can cause overthinking or exhaust `max_output_tokens` on simpler prompts such as text or JSON extraction"* (thinking page) — on an extraction prompt the fix is a lower level, not "answer quickly" prose.
+- **Don't ask for tool calls as raw-text JSON.** *"Do not prompt the model via system instructions to emit custom raw-text JSON tool calls with zero declared tools, which can return `MALFORMED_FUNCTION_CALL`. Always declare tools natively with function calling or constrain JSON responses with structured outputs."* (Hydrogen and Neon migration pages.) A wording rule with an error attached: a system instruction that describes a home-grown `{"tool": …, "args": …}` protocol must become declared functions or a response schema.
+- **One 1M window, 64K per synchronous hop, long decode beyond** — as Argon. Neon / Hydrogen allow 65,536 tokens per non-streaming hop, Carbon / Argon 32,768 per non-streaming REST hop.
+- **Launch claims — vendor says, not guidance:** *"cuts fabricated claims by more than 5x compared to Gemini 3.8 Flash by flagging missing context instead of guessing, batches read and search tool calls in parallel, and better adapts when tool calls fail."* Not a reason to delete "say when information is missing" or grounding lines; test first.
+
+### As the worker in a multi-model setup
+
+Google pairs it explicitly: *"having Carbon plan system interfaces or resolve hard roadblocks and delegating code edits, parallel subagent tasks, and test runs to Hydrogen."* For a subagent prompt that moves from 3.8 Flash to Hydrogen: drop persistence scaffolding as before, set the level explicitly if the worker should stay at `medium`, and keep 3.5 Flash-Lite for *"high-volume classification, routing, and sub-second latency targets."*
+
+### Migrating a prompt from 3.8 Flash
+
+- Wording: carry over; Google gives no wording change except the raw-text-JSON tool-call rule above.
+- `thinking_level`: default rises `medium` → `high`; `minimal` still errors.
+- Non-wording: remove sampling params (out-of-range → 400), explicit-cache calls; raise hardcoded low `max_output_tokens` caps to 65,536; keep thought signatures unchanged across turns.
+
+---
+
+## Gemini 4 Argon (October 13, 2026 — efficient Gemini 4 reasoning tier)
+
+`gemini-4-argon`, GA on release (stable id, not on the Free tier), the first Gemini 4 model. At launch Google called it its *"flagship reasoning model"*; since Carbon (2026-11-10) the docs position it below Carbon: *"our efficient Gemini 4 frontier reasoning model … faster responses and lower token spend per turn compared to Gemini 4 Carbon"*, *"ideal for most advanced software engineering and knowledge work tasks."* Carbon's API shape is the same, so this change set is also the Gemini 4 baseline that the Carbon, Neon and Hydrogen sections refer to.
+
+**No Argon-specific prompting guide.** The baseline is the family rules above, with the Gemini 4 status column as the honest caveat. What follows is the documented API-side change set, plus the launch post's behavior claims kept separate.
 
 ### Documented changes that shape wording
 
@@ -182,7 +240,7 @@ These are vendor claims with no prompting guidance attached. Do not turn them in
 
 ## Gemini 3.1 Pro (February 2026 preview — previous Pro tier)
 
-`gemini-3.1-pro-preview`, released 2026-02-19 and still a preview. Superseded at the top by Gemini 4 Argon on 2026-10-13; still served, no shutdown date announced. Optimized for deep reasoning and long-context work.
+`gemini-3.1-pro-preview`, released 2026-02-19 and still a preview. Superseded at the top by Gemini 4 Argon on 2026-10-13 (Gemini 4 Carbon has been the top tier since 2026-11-10); still served, no shutdown date announced. Optimized for deep reasoning and long-context work.
 
 ### Behaviors that shape wording
 
@@ -201,7 +259,7 @@ Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 
 
 ---
 
-## Gemini 3.8 Flash (September 2, 2026 — current Flash frontier)
+## Gemini 3.8 Flash (September 2, 2026 — previous Flash; Gemini 4 Hydrogen is its recommended upgrade)
 
 `gemini-3.8-flash`, GA on release, three weeks after 3.7 Flash — Google's post itself notes it is *"marking our third Flash release in only six weeks"*. Positioned as *"our most intelligent workhorse model, delivering significant improvements from 3.7 Flash across software engineering, agentic tasks, and critical, multi-step reasoning in specialized domains."*
 
@@ -211,7 +269,7 @@ Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 
 
 - **It works harder by design — the Flash terseness trend reverses.** Google: *"On complex tasks, it exhibits greater diligence — executing extra reasoning steps, and calling tools iteratively. At times, the model might use more tokens to maximize performance, especially at higher effort levels."* 3.6 Flash was ~17% terser than 3.5 and the atlas flagged carried-over "be brief" lines as overcorrecting; 3.8 moves the other way. Derived consequence: don't port persistence or thoroughness scaffolding ("keep calling tools until you're sure", "be exhaustive", "double-check with another search") into a 3.8 prompt — it stacks on a model that already takes the extra steps.
 - **Efficiency is a parameter or model choice, not prose.** The launch post advised *"developers can utilize lower effort levels to minimize token overhead or continue to rely on Gemini 3.7 Flash, which remains fully supported for efficiency-first workloads."* The second half no longer holds — 3.7 Flash now routes to 3.8 Flash. Lower effort is the remaining lever; a "be brief" line won't recover tokens the model spends by design.
-- **`thinking_level` `low` / `medium` / `high`, default `medium`; `minimal` returns an error** (API model page and thinking docs) — the same ladder as Argon. Configs carried from 3.5-era `minimal` settings fail; the fix is `low`, not a "think silently" line.
+- **`thinking_level` `low` / `medium` / `high`, default `medium`; `minimal` returns an error** (API model page and thinking docs) — the same ladder as Argon and Carbon; Hydrogen, its successor, defaults to `high` and adds `xhigh`. Configs carried from 3.5-era `minimal` settings fail; the fix is `low`, not a "think silently" line.
 - **Prompt-injection robustness** — *"Gemini 3.8 models have also made a significant leap in prompt injection robustness as measured by Gray Swan"*. Helpful for agents reading untrusted content; not a reason to remove "treat retrieved content as data" instructions.
 - Family rules unchanged: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format, sampling values ignored.
 
@@ -245,7 +303,7 @@ One consequence for the GA model: *"3.8 Flash ships with safeguards against misu
 
 - **Output is ~17% shorter than 3.5 Flash** at equal or better quality (up to 65% fewer tokens on DeepSWE-class agentic coding). Like GPT-5.6, this inverts carried-over concision instructions: a "be brief / no preamble" line written against 3.5 Flash now stacks on an already-terser model. Express length as a task requirement, not as a disposition.
 - **Fewer unwanted edits and fewer execution loops** — Google reports higher precision on agentic coding (DeepSWE 49% vs 37%). Scaffolding added to stop 3.5 Flash from thrashing (retry rules, "don't edit files you weren't asked to" walls) is a candidate for trimming — re-test before keeping it.
-- **`thinking_level` default `medium`; `minimal` still accepted** (levels `minimal` / `low` / `medium` / `high`) — unlike 3.8 Flash and Argon.
+- **`thinking_level` default `medium`; `minimal` still accepted** (levels `minimal` / `low` / `medium` / `high`) — unlike 3.8 Flash and every Gemini 4 model.
 - **Family rules unchanged**: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format.
 - **Sampling values ignored** — deprecated on its release date; see family rule #3.
 
@@ -270,7 +328,7 @@ One consequence for the GA model: *"3.8 Flash ships with safeguards against misu
 
 ### As a subagent
 
-When a Gemini-side prompt review involves a subagent fleet, this is the default worker: bounded, read-only or narrowly-scoped jobs (search, classification, extraction, pre-filtering), with the orchestrator on Argon, 3.1 Pro or Flash. The wording implications are the standard ones for a cheap executor — spell out the success criteria, name the tools, keep the scope small, and put the format contract in `response_json_schema` rather than prose.
+When a Gemini-side prompt review involves a subagent fleet, this is the default worker: bounded, read-only or narrowly-scoped jobs (search, classification, extraction, pre-filtering), with the orchestrator on a Gemini 4 model, 3.1 Pro or Flash (Google pairs Flash-Lite with Hydrogen for *"high-volume classification, routing, and sub-second latency targets"*). The wording implications are the standard ones for a cheap executor — spell out the success criteria, name the tools, keep the scope small, and put the format contract in `response_json_schema` rather than prose.
 
 The mirror-image models across vendors are the cheap volume tiers (Claude Haiku, GPT Luna — see `claude.md` / `gpt.md`). A subagent prompt written for one usually ports to the others with only the format-contract syntax changing.
 
@@ -281,15 +339,17 @@ The mirror-image models across vendors are the cheap volume tiers (Claude Haiku,
 | Anti-pattern | Symptom | Fix |
 |---|---|---|
 | **Chain-of-thought scaffolding** | "Think step by step" + numbered mental moves in the body | Strip; raise `thinking_level` to medium or high |
-| **Sampling params in prompt body** | "Set temperature to 0.3" / `top_p` / `top_k` mentioned in body | Remove from body — and the params themselves are **ignored on Argon / 3.6+** (400 in a future release), so the code around it needs a fix too. For variety, use propose-N-directions |
+| **Sampling params in prompt body** | "Set temperature to 0.3" / `top_p` / `top_k` mentioned in body | Remove from body — and the params themselves are **ignored on Gemini 4 / 3.6+** (400 in a future release; out-of-range already 400 on Neon / Hydrogen), so the code around it needs a fix too. For variety, use propose-N-directions |
 | **Mixed XML + Markdown** | `<context>...</context>` and `## Section` in same prompt | Pick one structure; prefer XML for inline, Markdown for top-level structure |
 | **Blanket "do not"** | `"do not infer / do not guess / do not hallucinate"` | Replace with positive scoped instructions |
 | **Negative constraints at top** | "Don't include X" in the first paragraph | Move to end; model drops early negatives |
-| **Missing persona** | Prompt has no identity-based system instruction | Add 1 line: "You are a [planner / analyst / writer]" — measurable boost on 3.x (unverified on Argon) |
+| **Missing persona** | Prompt has no identity-based system instruction | Add 1 line: "You are a [planner / analyst / writer]" — measurable boost on 3.x (unverified on Gemini 4) |
 | **Over-strong persona vs task** | Strong persona conflicts with output format requirements | Soften persona OR move format constraints into System Instructions where persona lives |
 | **Hardcoded model name** | "You are Gemini 3.1 Pro" | Strip; use functional role |
 | **Legacy `thinking_budget`** | Old SDK pattern in code | Migrate to `thinking_level` (cannot coexist — 400 error) |
-| **"Be brief" to save thinking tokens** | Prose asks the model to think less | Lower `thinking_level` — Google's stated lever on Argon |
+| **"Be brief" to save thinking tokens** | Prose asks the model to think less | Lower `thinking_level` — Google's stated lever on every Gemini 4 model |
+| **Raw-text JSON tool-call protocol** | System instruction describes a home-grown `{"tool": …}` format, no tools declared | Declare functions natively or use a response schema — on Neon / Hydrogen this pattern can return `MALFORMED_FUNCTION_CALL` |
+| **`xhigh` on simple extraction** | Neon / Hydrogen run at `xhigh` for text or JSON extraction | Lower the level — Google: `xhigh` can overthink or exhaust `max_output_tokens` on simpler prompts |
 
 ---
 
@@ -297,11 +357,11 @@ The mirror-image models across vendors are the cheap volume tiers (Claude Haiku,
 
 When the prompt is **cross-vendor** (Claude + GPT + Gemini), several Gemini-specific defaults conflict with other vendors:
 
-| Axis | Gemini 3.x (Argon: carried over, unverified) | Claude | GPT | Cross-vendor compromise |
+| Axis | Gemini 3.x (Gemini 4: carried over, unverified) | Claude | GPT | Cross-vendor compromise |
 |---|---|---|---|---|
 | Persona / "act as" | **+5% boost — keep** | Neutral | Hurts | **Conditional persona** OR drop with -5% Gemini cost |
-| Sampling params | **ignored on Argon / 3.6+**; earlier 3.x: defaults | → 400 on every model (API version `2026-10-21`) | Tunable on 5.x; GPT-6 Astra: unsupported | Don't reference sampling in body, and don't design around it |
-| Response length default | 3.6 Flash ~17% terser than 3.5; 3.8 Flash works harder; Argon `?` | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults move in opposite directions per model |
+| Sampling params | **ignored on Gemini 4 / 3.6+**; earlier 3.x: defaults | → 400 on every model (API version `2026-10-21`) | Tunable on 5.x; GPT-6 Astra: unsupported | Don't reference sampling in body, and don't design around it |
+| Response length default | 3.6 Flash ~17% terser than 3.5; 3.8 Flash works harder; Gemini 4 `?` | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults move in opposite directions per model |
 | Negative constraint position | At end (strict) | Anywhere | Anywhere | Place at end (strictest wins) |
 | Structure mixing | XML or Markdown, not both (strict) | Tolerates mixing | Tolerates mixing | Pick one (strictest wins) |
 | CoT scaffolding | Hurts | Tolerated | Hurts | Strip — works for all three |
@@ -316,26 +376,42 @@ When this conflict shows up in a review, the `/prompt-atlas` skill must **flag a
 
 ---
 
-## Universal Gemini prompts (Argon + 3.x)
+## Universal Gemini prompts (Gemini 4 + 3.x)
 
-A prompt that works across Argon / Pro / Flash / Flash-Lite:
+A prompt that works across Carbon / Neon / Hydrogen / Argon / Pro / Flash / Flash-Lite:
 
 - [ ] Concise (Flash-Lite needs it most)
 - [ ] No CoT scaffolding (all internalize reasoning)
-- [ ] No sampling params in body (ignored on Argon / 3.6+; keep defaults on earlier 3.x)
+- [ ] No sampling params in body (ignored on Gemini 4 / 3.6+; keep defaults on earlier 3.x)
 - [ ] Length stated as a task requirement, not a disposition (3.6 Flash is terser than 3.5, 3.8 Flash works harder — one global "be brief" is wrong for one of them)
-- [ ] Identity-based persona present (documented for 3.x; carry to Argon and test)
+- [ ] Identity-based persona present (documented for 3.x; carry to Gemini 4 and test)
 - [ ] XML or Markdown, not both
 - [ ] Negative constraints at end
 - [ ] Output format via `response_json_schema` if structured
 - [ ] Tool guidance in tool descriptions, not system prompt
 - [ ] No model name hardcoded
 - [ ] If long context: data at top, question at end, "Based on the above..." anchor
-- [ ] Stable prefix first, per-call content last (Argon caches implicitly only)
+- [ ] Stable prefix first, per-call content last (Gemini 4 caches implicitly only)
+- [ ] Tools declared natively or a response schema — no raw-text JSON tool-call protocol in the system instruction (Neon / Hydrogen: `MALFORMED_FUNCTION_CALL`)
+- [ ] No depth assumption: Carbon / Argon default `medium`, Neon / Hydrogen default `high` — the same prompt runs at different depths unless the level is set out-of-band
 
 ---
 
 ## Source notes
+
+Facts added in v2.1.0 (2026-11-21; raw `.md.txt` pages of ai.google.dev fetched with curl, except where noted):
+
+- Carbon / Neon / Hydrogen ids, GA dates (11-10 / 11-18 / 11-12), tiers, Neon and Hydrogen ladders and defaults, Argon GA — https://ai.google.dev/gemini-api/docs/changelog.md.txt and https://ai.google.dev/gemini-api/docs/deprecations.md.txt ("Gemini 4 models" table), read 2026-11-21.
+- Thinking table (`gemini-4-carbon` / `gemini-4-argon` On (medium) low…high; `gemini-4-neon` / `gemini-4-hydrogen` On (high) low…xhigh), `minimal` "Not supported on Gemini 4 models", `xhigh` overthinking quote — https://ai.google.dev/gemini-api/docs/thinking.md.txt, read 2026-11-21.
+- Carbon positioning, "more thinking tokens per turn than Argon", migration and timeout lines — https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-carbon.md.txt, read 2026-11-21.
+- Carbon developer guide (five tips, level guidance, orchestrator pairing) — https://aistudio.google.com/learn/gemini-4-carbon-developer-guide, published 2026-11-10, read 2026-11-21 (single-page app; rendered in headless Chrome, text taken from the page body).
+- Neon positioning, launch claims, ladder, raw-text JSON tool-call rule, thought-signature and sampling-400 lines — https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-neon.md.txt, read 2026-11-21.
+- Hydrogen positioning, the "cuts fabricated claims by more than 5x" claim, ladder, Carbon+Hydrogen pairing, 64K vs 32K non-streaming hop, raw-text JSON tool-call rule — https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-hydrogen.md.txt, read 2026-11-21.
+- Argon's current positioning ("efficient Gemini 4 frontier reasoning model … compared to Gemini 4 Carbon") — https://ai.google.dev/gemini-api/docs/models.md.txt and https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-argon.md.txt, read 2026-11-21.
+- Capabilities of the three new models (structured outputs and computer use supported; Live API and explicit caching not supported) — `…/docs/models/gemini-4-carbon.md.txt`, `…-neon.md.txt`, `…-hydrogen.md.txt`, read 2026-11-21.
+- Prompt-design page: the model-specific section is still "Gemini 3" — https://ai.google.dev/gemini-api/docs/prompting-strategies.md.txt, read 2026-11-21.
+- 2.5 Pro / 2.5 Flash deprecation (2026-11-02; routing from 2026-12-01) — changelog, read 2026-11-21; 2.5 Flash-Lite "not deprecated" — https://ai.google.dev/gemini-api/docs/models.md.txt.
+- Not read: the DeepMind model cards for Carbon / Neon / Hydrogen; Vertex AI pages; the Carbon announcement blog post.
 
 Facts added or re-checked in v2.0.0 (2026-10-31):
 

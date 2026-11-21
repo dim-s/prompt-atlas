@@ -2,6 +2,35 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [2.1.0] — 2026-11-21
+
+Gemini 4 family update on the owner's request of 21.11 («очень много моделей вышло от Гугла … нужно обновиться и добавить их»). Google pages were read raw on 2026-11-21 (`.md.txt` versions of ai.google.dev docs via curl; the Carbon developer guide is a single-page app and was rendered in headless Chrome). Each item names its source; read dates per fact are also in `references/models/gemini.md` § Source notes (the only file of this change with a Source notes section). `GAPI` = `https://ai.google.dev/gemini-api/docs/`.
+
+### Added
+
+- **Gemini 4 Carbon** (`gemini-4-carbon`, GA 2026-11-10, paid tier; `thinking_level` low/medium/high, default `medium`; more thinking per turn than Argon) — `gemini.md` § Gemini 4 Carbon, including the five tips of Google's Carbon developer guide, kept as vendor advice for Carbon. Source: `GAPI changelog.md.txt`, `GAPI whats-new-gemini-4-carbon.md.txt`, `GAPI thinking.md.txt`, `https://aistudio.google.com/learn/gemini-4-carbon-developer-guide`.
+- **Gemini 4 Neon** (`gemini-4-neon`, GA 2026-11-18, paid API tier only — in AI Studio also with Google AI Pro / Ultra; low/medium/high/xhigh, default `high`; `minimal` → error; between Hydrogen and Carbon) — `gemini.md` § Gemini 4 Neon. Source: `GAPI changelog.md.txt`, `GAPI whats-new-gemini-4-neon.md.txt`.
+- **Gemini 4 Hydrogen** (`gemini-4-hydrogen`, GA 2026-11-12, Free + paid tier; low/medium/high/xhigh, default `high`; Google's recommended upgrade from 3.8 Flash; default model of the Antigravity managed agent) — `gemini.md` § Gemini 4 Hydrogen. Source: `GAPI changelog.md.txt`, `GAPI whats-new-gemini-4-hydrogen.md.txt`, `GAPI latest-model.md.txt`.
+- **Wording rule with an error attached** (Neon / Hydrogen): don't define a raw-text JSON tool-call protocol in system instructions with no declared tools — `MALFORMED_FUNCTION_CALL`; declare tools or use a response schema. In `gemini.md` (family table rule 13, Hydrogen section, anti-patterns, universal checklist), `matrix.md` Tables B–D, `model-audits.md`. Source: `GAPI whats-new-gemini-4-neon.md.txt`, `GAPI whats-new-gemini-4-hydrogen.md.txt` (migration checklists).
+- **`xhigh` on simple extraction** anti-pattern — `gemini.md`. Source: `GAPI thinking.md.txt` (*"can cause overthinking or exhaust `max_output_tokens` on simpler prompts such as text or JSON extraction"*).
+- Rows for the three models in `lineup.md`, `matrix.md` Tables A–D, checklists in `model-audits.md`.
+
+### Changed
+
+- **Gemini 4 Argon** repositioned: no longer "current Pro tier / flagship" — Google now calls it *"our efficient Gemini 4 frontier reasoning model … lower token spend per turn compared to Gemini 4 Carbon"*. `lineup.md`, `matrix.md`, `gemini.md`, `model-audits.md`, `gemini-cli.md`. Source: `GAPI models.md.txt`, `GAPI whats-new-gemini-4-argon.md.txt`.
+- **"No Gemini 4 prompting guide" / "no other Gemini 4 model"** statements rewritten: the Carbon developer guide is the one Gemini 4 prompting source; Neon, Hydrogen and Argon still have none; the prompt-design page's model section is still "Gemini 3". `gemini.md`, `gemini-cli.md`, `matrix.md` reading guide, `_universal.md`. Source: `https://aistudio.google.com/learn/gemini-4-carbon-developer-guide`, `GAPI prompting-strategies.md.txt`.
+- **Gemini 3.8 Flash** is now "previous Flash" (Hydrogen is its recommended upgrade). `lineup.md`, `matrix.md`, `gemini.md`, `gemini-cli.md`. Source: `GAPI whats-new-gemini-4-hydrogen.md.txt`.
+- **Gemini 2.5 Pro / 2.5 Flash** deprecated 2026-11-02; from 2026-12-01 requests will route to 3.8 Flash / 3.5 Flash-Lite; 2.5 Flash-Lite not deprecated. `lineup.md`, `archive/models/gemini.md`, `gemini.md` (segmentation note), `model-audits.md` (3.8 Flash). Source: `GAPI changelog.md.txt` (2026-11-02), `GAPI models.md.txt`.
+- Thinking-ladder and sampling statements generalized from "Argon" to "Gemini 4" with the Neon / Hydrogen differences (default `high`, `xhigh`, out-of-range sampling → 400): `gemini.md`, `_universal.md`, `multilingual.md`, `gemini-cli.md`, `matrix.md`. Source: `GAPI thinking.md.txt`, `GAPI whats-new-gemini-4-neon.md.txt`, `GAPI whats-new-gemini-4-hydrogen.md.txt`.
+- SKILL.md description and examples, README coverage table and file tree name the four Gemini 4 models.
+
+### Not verified / deliberately left out
+
+- **"Gemini 4 Oxygen"** (named in the request): no such model in `GAPI changelog.md.txt`, `GAPI models.md.txt`, `GAPI deprecations.md.txt` or `https://aistudio.google.com/llms.txt` (read 2026-11-21). Not added.
+- **Gemini CLI support for Gemini 4:** no `gemini-4` id in `https://raw.githubusercontent.com/google-gemini/gemini-cli/main/packages/core/src/config/models.ts` (read 2026-11-21); CLI releases and docs were not read. `gemini-cli.md` says so instead of claiming support.
+- Not read: DeepMind model cards for Carbon / Neon / Hydrogen, Vertex AI pages, the Carbon / Neon / Hydrogen announcement blog posts. Launch claims (Hydrogen *"cuts fabricated claims by more than 5x"*, Neon "fewer redundant reads / shortcuts") are quoted as vendor claims, not used as guidance.
+- Out of scope by decision: Gemini Decision 1 (decision model), Genie 4, Gemini Omni 1.2 Flash, Embedding 2, 3.5 Transcribe.
+
 ## [2.0.0] — 2026-10-31
 
 Full revision on the owner's request of 31.10 («провести ревизию нашего скилла полностью … новые модели … оптимизировать … очень старые модели — в архив»). Major version: SKILL.md was restructured (109 KB → 42 KB), version facts moved out of it into two new reference files, and legacy models moved to a new `references/archive/`. Vendor pages were re-read raw on 2026-10-31 (curl of the `.md` docs / HF raw READMEs). Each item below names its source URL. Read dates per fact are also in the Source notes sections of `deepseek.md`, `gemini.md`, `glm.md`, `grok.md`, `kimi.md`, `meta.md`, `mistral-frontier.md`, `other-frontier.md`, `qwen-frontier.md`, `small-local.md`, `tencent.md` and `agentic-systems/codex.md`; **`claude.md`, `gpt.md` and `_universal.md` have no Source notes section — for Anthropic and OpenAI facts the URLs in this entry are the only record.** Abbreviations: `PCC` = `https://platform.claude.com/docs/en/`, `OAI` = `https://developers.openai.com/api/docs/`.

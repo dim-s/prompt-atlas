@@ -117,6 +117,29 @@ Runs on Haiku 4.5 prompts; most deltas are harness rules plus a few official lin
 
 ## Google — Gemini
 
+### Gemini 4 Carbon (or migrated from Argon / 3.x)
+
+- From Argon: model string only — wording carries over. Check `max_output_tokens` and client timeouts: Carbon thinks more per turn than Argon on complex tasks (gemini.md § Gemini 4 Carbon).
+- Don't add "be thorough / verify everything" lines on the move to Carbon — the extra thinking is the model's default; depth is `thinking_level` (`medium` default, `high` cap).
+- Long-run agent prompts: check for a measurable goal and an upfront clarifying-questions / pre-flight step, and a concrete verification signal (tests, logs, screenshots, a check script). These are Google's Carbon-guide tips — vendor advice for Carbon, not atlas rules for other Gemini models (§ Gemini 4 Carbon, developer guide).
+- AGENTS.md / skill edits the model proposes after a "reflect on this session" prompt are persistent-context changes — review them, don't accept them as pre-approved (§ Gemini 4 Carbon, tip 5).
+- From 3.x: everything in the Argon checklist below.
+
+### Gemini 4 Hydrogen (or migrated from 3.8 Flash)
+
+- `[CRITICAL]` Default depth rises from 3.8 Flash's `medium` to `high` with no error; `xhigh` is new. Set `thinking_level` explicitly where the old depth mattered; on simple extraction, a lower level — not "answer quickly" prose (gemini.md § Gemini 4 Hydrogen).
+- `[CRITICAL]` A system instruction that defines a raw-text JSON tool-call protocol with no declared tools can return `MALFORMED_FUNCTION_CALL`. Rewrite as declared functions or a response schema (§ Gemini 4 Hydrogen).
+- Keep the 3.8 Flash cleanup: no persistence / thoroughness scaffolding.
+- Don't strip "say when context is missing" / grounding lines on the strength of the launch claim that it *"cuts fabricated claims by more than 5x"* — vendor says, test first.
+- Flag as non-wording: sampling params (out-of-range → 400), explicit-cache calls, hardcoded `max_output_tokens` below 65,536, thought signatures not returned unchanged.
+
+### Gemini 4 Neon (or migrated from another Gemini 4)
+
+- From Carbon / Argon: default rises `medium` → `high`, `xhigh` available — set the level explicitly if the prompt was tuned at `medium` (gemini.md § Gemini 4 Neon).
+- Same raw-text JSON tool-call rule and non-wording items as Hydrogen.
+- Launch claims (fewer redundant reads, fabricated claims, shortcuts, overreach) are vendor says — keep grounding, scope and confirmation lines until an eval says otherwise.
+- Paid tier only — a prompt that must also run on the Free tier needs Hydrogen as its Gemini 4 target.
+
 ### Gemini 4 Argon (or migrated from 3.1 Pro)
 
 - `[CRITICAL]` If the 3.1 Pro prompt relied on the default depth: the default dropped from `high` to `medium` with no error. Set `thinking_level: high` explicitly where needed. Never write "think harder" prose (gemini.md § Gemini 4 Argon).
@@ -131,7 +154,7 @@ Runs on Haiku 4.5 prompts; most deltas are harness rules plus a few official lin
 - `thinking_level` default `high`; ladder `low`/`medium`/`high` (no `minimal`). Strip CoT scaffolding (§ Gemini 3.1 Pro; family rule #2).
 - Sampling: keep defaults. It is not in the "ignored" set (family rule #3).
 - Persona adherence is strongest here. Check that the persona doesn't fight the format (family rule #5).
-- If the user is choosing a Pro tier, Argon is now above it (§ Gemini 4 Argon).
+- If the user is choosing a Pro-class tier, the Gemini 4 models are above it — Carbon at the top; Neon and Argon below Carbon (Google does not rank Neon against Argon) (§ Gemini 4 Carbon / Neon / Argon).
 
 ### Gemini 3.8 Flash (or pinned to `gemini-3.7-flash`)
 
@@ -139,6 +162,7 @@ Runs on Haiku 4.5 prompts; most deltas are harness rules plus a few official lin
 - Strip persistence / thoroughness scaffolding; the model takes extra steps by design (§ Gemini 3.8 Flash).
 - Token complaint: the lever is lower effort. "Stay on 3.7 Flash" is no longer available (§ Gemini 3.8 Flash).
 - `minimal` → error. The fix is `low`, not a "think silently" line (§ Gemini 3.8 Flash).
+- Prompts pinned to `gemini-2.5-pro` will run here from 2026-12-01 (2.5 Pro deprecated 2026-11-02) — review them as 3.8 Flash prompts. For new work Google recommends Gemini 4 Hydrogen (§ Gemini 4 Hydrogen).
 
 ### Gemini 3.6 Flash (or pinned to `gemini-3.5-flash`)
 

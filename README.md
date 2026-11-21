@@ -16,7 +16,7 @@ Current lineup with ids, status and the reasoning knob per model: [`references/l
 |---|---|
 | **Anthropic Claude** | **Fable 5.1 / Mythos 5.1** (Sep 2026; Mythos: Project Glasswing only) / **Opus 5.5** (Sep 22 2026) / **Sonnet 5.5** (Sep 28 2026) / **Haiku 5.5** (Oct 7 2026) / previous: Fable 5, Opus 5, Sonnet 5 |
 | **OpenAI GPT** in Codex CLI | **GPT-6 Astra** (Sep 2026) / **GPT-6.1 Sol** (Sep 29 2026) / **GPT-6.1 Terra** (Oct 26 2026) / GPT-6 Sol / Luna / **GPT-Live 1** (voice, GA Sep 10) / previous: GPT-5.6 Sol / Terra / Luna |
-| **Google Gemini** in Gemini CLI | **Gemini 4 Argon** (GA Oct 13 2026) / 3.1 Pro / **3.8 Flash** (also serves `gemini-3.7-flash`) / 3.6 Flash (also serves `gemini-3.5-flash`) / **3.5 Flash-Lite** |
+| **Google Gemini** in Gemini CLI | **Gemini 4 Carbon** (GA Nov 10 2026) / **Neon** (Nov 18) / **Hydrogen** (Nov 12) / Argon (Oct 13) / 3.1 Pro / **3.8 Flash** (also serves `gemini-3.7-flash`) / 3.6 Flash (also serves `gemini-3.5-flash`) / **3.5 Flash-Lite** |
 | **Moonshot Kimi** | **K3.1 Pro** (Oct 2026) / K3 / K2.7-Code and K2.6 (closed to new users 31.10, retiring end Dec 2026) |
 | **Z.ai GLM** | **GLM-5.3 / 5.3-Flash / FlashX** (Aug 2026) / GLM-5.2 |
 | **Alibaba Qwen frontier** | **Qwen3.8-Max** (open weights 2.4T-A95B) / **Qwen3.8-Flash** (open `Qwen3.8-Flash-Next`) / **Qwen3.8-Omni-Flash** / Qwen3.7-Max |
@@ -123,7 +123,7 @@ In a Claude Code session, ask any of these:
 > "проверь мой CLAUDE.md" (or paste any CLAUDE.md-style text)
 > "адаптируй этот промпт под GPT-6.1 Sol / Codex"
 > "review my AGENTS.md for cross-vendor use"
-> "tune for Gemini 4 Argon"
+> "tune for Gemini 4 Hydrogen"
 > "почему GLM не думает в Claude Code?"
 > "адаптируй под DeepSeek V4.1 Flash"
 
@@ -172,7 +172,7 @@ prompt-atlas/
     ├── models/                    vendor-specific deltas
     │   ├── claude.md              Fable 5.1 / Opus 5.5 / Sonnet 5.5 / Haiku 5.5 + Fable 5 / Opus 5 / Sonnet 5
     │   ├── gpt.md                 GPT-6 Astra / 6.1 Sol / 6.1 Terra / 6 Sol / Luna / GPT-Live 1 + GPT-5.6
-    │   ├── gemini.md              Gemini 4 Argon / 3.1 Pro / 3.8 / 3.6 Flash / 3.5 Flash-Lite
+    │   ├── gemini.md              Gemini 4 Carbon / Neon / Hydrogen / Argon / 3.1 Pro / 3.8 / 3.6 Flash / 3.5 Flash-Lite
     │   ├── kimi.md                Kimi K3.1 Pro / K3 / K2.7-Code / K2.6 (retiring) — forced thinking, Agent Swarms
     │   ├── glm.md                 Z.ai GLM-5.3 / 5.3-Flash / FlashX / 5.2 — reasoning_effort + Claude-Code-router pattern
     │   ├── qwen-frontier.md       Qwen3.8-Max / 3.8-Flash / 3.8-Omni-Flash / 3.7-Max

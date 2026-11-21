@@ -79,6 +79,8 @@ Lite is the right default when the subagent's job is bounded and read-only: clas
 
 ## Gemini 2.5 Pro / Flash (legacy — for migration reviews)
 
+Status (2026-11-21): 2.5 Pro and 2.5 Flash were deprecated on 2026-11-02; from 2026-12-01 requests to them will route automatically to `gemini-3.8-flash` and `gemini-3.5-flash-lite` respectively (Gemini API changelog). A prompt pinned to either id will then run on that model — review it as a 3.8 Flash / 3.5 Flash-Lite prompt (`../../models/gemini.md`); Google names Gemini 4 Hydrogen the recommended upgrade for new work.
+
 Older generation. When migrating from 2.5 to 3.x, the changes are large enough that Google recommends a fresh-baseline approach:
 
 ### Wording fixes when migrating 2.5 → 3.x

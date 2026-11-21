@@ -12,7 +12,7 @@ Multiple overlapping cases. Read the relevant section.
 |---|---|
 | Prompt must work across multiple Claude versions (Fable 5.1 + Opus 5.5 + Sonnet 5.5 + Haiku 5.5, and the previous 5.0 generation) | § Universal Claude → `models/claude.md` |
 | Prompt must work across multiple GPT versions (GPT-6.x + 5.6) | § Universal GPT → `models/gpt.md` |
-| Prompt must work across multiple Gemini models (Argon + 3.x Pro / Flash / Flash-Lite) | § Universal Gemini → `models/gemini.md` |
+| Prompt must work across multiple Gemini models (Gemini 4 Carbon / Neon / Hydrogen / Argon + 3.x Pro / Flash / Flash-Lite) | § Universal Gemini → `models/gemini.md` |
 | Prompt must work across two or three frontier vendors (Claude + GPT + Gemini) | § Cross-vendor (three-vendor) |
 | Prompt must work across multiple Kimi versions (K3.1 Pro / K3 / K2.x) | § Universal Kimi |
 | Prompt must work across multiple Z.ai GLM versions | § Universal GLM |
@@ -38,7 +38,7 @@ Most production CLAUDE.md / AGENTS.md fall into one of these — pure single-mod
 
 ## Universal Gemini
 
-**Lives in `models/gemini.md § Universal Gemini prompts (Argon + 3.x)`** (Gemini 4 Argon, 3.1 Pro, 3.8 / 3.6 Flash, 3.5 Flash-Lite). The short version: concise, no CoT scaffolding (depth is `thinking_level`, whose ladder and default differ per model — Argon and 3.8 Flash have no `minimal`); identity persona documented for 3.x, unverified on Argon; XML or Markdown, not both; negative constraints at the end; no sampling in the body or the code (ignored on Argon / 3.6+, 400 announced); no global length disposition (3.6 Flash terser, 3.8 Flash works harder).
+**Lives in `models/gemini.md § Universal Gemini prompts (Gemini 4 + 3.x)`** (Gemini 4 Carbon / Neon / Hydrogen / Argon, 3.1 Pro, 3.8 / 3.6 Flash, 3.5 Flash-Lite). The short version: concise, no CoT scaffolding (depth is `thinking_level`, whose ladder and default differ per model — no Gemini 4 model and not 3.8 Flash has `minimal`; Neon / Hydrogen default to `high` and add `xhigh`, Carbon / Argon default to `medium`); identity persona documented for 3.x, unverified on Argon; XML or Markdown, not both; negative constraints at the end; no sampling in the body or the code (ignored on Argon / 3.6+, 400 announced); no global length disposition (3.6 Flash terser, 3.8 Flash works harder).
 
 ---
 
@@ -166,7 +166,7 @@ The hardest classic case: an `AGENTS.md` or system prompt meant to work on **two
 | Subagent spawning | Opus 5 lineage / Fable delegate readily — boundaries + cap | Codex spawns what's defined | Spawns what's defined; supports remote subagents | Be explicit when you want delegation |
 | Output format | Prose constraints work | Push to `json_schema` | Push to `response_json_schema` | Prefer schema for all three |
 | Aggressive emphasis | Overuse → overtriggering on every current Claude | Mostly inert noise | Inert noise | Reserve ALL-CAPS / "CRITICAL:" for safety invariants only |
-| **Sampling params in body** | **Every Claude: 400 at any value (API version `2026-10-21`)** | Tunable on 5.6; **GPT-6 Astra / 6.1 Sol: unsupported; 6.1 Terra / 6 Sol / 6 Luna: only at effort `none`** | **Ignored on Argon / 3.6+ (400 announced); defaults on earlier 3.x** | Don't reference sampling anywhere, and don't build variety on it — all three vendors have removed or pinned the lever. Use "propose N directions" |
+| **Sampling params in body** | **Every Claude: 400 at any value (API version `2026-10-21`)** | Tunable on 5.6; **GPT-6 Astra / 6.1 Sol: unsupported; 6.1 Terra / 6 Sol / 6 Luna: only at effort `none`** | **Ignored on Gemini 4 / 3.6+ (400 announced; out-of-range already 400 on Neon / Hydrogen); defaults on earlier 3.x** | Don't reference sampling anywhere, and don't build variety on it — all three vendors have removed or pinned the lever. Use "propose N directions" |
 | **Response length default** | **Opus 5 runs long and does not calibrate** (effort won't shorten it) — concision must be prompted | **5.6 is terser than 5.5** — a carried-over "be brief" overcorrects | 3.6 Flash ~17% terser than 3.5 Flash; 3.8 Flash works harder | ⚠️ **Live contradiction.** State length as a task requirement ("at most 5 bullets", "one paragraph per finding"); never as a global disposition |
 | Instruction repetition | Tolerated; a short concision reminder near the end is recommended on Opus 5 | **Measured cost on 5.6** (leaner prompts: +10–15% score, −41–66% tokens) | Concise input is a family rule; verbose prompts get over-analyzed | Say each thing once, in its own section; if an echo is needed for Opus 5, keep it to one short line |
 | **Negative constraint position** | Anywhere | Anywhere | **At end (drops early negatives)** | Place at end of file (strictest wins) |
@@ -177,7 +177,7 @@ The hardest classic case: an `AGENTS.md` or system prompt meant to work on **two
 ### The persona problem (the unique three-vendor contradiction)
 
 **There is no neutral position on persona.** A "You are a senior engineer" line:
-- **Helps Gemini 3** (+5% reasoning boost — Google research; not restated for Argon)
+- **Helps Gemini 3** (+5% reasoning boost — Google research; not restated for any Gemini 4 model)
 - **Hurts GPT** (5.5 guide + community consensus; the GPT-6 guide is silent — `gpt.md` rule #12)
 - **Neutral on Claude** (works either way)
 
@@ -315,7 +315,7 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Self-verification | **explicit "review for coverage" instruction present — unless the Opus 5 lineage or Tencent Hy4 (vendor-named over-verification) is in scope; then state verification as part of the task** | Qwen (load-bearing) vs Opus 5 / Hy4 (strip) |
 | Reasoning depth | **API knob only, no prose CoT** | All frontier vendors (universal) |
 | Output format | **`json_schema` / `json_object` API + JSON demanded in prose** | DeepSeek (both required) |
-| Sampling params | **no mention in body, no behavior depending on them** | every Claude (400 at any value, API `2026-10-21`) + Gemini (ignored on Argon / 3.6+) + GPT-6 Astra / 6.1 Sol (unsupported; other 6.x only at `none`) + Kimi (fixed on hosted API) |
+| Sampling params | **no mention in body, no behavior depending on them** | every Claude (400 at any value, API `2026-10-21`) + Gemini (ignored on Gemini 4 / 3.6+) + GPT-6 Astra / 6.1 Sol (unsupported; other 6.x only at `none`) + Kimi (fixed on hosted API) |
 | Response length | **stated per deliverable ("at most 5 bullets"), never as a global disposition** | GPT-5.6 / Gemini 3.6 Flash / DeepSeek V4.1-Flash-1017 (already terse) vs Opus 5 (runs long, won't calibrate) — the two directions cancel |
 | Instruction repetition | **each rule stated once** | GPT-5.6 (measured token/score cost) |
 | Reasoning off-switch | **never write "answer without reasoning"** | Kimi K2.7-Code / K3 / K3.1 Pro, GLM-5.3 (all variants), Grok 4.5+, Claude Opus 5.5, Mistral Large 4, hosted Muse Wonder / Spark and Muse Spark Open, MiniMax M3.1-Flash, StepFun Step 5, Qwen3.8-Max open weights (`Qwen3.8-2.4T-A95B`) — thinking forced on / cannot be disabled; Opus 5 and Sonnet 5.5 `between_tools` (increases tag leakage) |
@@ -325,7 +325,7 @@ Strictest-constraint-wins across all current frontier vendors. **Cite the strict
 | Tool guidance | **inside tool description, not system body** | GPT + DeepSeek (system overuse penalty) |
 | Instruction placement | **brief role in system + bulk in user message** | DeepSeek (user-prompt priority) — costs little on others |
 | Image content placement | **image blocks in user messages only** — the safe, standard placement on every multimodal vendor | convention (the DeepSeek vision-model 400 that motivated it is archived) |
-| Unverified new-family axes | **don't claim behavioral deltas for vendors without prompting guides — apply the strictest verified neighbor and mark `?`** | Grok 4.x, Gemini 4 Argon, Mistral Medium 3.5, hosted Muse Wonder / Spark, Tencent Hy4 preview, MiniMax M3.1-Flash, MiMo-V2.6, Step 5 Preview (no guides published) — anti-fabrication |
+| Unverified new-family axes | **don't claim behavioral deltas for vendors without prompting guides — apply the strictest verified neighbor and mark `?`** | Grok 4.x, Gemini 4 Argon / Neon / Hydrogen (Carbon: workflow tips only), Mistral Medium 3.5, hosted Muse Wonder / Spark, Tencent Hy4 preview, MiniMax M3.1-Flash, MiMo-V2.6, Step 5 Preview (no guides published) — anti-fabrication |
 | Granularity | **explicit constraints, hex colors, sizes, scopes** | Qwen (vagueness hurts) — costs little on others |
 | Numbered requirements | **A, B, C, D rather than "the following considerations"** | Qwen (skips un-emphasized) — costs nothing on others |
 | Identity check | **don't ask the model to name itself** | GLM (distillation artifact) |
