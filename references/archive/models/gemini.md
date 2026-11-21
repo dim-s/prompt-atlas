@@ -2,6 +2,37 @@
 
 Moved here on 2026-10-31 (v2.0.0) to keep the live reference lean. These models are retired, deprecated, or two or more generations behind the current lineup and are no longer the baseline that current-model deltas are written against. Content is kept verbatim as it stood when archived — it is **not maintained**: facts here may be stale. Load this file only when reviewing a prompt that still targets one of these models or when migrating off one.
 
+## Gemini 3.6 Flash (July 21, 2026 — archived 2026-11-21, v2.1.0)
+
+Archived because the Flash line moved two generations on (3.8 Flash, then Gemini 4 Hydrogen — Google's recommended upgrade from 3.8 Flash), and no live section is written as a delta against 3.6 Flash. Still served, no shutdown date announced (deprecations page, read 2026-11-21); requests to `gemini-3.5-flash` still route here. Section kept as it stood on 2026-11-21.
+
+`gemini-3.6-flash`, GA on release; the models page calls it *"Our previous-generation Flash model"*. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
+
+**A prompt pinned to `gemini-3.5-flash` now runs on 3.6 Flash** — 3.5 Flash was deprecated on 2026-10-08 and its requests are *"automatically routed to gemini-3.6-flash"*. Such a prompt silently gets the terser model below; re-check its length instructions.
+
+### Behaviors that shape wording
+
+- **Output is ~17% shorter than 3.5 Flash** at equal or better quality (up to 65% fewer tokens on DeepSWE-class agentic coding). Like GPT-5.6, this inverts carried-over concision instructions: a "be brief / no preamble" line written against 3.5 Flash now stacks on an already-terser model. Express length as a task requirement, not as a disposition.
+- **Fewer unwanted edits and fewer execution loops** — Google reports higher precision on agentic coding (DeepSWE 49% vs 37%). Scaffolding added to stop 3.5 Flash from thrashing (retry rules, "don't edit files you weren't asked to" walls) is a candidate for trimming — re-test before keeping it.
+- **`thinking_level` default `medium`; `minimal` still accepted** (levels `minimal` / `low` / `medium` / `high`) — unlike 3.8 Flash and every Gemini 4 model.
+- **Family rules unchanged**: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format.
+- **Sampling values ignored** — deprecated on its release date; see family rule #3.
+
+### When 3.6 Flash specific tuning helps
+
+- Cost/latency-sensitive agentic loops migrating off 3.5 Flash — re-check any length instructions and loop-damping scaffolding while you're there
+- High-volume workloads where a 17% output reduction compounds
+
+**No model-specific prompting guide was published for 3.6 Flash** — Google documented the model, not new prompting advice. Everything above is derived from documented behavior; the wording rules remain the family ones.
+
+### Migration checklist (moved from `model-audits.md`)
+
+- `[CRITICAL]` A prompt pinned to `gemini-3.5-flash` silently runs on 3.6 Flash since 2026-10-08. A carried-over "be brief" now stacks on ~17% terser output (above).
+- Re-test loop-damping and "don't edit extra files" scaffolding written for 3.5 Flash (above).
+- Sampling values are ignored. Remove them from the code (family rule #3).
+
+---
+
 ## Gemini 3 Flash
 
 Balanced model — speed and capability between Pro and Flash-Lite.

@@ -164,12 +164,6 @@ Runs on Haiku 4.5 prompts; most deltas are harness rules plus a few official lin
 - `minimal` → error. The fix is `low`, not a "think silently" line (§ Gemini 3.8 Flash).
 - Prompts pinned to `gemini-2.5-pro` will run here from 2026-12-01 (2.5 Pro deprecated 2026-11-02) — review them as 3.8 Flash prompts. For new work Google recommends Gemini 4 Hydrogen (§ Gemini 4 Hydrogen).
 
-### Gemini 3.6 Flash (or pinned to `gemini-3.5-flash`)
-
-- `[CRITICAL]` A prompt pinned to `gemini-3.5-flash` silently runs on 3.6 Flash since 2026-10-08. A carried-over "be brief" now stacks on ~17% terser output (§ Gemini 3.6 Flash).
-- Re-test loop-damping and "don't edit extra files" scaffolding written for 3.5 Flash (§ Gemini 3.6 Flash).
-- Sampling values are ignored. Remove them from the code (family rule #3).
-
 ### Gemini 3.5 Flash-Lite (or migrated from 3.1 Flash-Lite)
 
 - Use the Lite regime: concise, bounded scope, few-shot for strict formats, tool guidance in tool descriptions (§ Gemini 3.5 Flash-Lite).

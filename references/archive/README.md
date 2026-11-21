@@ -11,7 +11,7 @@ Coverage for models that are no longer part of the live atlas, kept verbatim as 
 | `matrix-legacy.md` | Legacy rows of matrix Tables A–D |
 | `models/claude.md` | Opus 4.7 (covers Opus 4.8), Sonnet 4.6, Haiku 4.5 |
 | `models/gpt.md` | GPT-5.5, 5.4, 5.3 / 5.3-Codex, 5.2, 5.1 |
-| `models/gemini.md` | Gemini 3 Flash, 3.7 Flash, 3.5 Flash (+ Cyber), 3.1 Flash-Lite, 2.5 Pro / Flash |
+| `models/gemini.md` | Gemini 3.6 Flash (v2.1.0), 3 Flash, 3.7 Flash, 3.5 Flash (+ Cyber), 3.1 Flash-Lite, 2.5 Pro / Flash |
 | `models/kimi.md` | Kimi K2.5, K2 |
 | `models/glm.md` | GLM-5.1, GLM-5, GLM-4.6 |
 | `models/qwen-frontier.md` | Qwen3.7 Plus, 3.6 Plus, 3.6-Max-Preview, Qwen3-Max-Thinking |

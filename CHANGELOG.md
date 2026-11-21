@@ -24,6 +24,11 @@ Gemini 4 family update on the owner's request of 21.11 («очень много 
 - Thinking-ladder and sampling statements generalized from "Argon" to "Gemini 4" with the Neon / Hydrogen differences (default `high`, `xhigh`, out-of-range sampling → 400): `gemini.md`, `_universal.md`, `multilingual.md`, `gemini-cli.md`, `matrix.md`. Source: `GAPI thinking.md.txt`, `GAPI whats-new-gemini-4-neon.md.txt`, `GAPI whats-new-gemini-4-hydrogen.md.txt`.
 - SKILL.md description and examples, README coverage table and file tree name the four Gemini 4 models.
 
+### Archived
+
+- **Gemini 3.6 Flash** — on the owner's follow-up of 21.11 («часть старых моделей … которая уже действительно не актуальная нужно в архив отправить»), by the archive policy (`archive/README.md`): two Flash generations behind (3.8 Flash, then Gemini 4 Hydrogen) and no live section is written as a delta against it. Section and its `model-audits.md` checklist → `archive/models/gemini.md`; matrix rows A–D → `archive/matrix-legacy.md`; `lineup.md` row points to the archive. Still served, no shutdown date (`GAPI deprecations.md.txt`, read 2026-11-21); `gemini-3.5-flash` still routes to it.
+- **Kept live, by the same policy:** Gemini 3.1 Pro (one generation behind; the Argon section is written as a migration from it), 3.8 Flash (Hydrogen's section is a delta against it), 3.8 Flash Cyber, 3.5 Flash-Lite (current Lite tier).
+
 ### Not verified / deliberately left out
 
 - **"Gemini 4 Oxygen"** (named in the request): no such model in `GAPI changelog.md.txt`, `GAPI models.md.txt`, `GAPI deprecations.md.txt` or `https://aistudio.google.com/llms.txt` (read 2026-11-21). Not added.

@@ -27,6 +27,7 @@ Moved here on 2026-10-31 (v2.0.0). Rows for retired, deprecated or two-plus-gene
 | **Gemini 3.5 Flash** (May 19 2026) | high — concise dominates | partial | helps (identity-based, family-consistent) | mixed | mixed | inert | **CoT not needed** — but `thinking_level` default dropped to `medium` (was `high`); naive port silently reasons less |
 | **Grok 4.3** (xAI, Apr 30 / May 4 2026) | medium-high | yes — generalizes well | OK; persona helps for tone but no strong directional preference documented | helps when format strict | helps | inert | tolerated; built-in reasoning makes scaffolding unnecessary |
 | **Gemini 3.7 Flash** (Aug 13 2026 — previous Flash) | high — concise dominates | partial | helps (identity-based, family-consistent) | mixed | mixed | inert | CoT not needed; **`thinking_level` default medium** — set explicitly if depth needed; intro price half of 3.6 Flash |
+| **Gemini 3.6 Flash** (Jul 21 2026 — previous Flash; also serves pinned `gemini-3.5-flash` since Oct 8) | high — concise dominates | partial | helps (identity-based, family-consistent) | mixed | mixed | inert | CoT not needed; **output ~17% shorter than 3.5 Flash — carried-over "be brief" overcorrects** |
 | **Grok 4.5** (xAI, Jul 2026 — previous recommended) | medium-high (4.3 family behavior; **no 4.5 prompting guide published**) | yes | OK; no directional preference documented | helps when format strict | helps | inert | tolerated; built-in reasoning makes scaffolding unnecessary; **`reasoning_effort` (default high) exists since 4.5** |
 | **Haiku 4.5** | medium-high | rarely | OK | helps; needed when format strict | mixed | overtriggers | needed for complex tasks |
 
@@ -51,6 +52,7 @@ Moved here on 2026-10-31 (v2.0.0). Rows for retired, deprecated or two-plus-gene
 | **Gemini 3.5 Flash** | `thinking_level` (minimal/low/medium-**default**/high) — **default dropped from `high` to `medium`** vs prior 3-Flash-Preview; "low" retuned for code/agentic tasks | direct, efficient | `response_json_schema` preferred | implicit |
 | **Grok 4.3** | built-in reasoning (no separate toggle documented); model decides reasoning depth autonomously | direct, terse, action-biased | structured output via OpenAI-compatible API | implicit |
 | **Gemini 3.7 Flash** (previous) | `thinking_level` (low/medium/**default**/high) — default `medium`; set explicitly for depth-critical work | direct, efficient; higher first-pass accuracy (FrontierCode 43.6 vs 34.4 on 3.6) | `response_json_schema` preferred | implicit |
+| **Gemini 3.6 Flash** (previous) | `thinking_level` minimal/low/medium/high — default `medium` | direct, efficient; **~17% fewer output tokens than 3.5 Flash**, fewer unwanted code edits and execution loops | `response_json_schema` preferred | implicit — and terser than its predecessor; don't add a global "be brief" |
 | **Haiku 4.5** | `effort` (limited range) | direct, terse | prose; explicit format needed | terse default |
 
 ## Table C
@@ -72,6 +74,7 @@ Moved here on 2026-10-31 (v2.0.0). Rows for retired, deprecated or two-plus-gene
 | **DeepSeek V3.2 (legacy)** | similar; R1 lineage made reasoning + tools mutually exclusive | mid | yes | yes |
 | **GPT-5.5 Instant** | inside tool description (family rule) | spawns what's defined | yes | yes |
 | **Gemini 3.5 Flash** | system instruction OK; tool descriptions for tool specifics | spawns what's defined; **leads agentic tool calling** on Terminal-Bench 2.1 (76.2%) and MCP Atlas (83.6%) | yes | yes |
+| **Gemini 3.6 Flash** | system instruction OK; tool descriptions for tool specifics | spawns what's defined; **fewer unwanted edits and execution loops** than 3.5 Flash (DeepSWE 49% vs 37%) | yes | yes |
 | **Grok 4.3** | tool description preferred | **#1 on Artificial Analysis agentic tool-calling leaderboard**; Grok Skills feature for persistent custom expertise | yes | yes |
 | **Haiku 4.5** | system prompt OK | conservative — name tool explicitly | yes | yes |
 
@@ -95,6 +98,7 @@ Moved here on 2026-10-31 (v2.0.0). Rows for retired, deprecated or two-plus-gene
 | **DeepSeek V3.2 (legacy)** | from R1: tool/reasoning unified; better long-context | update R1-era prompts that assumed reasoning-vs-tool tradeoff |
 | **GPT-5.5 Instant** | from 5.5: same family, lower latency | same migration as 5.5 (fresh baseline); pick Instant when latency matters more than reasoning depth |
 | **Gemini 3.5 Flash** | from 3 Flash Preview / 3.1 Flash | **silent regression risk**: `thinking_budget` int retired → `thinking_level` enum with **`medium` default** (was `high` on Preview). Naive port reasons less. Also audit any code reading `thinking_budget` |
+| **Gemini 3.6 Flash** | from 3.5 Flash (deprecated 2026-10-08 — pinned id auto-routes here): cheaper, terser, more precise | re-check length instructions (17% shorter output — "be brief" overcorrects); re-test loop-damping and "don't edit extra files" scaffolding added for 3.5; **sampling values ignored since its release** — remove from code, not just from the body |
 | **Grok 4.3** | from Grok 4.20: 40% input price cut, 1M context, video input added | move to Grok 4.3 for cost/feature; Grok 5 still upcoming (Q2 2026) |
 | **Grok 4.5** | vendor-recommended over 4.3 — **but the context window shrinks 1M → 500K** | `[CRITICAL]` if the prompt architecture assumes 1M (whole-repo dumps, full history replay): chunk, retrieve or summarize. Also note the **200K pricing step** — crossing it doubles input *and* output rates |
 | **Haiku 4.5** | forward-compatible | mostly unchanged from 4.0/4.5 era |

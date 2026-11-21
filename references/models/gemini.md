@@ -4,7 +4,7 @@ What changes about how you should PHRASE prompts for the Gemini 4 family (Carbon
 
 When the artifact runs in Gemini CLI specifically (GEMINI.md, AGENTS.md via fileName config, Gemini CLI subagent, skill, slash command), also read `../agentic-systems/gemini-cli.md` — the CLI layers its own behavior on top of the underlying model.
 
-Retired, deprecated and older models (3 Flash, 3.5 Flash, 3.7 Flash, 3.1 Flash-Lite, 2.5) live in `../archive/models/gemini.md`.
+Retired, deprecated and older models (3.6 Flash, 3 Flash, 3.5 Flash, 3.7 Flash, 3.1 Flash-Lite, 2.5) live in `../archive/models/gemini.md`.
 
 ---
 
@@ -279,7 +279,7 @@ Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 
 
 ### When NOT to invest
 
-- Efficiency-first, high-volume loops — lower effort (or 3.6 Flash / 3.5 Flash-Lite) is the fix; rewording won't undo tokens the model spends by design.
+- Efficiency-first, high-volume loops — lower effort (or 3.5 Flash-Lite) is the fix; rewording won't undo tokens the model spends by design.
 
 **No model-specific prompting guide was published for 3.8 Flash.** Everything above is quoted from or derived from Google's launch post (2026-09-02), the Gemini API changelog entry of the same date, the `gemini-3.8-flash` model page and the thinking docs (read 2026-09-13; routing re-read 2026-10-31).
 
@@ -290,29 +290,6 @@ Direct replacement: `gemini-3.1-pro-preview`. Wording is unchanged from 3.0 → 
 A cybersecurity variant built on the same core — both releases *"are powered by the same foundational intelligence"* — and, like the earlier 3.5 Flash Cyber, **not generally available**: *"available to trusted defenders through our new Fairwind Program"* (government authorities, critical infrastructure operators, software maintainers). Note the access route changed from 3.5 Flash Cyber's CodeMender. Nothing to tune against; recorded so a later pass doesn't re-investigate.
 
 One consequence for the GA model: *"3.8 Flash ships with safeguards against misuse in the domains of Chemical, Biological, Radiological, and Nuclear (CBRN) and cyber offense"* — the permissive cyber mitigations belong to the Cyber variant only. No wording workaround is documented for benign security prompts that hit those safeguards on 3.8 Flash.
-
----
-
-## Gemini 3.6 Flash (July 21, 2026 — previous Flash frontier)
-
-`gemini-3.6-flash`, GA on release; the models page calls it *"Our previous-generation Flash model"*. The changelog describes it as offering *"improved token efficiency and code/agentic planning capabilities at a lower price point than 3.5 Flash."*
-
-**A prompt pinned to `gemini-3.5-flash` now runs on 3.6 Flash** — 3.5 Flash was deprecated on 2026-10-08 and its requests are *"automatically routed to gemini-3.6-flash"*. Such a prompt silently gets the terser model below; re-check its length instructions.
-
-### Behaviors that shape wording
-
-- **Output is ~17% shorter than 3.5 Flash** at equal or better quality (up to 65% fewer tokens on DeepSWE-class agentic coding). Like GPT-5.6, this inverts carried-over concision instructions: a "be brief / no preamble" line written against 3.5 Flash now stacks on an already-terser model. Express length as a task requirement, not as a disposition.
-- **Fewer unwanted edits and fewer execution loops** — Google reports higher precision on agentic coding (DeepSWE 49% vs 37%). Scaffolding added to stop 3.5 Flash from thrashing (retry rules, "don't edit files you weren't asked to" walls) is a candidate for trimming — re-test before keeping it.
-- **`thinking_level` default `medium`; `minimal` still accepted** (levels `minimal` / `low` / `medium` / `high`) — unlike 3.8 Flash and every Gemini 4 model.
-- **Family rules unchanged**: concise input, identity-based persona, no CoT scaffolding, negatives at the end, one structure format.
-- **Sampling values ignored** — deprecated on its release date; see family rule #3.
-
-### When 3.6 Flash specific tuning helps
-
-- Cost/latency-sensitive agentic loops migrating off 3.5 Flash — re-check any length instructions and loop-damping scaffolding while you're there
-- High-volume workloads where a 17% output reduction compounds
-
-**No model-specific prompting guide was published for 3.6 Flash** — Google documented the model, not new prompting advice. Everything above is derived from documented behavior; the wording rules remain the family ones.
 
 ---
 
@@ -361,7 +338,7 @@ When the prompt is **cross-vendor** (Claude + GPT + Gemini), several Gemini-spec
 |---|---|---|---|---|
 | Persona / "act as" | **+5% boost — keep** | Neutral | Hurts | **Conditional persona** OR drop with -5% Gemini cost |
 | Sampling params | **ignored on Gemini 4 / 3.6+**; earlier 3.x: defaults | → 400 on every model (API version `2026-10-21`) | Tunable on 5.x; GPT-6 Astra: unsupported | Don't reference sampling in body, and don't design around it |
-| Response length default | 3.6 Flash ~17% terser than 3.5; 3.8 Flash works harder; Gemini 4 `?` | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults move in opposite directions per model |
+| Response length default | 3.6 Flash (archived) ~17% terser than 3.5; 3.8 Flash works harder; Gemini 4 `?` | **Opus 5 runs long, doesn't calibrate** | 5.6 terser than 5.5 | State length as a task requirement, not a disposition — the defaults move in opposite directions per model |
 | Negative constraint position | At end (strict) | Anywhere | Anywhere | Place at end (strictest wins) |
 | Structure mixing | XML or Markdown, not both (strict) | Tolerates mixing | Tolerates mixing | Pick one (strictest wins) |
 | CoT scaffolding | Hurts | Tolerated | Hurts | Strip — works for all three |
@@ -383,7 +360,7 @@ A prompt that works across Carbon / Neon / Hydrogen / Argon / Pro / Flash / Flas
 - [ ] Concise (Flash-Lite needs it most)
 - [ ] No CoT scaffolding (all internalize reasoning)
 - [ ] No sampling params in body (ignored on Gemini 4 / 3.6+; keep defaults on earlier 3.x)
-- [ ] Length stated as a task requirement, not a disposition (3.6 Flash is terser than 3.5, 3.8 Flash works harder — one global "be brief" is wrong for one of them)
+- [ ] Length stated as a task requirement, not a disposition (3.8 Flash works harder, while a prompt pinned to `gemini-3.5-flash` runs on the terser, archived 3.6 Flash — one global "be brief" is wrong for one of them)
 - [ ] Identity-based persona present (documented for 3.x; carry to Gemini 4 and test)
 - [ ] XML or Markdown, not both
 - [ ] Negative constraints at end

@@ -38,7 +38,7 @@ Most production CLAUDE.md / AGENTS.md fall into one of these — pure single-mod
 
 ## Universal Gemini
 
-**Lives in `models/gemini.md § Universal Gemini prompts (Gemini 4 + 3.x)`** (Gemini 4 Carbon / Neon / Hydrogen / Argon, 3.1 Pro, 3.8 / 3.6 Flash, 3.5 Flash-Lite). The short version: concise, no CoT scaffolding (depth is `thinking_level`, whose ladder and default differ per model — no Gemini 4 model and not 3.8 Flash has `minimal`; Neon / Hydrogen default to `high` and add `xhigh`, Carbon / Argon default to `medium`); identity persona documented for 3.x, unverified on Argon; XML or Markdown, not both; negative constraints at the end; no sampling in the body or the code (ignored on Argon / 3.6+, 400 announced); no global length disposition (3.6 Flash terser, 3.8 Flash works harder).
+**Lives in `models/gemini.md § Universal Gemini prompts (Gemini 4 + 3.x)`** (Gemini 4 Carbon / Neon / Hydrogen / Argon, 3.1 Pro, 3.8 Flash, 3.5 Flash-Lite; 3.6 Flash is archived). The short version: concise, no CoT scaffolding (depth is `thinking_level`, whose ladder and default differ per model — no Gemini 4 model and not 3.8 Flash has `minimal`; Neon / Hydrogen default to `high` and add `xhigh`, Carbon / Argon default to `medium`); identity persona documented for 3.x, unverified on Argon; XML or Markdown, not both; negative constraints at the end; no sampling in the body or the code (ignored on Argon / 3.6+, 400 announced); no global length disposition (3.6 Flash terser, 3.8 Flash works harder).
 
 ---
 
