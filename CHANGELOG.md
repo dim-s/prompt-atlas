@@ -2,6 +2,12 @@
 
 All notable changes to **prompt-atlas** are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project adheres to [Semantic Versioning](https://semver.org/) where feasible (model-coverage additions are minor versions; methodology changes are major).
 
+## [Unreleased]
+
+### Added
+
+- **Prime directive, load-bearing signals:** a concrete order of steps (rewritten as a list of properties it stops being an operation), scope quantifiers ("always", "any", "even if" — narrowing them deletes the rule), and a short counterweight to the role's main push (its loss shows only on negative controls). Source: compressing a 137 KB agent body to 32 KB lost exactly these three; a second model and negative controls caught them (owner's approval 27.11).
+
 ## [2.1.0] — 2026-11-21
 
 Gemini 4 family update on the owner's request of 21.11 («очень много моделей вышло от Гугла … нужно обновиться и добавить их»). Google pages were read raw on 2026-11-21 (`.md.txt` versions of ai.google.dev docs via curl; the Carbon developer guide is a single-page app and was rendered in headless Chrome). Each item names its source; read dates per fact are also in `references/models/gemini.md` § Source notes (the only file of this change with a Source notes section). `GAPI` = `https://ai.google.dev/gemini-api/docs/`.

@@ -88,7 +88,9 @@ Treat existing text as **evidence of past decisions**, not first-draft cruft. Be
 2. **Signals a line is probably load-bearing** — handle with extra care:
    - Unusual phrasing, repetition, or emphasis (all-caps, "NEVER", "ALWAYS", "IMPORTANT") — often a scar from a specific incident
    - Negative instructions ("do NOT do X") — the opposite behavior almost certainly happened at least once
-   - Specific examples, file paths, function names, numeric thresholds
+   - Specific examples, file paths, function names, numeric thresholds, a concrete order of steps ("small probe first, the full grid only on its result") — rewritten as a list of properties ("only what changed, in the background, in parallel") it reads the same and has stopped being an operation
+   - Scope quantifiers ("always", "even if", "any", "proactively") — narrowing "on any screenshot used as proof" to "on an important visual artifact" deletes the rule while it still looks kept
+   - A short counterweight to the role's main push ("genuinely clean → a short ✅ beats invented nitpicks") — reads as filler, holds the calibration; its loss shows only on negative controls, positive cases still pass
    - Trigger phrases in SKILL.md / subagent `description` fields — every keyword may be a deliberate heuristic hook
    - Seemingly redundant clauses ("X — do not do Y") — the second clause is the fix, the first is context
    - Non-standard order or structure
